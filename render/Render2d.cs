@@ -77,4 +77,14 @@ public static class Render2d
 
         Raylib.EndDrawing();
     }
+
+    public static void ObjetosEnElRender()
+    {
+        foreach (ObjetoAbstracto item in objetosAbstractos)
+        {
+            Console.ForegroundColor = ConsoleColor.Blue;
+            Console.WriteLine(item.GetType() + ", capaDibujado:" + item.capaDibujado);
+            Console.ForegroundColor = ConsoleColor.White;
+        }
+    }
 }

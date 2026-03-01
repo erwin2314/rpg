@@ -46,6 +46,8 @@ public class Panel : ObjetoAbstracto
     /// </summary>
     public Color colorDelRectangulo;
 
+    public IdTextura idTextura;
+
     /// <summary>
     /// Imagen de fondo opcional del panel <br/>
     /// Si es null se dibuja un rectangulo solido en su lugar
@@ -56,7 +58,7 @@ public class Panel : ObjetoAbstracto
     /// Rectangulo interno usado para el dibujado
     /// </summary>
     private Rectangle rectangulo;
-
+    
     /// <summary>
     /// Crea un nuevo panel y lo registra automaticamente en CentroUI <br/>
     /// Si el idTextura es vacio, la imagen se asigna como null y se dibuja un rectangulo solido <br/>
@@ -100,7 +102,9 @@ public class Panel : ObjetoAbstracto
         this.colorDeltexto = colorDelTexto;
         this.colorDelRectangulo = colorDelRectangulo;
 
-        if(idTextura == IdTextura.vacio)
+        this.idTextura = idTextura;
+
+        if(this.idTextura == IdTextura.vacio)
         {
             this.imagen = null;
         }
@@ -113,6 +117,9 @@ public class Panel : ObjetoAbstracto
         this.rectangulo = new Rectangle(posicionX,posicionY,ancho,alto);
         InsertarACentroUI();
     }
+
+    //capaDibujado
+    public Panel():base(101){}
 
     /// <summary>
     /// No realiza ninguna accion, el panel no tiene logica de actualizacion
@@ -130,6 +137,7 @@ public class Panel : ObjetoAbstracto
     /// </summary>
     public override void Dibujar()
     {
+        if(!visible) return;
         int largoDeTexto = Raylib.MeasureText(textoAMostrar,tamañoDelTexto);
         int altoDelTextoAprox = tamañoDelTexto;
         if(imagen != null)
@@ -142,5 +150,20 @@ public class Panel : ObjetoAbstracto
             Raylib.DrawRectanglePro(rectangulo,new System.Numerics.Vector2(0,0),0,colorDelRectangulo);
             Raylib.DrawText(textoAMostrar,(int)((posicionX + (rectangulo.Width/2)) - (largoDeTexto/2)),(int)((posicionY + (rectangulo.Height/2))-(altoDelTextoAprox/2)),tamañoDelTexto,colorDeltexto);
         }
+    }
+
+    public override void Inicializar()
+    {
+        if(this.idTextura == IdTextura.vacio)
+        {
+            this.imagen = null;
+        }
+        else
+        {
+            this.imagen = GestorTexturas.ObtenerTextura(idTextura);
+        }
+
+        this.rectangulo = new Rectangle(posicionX,posicionY,ancho,alto);
+        InsertarACentroUI();
     }
 }

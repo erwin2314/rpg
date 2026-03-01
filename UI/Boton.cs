@@ -52,6 +52,8 @@ public class Boton : ObjetoAbstracto
     /// </summary>
     public Texture2D? imagen;
 
+    public IdTextura idTextura;
+
     /// <summary>
     /// Accion (delegate) que se ejecuta al hacer clic en el boton <br/>
     /// Si es null se imprime un mensaje en consola indicando que no tiene funcion asignada
@@ -109,7 +111,9 @@ public class Boton : ObjetoAbstracto
         this.colorDeltexto = colorDelTexto;
         this.colorDelRectangulo = colorDelRectangulo;
 
-        if(idTextura == IdTextura.vacio)
+        this.idTextura = idTextura;
+
+        if(this.idTextura == IdTextura.vacio)
         {
             this.imagen = null;
         }
@@ -122,12 +126,15 @@ public class Boton : ObjetoAbstracto
         InsertarACentroUI();
     }
 
+    public Boton():base(101){}
+
     /// <summary>
     /// Ejecuta la accion asignada al boton <br/>
     /// Si no tiene ninguna accion asignada imprime un mensaje en consola
     /// </summary>
     public void click()
     {
+        if(!visible || !activo) return;
         if(accionAlHacerClick != null)
         {
             accionAlHacerClick();
@@ -144,6 +151,7 @@ public class Boton : ObjetoAbstracto
     /// </summary>
     public override void Actualizar()
     {
+        if(!activo) return;
         if(Raylib.IsMouseButtonPressed(MouseButton.Left) == true && Raylib.CheckCollisionPointRec(Raylib.GetMousePosition(),rectangulo))
         {
             click();
@@ -158,6 +166,7 @@ public class Boton : ObjetoAbstracto
     /// </summary>
     public override void Dibujar()
     {
+        if(!visible) return;
         int largoDeTexto = Raylib.MeasureText(textoAMostrar,tamañoDelTexto);
         int altoDelTextoAprox = tamañoDelTexto;
         if(imagen != null)
@@ -170,5 +179,21 @@ public class Boton : ObjetoAbstracto
             Raylib.DrawRectanglePro(rectangulo,new System.Numerics.Vector2(0,0),0,colorDelRectangulo);
             Raylib.DrawText(textoAMostrar,(int)((posicionX + (rectangulo.Width/2)) - (largoDeTexto/2)),(int)((posicionY + (rectangulo.Height/2))-(altoDelTextoAprox/2)),tamañoDelTexto,colorDeltexto);
         }
+    }
+
+    public override void Inicializar()
+    {
+        if(this.idTextura == IdTextura.vacio)
+        {
+            this.imagen = null;
+        }
+        else
+        {
+            this.imagen = GestorTexturas.ObtenerTextura(idTextura);
+        }
+
+        this.rectangulo = new Rectangle(posicionX,posicionY,ancho,alto);
+        InsertarACentroUI();
+        InsertarACentroUI();
     }
 }

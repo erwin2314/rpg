@@ -1,16 +1,30 @@
 /// <summary>
 /// Es la clase padre de todas las clases que van a ser dibujadas
 /// </summary>
-public abstract class ObjetoAbstracto
+public abstract class ObjetoAbstracto : ISerializableATxt
 {
     /// <summary>
     /// Los objetos en capas superiores apareceran arriba de los que estan en capas inferiores
     /// </summary>
     public int capaDibujado;
+    /// <summary>
+    /// Si el objeto no es visible, no se va a dibujar
+    /// </summary>
+    public bool visible = true;
+    /// <summary>
+    /// Si el objeto no es activo, no se va a actualizar ni va a responder a eventos
+    /// </summary>
+    public bool activo = true;
     protected ObjetoAbstracto(int capaDibujado = 0)
     {
         this.capaDibujado = capaDibujado;
     } 
+    
+    /// <summary>
+    /// Se debe llamar cuando un objeto es creado a partir de un constructor vacio
+    /// </summary>
+    public abstract void Inicializar();
+    
     /// <summary>
     /// Funcion abstracta para sobreescribir en caso de que necesite actualizar valores o hacer calculos
     /// </summary>

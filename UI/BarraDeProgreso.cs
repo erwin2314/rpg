@@ -61,7 +61,7 @@ public class BarraDeProgreso : ObjetoAbstracto
     /// Indica en verdadero o falso si la barra esta completa <br/>
     /// (el progreso es igual al total)
     /// </summary>
-    private bool completo = false;
+    public bool completo = false;
 
     /// <summary>
     /// Indica en verdadero o falso si la barra esta vacia <br/>
@@ -108,14 +108,21 @@ public class BarraDeProgreso : ObjetoAbstracto
         InsertarACentroUI();
     }
 
+    public BarraDeProgreso():base(101){}
+    public override void Inicializar()
+    {
+        InsertarACentroUI();
+    }
+
     /// <summary>
     /// Calcula el nivel de progreso y comprueba si esta vacia o completa
     /// </summary>
     public override void Actualizar()
     {
+        if(!activo) return;
         if(completo != true)
         {
-            if(progreso >= total)
+            if(progreso >= total && avance >= 0)
             {
                 progreso = total;
                 porcentaje = 1;
@@ -128,7 +135,7 @@ public class BarraDeProgreso : ObjetoAbstracto
             }
             porcentaje = progreso/total;
         }
-        if(progreso == 0)
+        if(progreso <= 0)
         {
             vacia = true;
         }
@@ -145,6 +152,7 @@ public class BarraDeProgreso : ObjetoAbstracto
     /// </summary>
     public override void Dibujar()
     {
+        if(!visible) return;
         Raylib.DrawRectangle(posicionX,posicionY,ancho,alto,colorRectanguloFondo);
         Raylib.DrawRectangle(posicionX,posicionY,(int)(ancho*porcentaje),alto,colorRectanguloFrente);
     }
@@ -154,6 +162,7 @@ public class BarraDeProgreso : ObjetoAbstracto
     /// </summary>
     public void Reiniciar()
     {
+        if(!activo) return;
         vacia = true;
         completo = false;
         progreso = 0f;
@@ -167,6 +176,7 @@ public class BarraDeProgreso : ObjetoAbstracto
     /// <param name="valor">Valor a añadir o restar (signo negativo)</param>
     public void AñadirValor(float valor)
     {
+        if(!activo) return;
         if(progreso + valor >= total)
         {
             progreso = total;

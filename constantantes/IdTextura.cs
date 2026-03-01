@@ -9,7 +9,7 @@ public enum IdTextura
         //vacio
         vacio = -1,
         //PlaceHolder
-        placeHolder = 0,
+        placeholder = 0,
         //Jugadores
         jugador1 = 1,
 
