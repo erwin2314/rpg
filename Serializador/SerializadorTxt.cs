@@ -30,7 +30,6 @@ public static class Serializador
     {
         var propiedadesDelObj = objeto.GetType().GetFields()
             .Where(p => p.GetValue(objeto) != null)
-            .Where(p => !typeof(Delegate).IsAssignableFrom(p.FieldType))
             .Where(p => !typeof(Texture2D?).IsAssignableFrom(p.FieldType));
 
         
@@ -48,6 +47,10 @@ public static class Serializador
             if(valorPropiedad is Color color)
             {
                 objetoEnTexto[i] = $"{nombrePropiedad} = {ObtenerNombreColor(color)}";
+            }
+            else if(valorPropiedad is Action funcion)
+            {
+                objetoEnTexto[i] = $"{nombrePropiedad} = {Eventos.ObtenerNombre(funcion)}";
             }
             else
             {
@@ -91,6 +94,10 @@ public static class Serializador
             else if(propiedad.FieldType.IsEnum)
             {
                 propiedad.SetValue(objeto, Enum.Parse(propiedad.FieldType, valorEnTexto));
+            }
+            else if(propiedad.FieldType == typeof(Action))
+            {
+                propiedad.SetValue(objeto, Eventos.ObtenerFuncion(valorEnTexto));
             }
             else
             {

@@ -6,14 +6,16 @@ public static class Program
     {
         Serializador.RegistrarClase<Panel>();
         Serializador.RegistrarClase<BarraDeProgreso>();
+        Serializador.RegistrarClase<Boton>();
+
+        Eventos.AgregarEvento("Salir",Salir);
 
         Raylib.InitWindow(1280,720,"prueba");
         Raylib.SetTargetFPS(60);
         GestorTexturas.CargarTexturas();
-        Boton botonPrueba1 = new Boton(100,100,100,100,Color.Black,Color.White,idTextura:IdTextura.placeholder,textoAMostrar:"Hola mundo 123",accionAlHacerClic:Salir);
+        //Boton botonPrueba1 = new Boton(100,100,100,100,Color.Black,Color.White,idTextura:IdTextura.placeholder,textoAMostrar:"Hola mundo 123",accionAlHacerClic:Salir);
         
-        ObjetoAbstracto barra = Serializador.DeserializarDeTxt<ObjetoAbstracto>(GestorArchivosDeTxt.ObtenerLineasValidasDeArchivo("pruebasTxt/barraProgreso.txt"));
-        Panel panel = (Panel)Serializador.DeserializarDeTxt<Panel>(GestorArchivosDeTxt.ObtenerLineasValidasDeArchivo("pruebasTxt/panel.txt"));
+        Boton boton = Serializador.DeserializarDeTxt<Boton>(GestorArchivosDeTxt.ObtenerLineasValidasDeArchivo("pruebasTXT/botonPrueba1"));
         
         while(!Raylib.WindowShouldClose())
         {
@@ -28,4 +30,5 @@ public static class Program
         GestorTexturas.DescargarTexturas();
         Environment.Exit(0);
     }
+    
 }
