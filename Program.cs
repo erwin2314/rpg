@@ -30,6 +30,7 @@ public static class Program
     public static void Salir()
     {
         GestorTexturas.DescargarTexturas();
+        gestorRed.Desconectarse();
         Environment.Exit(0);
     }
     

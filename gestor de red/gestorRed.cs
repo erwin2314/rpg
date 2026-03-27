@@ -22,7 +22,6 @@ public static class gestorRed
 
     public static void InicializarComoCliente(string ip, ushort puerto)
     {
-
         gestorCliente.Conectar($"{ip}:{puerto}");
     }
 
@@ -35,6 +34,13 @@ public static class gestorRed
         else if(EnLinea && !EsServidor)
         {
             gestorCliente.Actualizar();
+        }
+
+        EsServidor = gestorServidor.server.IsRunning;
+        if(!EsServidor || gestorCliente.cliente.IsConnected)
+        {
+            EnLinea = false;
+            Console.WriteLine(gestorCliente.cliente.IsConnecting);
         }
     }
     public static void Desconectarse()

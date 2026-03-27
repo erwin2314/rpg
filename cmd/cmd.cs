@@ -3,32 +3,42 @@ public static class CMD
     private static string bufferActual = "";
 
     public static void ProcesarComandos()
+{
+    try
     {
-        while (Console.KeyAvailable)
+        if (!Console.IsInputRedirected)
         {
-            ConsoleKeyInfo tecla = Console.ReadKey(true);
+            while (Console.KeyAvailable)
+            {
+                ConsoleKeyInfo tecla = Console.ReadKey(true);
 
-            if (tecla.Key == ConsoleKey.Enter)
-            {
-                Console.WriteLine();
-                EjecutarComando(bufferActual.Trim());
-                bufferActual = "";
-            }
-            else if (tecla.Key == ConsoleKey.Backspace)
-            {
-                if (bufferActual.Length > 0)
+                if (tecla.Key == ConsoleKey.Enter)
                 {
-                    bufferActual = bufferActual[..^1];
-                    Console.Write("\b \b");
+                    Console.WriteLine();
+                    EjecutarComando(bufferActual.Trim());
+                    bufferActual = "";
                 }
-            }
-            else
-            {
-                bufferActual += tecla.KeyChar;
-                Console.Write(tecla.KeyChar);
+                else if (tecla.Key == ConsoleKey.Backspace)
+                {
+                    if (bufferActual.Length > 0)
+                    {
+                        bufferActual = bufferActual[..^1];
+                        Console.Write("\b \b");
+                    }
+                }
+                else
+                {
+                    bufferActual += tecla.KeyChar;
+                    Console.Write(tecla.KeyChar);
+                }
             }
         }
     }
+    catch (InvalidOperationException)
+    {
+        // Consola no disponible (debug mode)
+    }
+}
 
     private static void EjecutarComando(string comando)
     {
