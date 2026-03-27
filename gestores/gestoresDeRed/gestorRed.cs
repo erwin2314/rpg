@@ -58,15 +58,15 @@ public static class gestorRed
         {
             gestorServidor.Actualizar();
         }
-        else
+        else if(EnLinea && !EsServidor || gestorCliente.cliente.IsConnecting)
         {
             gestorCliente.Actualizar();
         }
 
         EsServidor = gestorServidor.server.IsRunning;
-        if(!EsServidor || gestorCliente.cliente.IsConnected)
+        if(EsServidor || gestorCliente.cliente.IsConnected)
         {
-            EnLinea = false;
+            EnLinea = true;
 
         }
     }

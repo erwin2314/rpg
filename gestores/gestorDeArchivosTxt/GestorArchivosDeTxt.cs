@@ -84,4 +84,27 @@ public static class GestorArchivosDeTxt
             File.WriteAllLines(path,textoAEscribir);
         }
     }
+
+    public static void CrearArchivoDeConfiguracionRed()
+    {
+        string[] lineas = [
+        "//nombre de usuario",ConfiguracionRed.NombreUsuario
+        ,"//Ip del servidor a conectarse por el cual es cliente se intenta conectar",ConfiguracionRed.IpServidor
+        ,"//Puerto por el cual se intenta conectar al servidor el cliente",ConfiguracionRed.PuertoCliente.ToString()
+        ,"//Puerto por el cual se abre el servidor",ConfiguracionRed.PuertoServidor.ToString()
+        ,"//Numero maximo de jugadores al crear servidor",ConfiguracionRed.MaximoClientesServidor.ToString()];
+        
+        ConfiguracionRed.pathDeArchivoDeConfiguracionDeRed = "configuracion/confRed.txt";
+        CrearArchivo("configuracion","confRed.txt",lineas);
+    }
+
+    public static void CrearArchivoDeConfiguracionMiscelanea()
+    {
+        string[] lineas = [
+        "//decide si es posible acceder al chat directamente desde la ventana grafica",ConfiguracionMiscelanea.chatAccesibleDesdeRaylib.ToString()
+        ];
+        
+        ConfiguracionMiscelanea.pathDeArchivosDeConfiguracionMiscelanea = "configuracion/confMisc.txt";
+        CrearArchivo("configuracion","confMisc.txt",lineas);
+    }
 }

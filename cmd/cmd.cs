@@ -17,6 +17,7 @@ public static class CMD
     /// </summary>
     public static void ProcesarComandos()
     {
+        
         try
         {
             if (!Console.IsInputRedirected)
@@ -59,45 +60,53 @@ public static class CMD
     /// start server, disconect, join server, exit
     /// </summary>
     /// <param name="comando">Cadena de texto con el comando a ejecutar</param>
-    private static void EjecutarComando(string comando)
+    public static List<string> EjecutarComando(string comando)
     {
+        List<string> salida = new List<string>();
         switch (comando)
         {
             case "whoami":
-                Console.WriteLine($"Usuario: {Usuario.nombre}");
+                salida.Add($"Usuario: {Usuario.nombre}");
                 break;
             case "status":
-                Console.WriteLine($"Soy servidor: {gestorRed.EsServidor}");
-                Console.WriteLine($"En línea: {gestorRed.EnLinea}");
+                salida.Add($"Soy servidor: {gestorRed.EsServidor}");
+                salida.Add($"En línea: {gestorRed.EnLinea}");
                 break;
             case "client port":
-                Console.WriteLine($"Puerto del servidor: {Configuracion.PuertoCliente}");
+                salida.Add($"Puerto del servidor: {ConfiguracionRed.PuertoCliente}");
                 break;
             case "exit":
                 Eventos.ObtenerFuncion("Salir")?.Invoke();
                 break;
             case "server port":
-                Console.WriteLine($"Puerto del servidor: {Configuracion.PuertoServidor}");
+                salida.Add($"Puerto del servidor: {ConfiguracionRed.PuertoServidor}");
                 break;
             case "server ip":
-                Console.WriteLine($"Puerto del servidor: {Configuracion.IpServidor}");
+                salida.Add($"Puerto del servidor: {ConfiguracionRed.IpServidor}");
                 break;
             case "server info":
-                Console.WriteLine($"Puerto del servidor: {Configuracion.PuertoServidor}");
-                Console.WriteLine($"Puerto del servidor: {Configuracion.IpServidor}");
+                salida.Add($"Puerto del servidor: {ConfiguracionRed.PuertoServidor}");
+                salida.Add($"Puerto del servidor: {ConfiguracionRed.IpServidor}");
                 break;
             case "start server":
-                gestorRed.InciarComoServidor(Configuracion.PuertoServidor,Configuracion.MaximoClientesServidor);
+                gestorRed.InciarComoServidor(ConfiguracionRed.PuertoServidor,ConfiguracionRed.MaximoClientesServidor);
                 break;
             case "disconect":
                 gestorRed.Desconectarse();
                 break;
             case "join server":
-                gestorRed.InicializarComoCliente(Configuracion.IpServidor,Configuracion.PuertoCliente);
+                gestorRed.InicializarComoCliente(ConfiguracionRed.IpServidor,ConfiguracionRed.PuertoCliente);
                 break;
             default:
-                Console.WriteLine($"Comando desconocido: {comando}");
+                salida.Add($"Comando desconocido: {comando}");
                 break;
         }
+
+        foreach (string item in salida)
+        {
+            Console.WriteLine(item);
+        }
+
+        return salida;
     }
 }

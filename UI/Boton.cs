@@ -205,6 +205,6 @@ public class Boton : ObjetoAbstracto
 
         this.rectangulo = new Rectangle(posicionX,posicionY,ancho,alto);
         InsertarACentroUI();
-        InsertarACentroUI();
+
     }
 }

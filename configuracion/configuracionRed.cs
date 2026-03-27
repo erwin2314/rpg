@@ -3,7 +3,7 @@
 /// Clase estatica que almacena y gestiona la configuracion de red del juego <br/>
 /// Lee los valores desde un archivo de texto y los persiste en disco
 /// </summary>
-public static class Configuracion
+public static class ConfiguracionRed
 {
     /// <summary>
     /// Nombre del usuario local
@@ -51,9 +51,10 @@ public static class Configuracion
             }
             else
             {
-                lineas = [NombreUsuario,IpServidor,PuertoCliente.ToString(),PuertoServidor.ToString(),MaximoClientesServidor.ToString()];
-                pathDeArchivoDeConfiguracionDeRed = "configuracion/confRed.txt";
-                GestorArchivosDeTxt.CrearArchivo("configuracion","confRed.txt",lineas);
+                GestorArchivosDeTxt.CrearArchivoDeConfiguracionRed();
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine("ConfiguracionRed creada");
+                Console.ResetColor();
             }
 
             NombreUsuario = lineas[0];
@@ -64,11 +65,15 @@ public static class Configuracion
 
             Usuario.nombre = NombreUsuario;
 
-            Console.WriteLine("Configuracion encontrada con exito");
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("ConfiguracionRed encontrada con exito");
+            Console.ResetColor();
         }
         catch
         {
+            Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine("No se pudo encontrar ni crear el archivo de configuracion de red");
+            Console.ResetColor();
         }
     }
 }
