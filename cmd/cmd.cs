@@ -1,45 +1,64 @@
+/// <summary>
+/// Clase estatica que implementa una interfaz de linea de comandos para el juego <br/>
+/// Lee la entrada del teclado caracter por caracter y ejecuta comandos al presionar Enter
+/// </summary>
 public static class CMD
 {
+    /// <summary>
+    /// Acumulador de caracteres que forman el comando actual en proceso de escritura
+    /// </summary>
     private static string bufferActual = "";
 
+    /// <summary>
+    /// Lee los caracteres disponibles en la consola y construye el comando actual <br/>
+    /// Al presionar Enter ejecuta el comando acumulado y limpia el buffer <br/>
+    /// Soporta Backspace para borrar el ultimo caracter escrito <br/>
+    /// No hace nada si la consola no esta disponible (modo debug)
+    /// </summary>
     public static void ProcesarComandos()
-{
-    try
     {
-        if (!Console.IsInputRedirected)
+        try
         {
-            while (Console.KeyAvailable)
+            if (!Console.IsInputRedirected)
             {
-                ConsoleKeyInfo tecla = Console.ReadKey(true);
+                while (Console.KeyAvailable)
+                {
+                    ConsoleKeyInfo tecla = Console.ReadKey(true);
 
-                if (tecla.Key == ConsoleKey.Enter)
-                {
-                    Console.WriteLine();
-                    EjecutarComando(bufferActual.Trim());
-                    bufferActual = "";
-                }
-                else if (tecla.Key == ConsoleKey.Backspace)
-                {
-                    if (bufferActual.Length > 0)
+                    if (tecla.Key == ConsoleKey.Enter)
                     {
-                        bufferActual = bufferActual[..^1];
-                        Console.Write("\b \b");
+                        Console.WriteLine();
+                        EjecutarComando(bufferActual.Trim());
+                        bufferActual = "";
                     }
-                }
-                else
-                {
-                    bufferActual += tecla.KeyChar;
-                    Console.Write(tecla.KeyChar);
+                    else if (tecla.Key == ConsoleKey.Backspace)
+                    {
+                        if (bufferActual.Length > 0)
+                        {
+                            bufferActual = bufferActual[..^1];
+                            Console.Write("\b \b");
+                        }
+                    }
+                    else
+                    {
+                        bufferActual += tecla.KeyChar;
+                        Console.Write(tecla.KeyChar);
+                    }
                 }
             }
         }
+        catch (InvalidOperationException)
+        {
+            // Consola no disponible (debug mode)
+        }
     }
-    catch (InvalidOperationException)
-    {
-        // Consola no disponible (debug mode)
-    }
-}
 
+    /// <summary>
+    /// Interpreta y ejecuta el comando de texto recibido <br/>
+    /// Comandos disponibles: whoami, status, client port, server port, server ip, server info,
+    /// start server, disconect, join server, exit
+    /// </summary>
+    /// <param name="comando">Cadena de texto con el comando a ejecutar</param>
     private static void EjecutarComando(string comando)
     {
         switch (comando)

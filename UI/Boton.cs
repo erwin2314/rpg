@@ -52,6 +52,9 @@ public class Boton : ObjetoAbstracto
     /// </summary>
     public Texture2D? imagen;
 
+    /// <summary>
+    /// Identificador de la textura usada como fondo del boton
+    /// </summary>
     public IdTextura idTextura;
 
     /// <summary>
@@ -126,6 +129,10 @@ public class Boton : ObjetoAbstracto
         InsertarACentroUI();
     }
 
+    /// <summary>
+    /// Constructor vacio requerido para la deserializacion <br/>
+    /// Se debe llamar Inicializar() despues de asignar los campos
+    /// </summary>
     public Boton():base(101){}
 
     /// <summary>
@@ -181,6 +188,10 @@ public class Boton : ObjetoAbstracto
         }
     }
 
+    /// <summary>
+    /// Inicializa el boton despues de la deserializacion <br/>
+    /// Asigna la textura segun el id y registra el boton en CentroUI
+    /// </summary>
     public override void Inicializar()
     {
         if(this.idTextura == IdTextura.vacio)

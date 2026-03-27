@@ -78,6 +78,10 @@ public static class Render2d
         Raylib.EndDrawing();
     }
 
+    /// <summary>
+    /// Imprime en consola el tipo y la capa de dibujado de cada objeto registrado en el render <br/>
+    /// Util para depurar el estado actual de la lista de objetos
+    /// </summary>
     public static void ObjetosEnElRender()
     {
         foreach (ObjetoAbstracto item in objetosAbstractos)

@@ -75,6 +75,20 @@ public class BarraDeProgreso : ObjetoAbstracto
     /// </summary>
     public bool autoIncremental;
 
+    /// <summary>
+    /// Crea una nueva barra de progreso y la registra automaticamente en CentroUI
+    /// </summary>
+    /// <param name="total">Valor maximo de la barra (representa el 100%)</param>
+    /// <param name="progreso">Valor inicial del progreso</param>
+    /// <param name="avance">Cantidad de progreso por segundo cuando autoIncremental esta activo</param>
+    /// <param name="colorRectanguloFondo">Color del rectangulo de fondo</param>
+    /// <param name="colorRectanguloFrente">Color del rectangulo de progreso</param>
+    /// <param name="posicionX">Posicion en el eje x</param>
+    /// <param name="posicionY">Posicion en el eje y</param>
+    /// <param name="ancho">Ancho de la barra en pixeles</param>
+    /// <param name="alto">Alto de la barra en pixeles</param>
+    /// <param name="autoIncremental">Si es true el progreso aumenta automaticamente cada frame</param>
+    /// <param name="capaDibujado">Capa de dibujado, las capas superiores se dibujan encima</param>
     public BarraDeProgreso
     (
         float total,
@@ -88,7 +102,7 @@ public class BarraDeProgreso : ObjetoAbstracto
         int alto,
         bool autoIncremental,
         int capaDibujado = 101
-        
+
     )
     :base
     (
@@ -108,7 +122,16 @@ public class BarraDeProgreso : ObjetoAbstracto
         InsertarACentroUI();
     }
 
+    /// <summary>
+    /// Constructor vacio requerido para la deserializacion <br/>
+    /// Se debe llamar Inicializar() despues de asignar los campos
+    /// </summary>
     public BarraDeProgreso():base(101){}
+
+    /// <summary>
+    /// Inicializa la barra de progreso despues de la deserializacion <br/>
+    /// Registra el objeto en CentroUI
+    /// </summary>
     public override void Inicializar()
     {
         InsertarACentroUI();

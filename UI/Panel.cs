@@ -46,6 +46,9 @@ public class Panel : ObjetoAbstracto
     /// </summary>
     public Color colorDelRectangulo;
 
+    /// <summary>
+    /// Identificador de la textura usada como fondo del panel
+    /// </summary>
     public IdTextura idTextura;
 
     /// <summary>
@@ -118,7 +121,10 @@ public class Panel : ObjetoAbstracto
         InsertarACentroUI();
     }
 
-    //capaDibujado
+    /// <summary>
+    /// Constructor vacio requerido para la deserializacion <br/>
+    /// Se debe llamar Inicializar() despues de asignar los campos
+    /// </summary>
     public Panel():base(101){}
 
     /// <summary>
@@ -152,6 +158,10 @@ public class Panel : ObjetoAbstracto
         }
     }
 
+    /// <summary>
+    /// Inicializa el panel despues de la deserializacion <br/>
+    /// Asigna la textura segun el id y registra el panel en CentroUI
+    /// </summary>
     public override void Inicializar()
     {
         if(this.idTextura == IdTextura.vacio)
