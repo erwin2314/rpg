@@ -16,6 +16,7 @@ public static class Program
         Raylib.SetTargetFPS(60);
         GestorTexturas.CargarTexturas();
         Boton botonPrueba1 = new Boton(100,100,100,100,Color.Black,Color.White,idTextura:IdTextura.placeholder,textoAMostrar:"Hola mundo 123",accionAlHacerClic:Salir);
+        Boton botonPrueba2 = new Boton(300,100,100,100,Color.Black,Color.White,idTextura:IdTextura.placeholder,textoAMostrar:"join server",accionAlHacerClic:UnirseServidor);
         
         while(!Raylib.WindowShouldClose())
         {
@@ -32,6 +33,11 @@ public static class Program
         GestorTexturas.DescargarTexturas();
         gestorRed.Desconectarse();
         Environment.Exit(0);
+    }
+
+    public static void UnirseServidor()
+    {
+        gestorRed.InicializarComoCliente(Configuracion.IpServidor,Configuracion.PuertoCliente);
     }
     
 }

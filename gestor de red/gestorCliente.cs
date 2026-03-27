@@ -38,7 +38,7 @@ public static class gestorCliente
     {
         gestorRed.EnLinea = false;
         gestorRed.EsServidor = false;
-        Console.WriteLine("Desconexion realizada");
+        Console.WriteLine("Desconexion realizada : " + e.Reason);
     }
 
     public static void EnConexionFallida(object? sender, ConnectionFailedEventArgs e)

@@ -31,7 +31,7 @@ public static class gestorRed
         {
             gestorServidor.Actualizar();
         }
-        else if(EnLinea && !EsServidor)
+        else
         {
             gestorCliente.Actualizar();
         }
