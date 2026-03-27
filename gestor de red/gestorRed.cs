@@ -40,7 +40,7 @@ public static class gestorRed
         if(!EsServidor || gestorCliente.cliente.IsConnected)
         {
             EnLinea = false;
-            Console.WriteLine(gestorCliente.cliente.IsConnecting);
+            
         }
     }
     public static void Desconectarse()
