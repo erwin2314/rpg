@@ -10,6 +10,8 @@ public static class Program
 
         Eventos.AgregarEvento("Salir",Salir);
 
+        Configuracion.ObtenerConfiguracionDeRed();
+
         Raylib.InitWindow(1280,720,"prueba");
         Raylib.SetTargetFPS(60);
         GestorTexturas.CargarTexturas();
@@ -19,6 +21,7 @@ public static class Program
         
         while(!Raylib.WindowShouldClose())
         {
+            CMD.ProcesarComandos();
             CentroUI.Actualizar();
             Render2d.DibujarObjetosAbstractos();
         }
