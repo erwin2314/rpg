@@ -6,12 +6,13 @@ public static class Configuracion
     public static string IpServidor = "127.0.0.1";
     public static ushort PuertoCliente = 7777;
     public static ushort PuertoServidor = 7777;
+    public static ushort MaximoClientesServidor = 4;
 
     public static string pathDeArchivoDeConfiguracionDeRed = "configuracion/confRed.txt";
 
     public static void ObtenerConfiguracionDeRed()
     {
-        string[] lineas = new string[4];
+        string[] lineas = new string[5];
         try
         {
             if(GestorArchivosDeTxt.ExisteArchivo(pathDeArchivoDeConfiguracionDeRed))
@@ -20,7 +21,7 @@ public static class Configuracion
             }
             else
             {
-                lineas = [NombreUsuario,IpServidor,PuertoCliente.ToString(),PuertoServidor.ToString()];
+                lineas = [NombreUsuario,IpServidor,PuertoCliente.ToString(),PuertoServidor.ToString(),MaximoClientesServidor.ToString()];
                 pathDeArchivoDeConfiguracionDeRed = "configuracion/confRed.txt";
                 GestorArchivosDeTxt.CrearArchivo("configuracion","confRed.txt",lineas);
             }
@@ -29,6 +30,7 @@ public static class Configuracion
             IpServidor = lineas[1];
             PuertoCliente = Convert.ToUInt16(lineas[2]);
             PuertoServidor = Convert.ToUInt16(lineas[3]);
+            MaximoClientesServidor = Convert.ToUInt16(lineas[4]);
 
             Usuario.nombre = NombreUsuario;
 

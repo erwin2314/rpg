@@ -57,6 +57,15 @@ public static class CMD
                 Console.WriteLine($"Puerto del servidor: {Configuracion.PuertoServidor}");
                 Console.WriteLine($"Puerto del servidor: {Configuracion.IpServidor}");
                 break;
+            case "start server":
+                gestorRed.InciarComoServidor(Configuracion.PuertoServidor,Configuracion.MaximoClientesServidor);
+                break;
+            case "disconect":
+                gestorRed.Desconectarse();
+                break;
+            case "join server":
+                gestorRed.InicializarComoCliente(Configuracion.IpServidor,Configuracion.PuertoCliente);
+                break;
             default:
                 Console.WriteLine($"Comando desconocido: {comando}");
                 break;

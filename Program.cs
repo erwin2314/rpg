@@ -15,13 +15,12 @@ public static class Program
         Raylib.InitWindow(1280,720,"prueba");
         Raylib.SetTargetFPS(60);
         GestorTexturas.CargarTexturas();
-        //Boton botonPrueba1 = new Boton(100,100,100,100,Color.Black,Color.White,idTextura:IdTextura.placeholder,textoAMostrar:"Hola mundo 123",accionAlHacerClic:Salir);
-        
-        Boton boton = Serializador.DeserializarDeTxt<Boton>(GestorArchivosDeTxt.ObtenerLineasValidasDeArchivo("pruebasTXT/botonPrueba1"));
+        Boton botonPrueba1 = new Boton(100,100,100,100,Color.Black,Color.White,idTextura:IdTextura.placeholder,textoAMostrar:"Hola mundo 123",accionAlHacerClic:Salir);
         
         while(!Raylib.WindowShouldClose())
         {
             CMD.ProcesarComandos();
+            gestorRed.Actualizar();
             CentroUI.Actualizar();
             Render2d.DibujarObjetosAbstractos();
         }
