@@ -70,25 +70,30 @@ public static class CMD
         string comandoConTrim = comando.Trim();
         if(comandoConTrim.StartsWith("say "))
         {
-            string mensaje = comandoConTrim[4..];
+            string mensaje = comandoConTrim;
 
             if(gestorRed.EnLinea && gestorRed.EsServidor)
             {
                 Message message = Message.Create(MessageSendMode.Reliable,IdMensajesDeRed.chatBroadcast);
                 message.AddString(mensaje);
-                gestorServidor.EnviarMensajeATodosLosClientes(message);
-                salida.Add(mensaje);
+                //gestorServidor.EnviarMensajeATodosLosClientes(message);
+                salida.Add(comandoConTrim[4..]);
             }
             else if(gestorRed.EnLinea && !gestorRed.EsServidor)
             {
                 Message message = Message.Create(MessageSendMode.Reliable,IdMensajesDeRed.chatAServer);
                 message.AddString(mensaje);
                 gestorCliente.EnviarMensaje(message);
-                salida.Add(mensaje);
+                salida.Add(comandoConTrim[4..]);
             }
             else
             {
-                salida.Add(mensaje + " No estas en linea");
+                salida.Add(comandoConTrim[4..] + " No estas en linea");
+            }
+
+            foreach (string item in salida)
+            {
+                Console.WriteLine(item);
             }
 
             return salida;
