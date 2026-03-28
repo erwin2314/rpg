@@ -8,6 +8,7 @@ public static class Eventos
     /// Diccionario que almacena los eventos registrados, mapeando nombre a funcion
     /// </summary>
     public static Dictionary<string,Action> diccionarioEventos = new Dictionary<string, Action>();
+    //public static Dictionary<string, Action<string[]>> diccionarioEventosConArgs = new();
 
     /// <summary>
     /// Registra un evento con el nombre indicado <br/>
@@ -19,6 +20,7 @@ public static class Eventos
     {
         diccionarioEventos[nombre] = funcion;
     }
+    
 
     /// <summary>
     /// Busca y devuelve la funcion asociada al nombre de evento indicado

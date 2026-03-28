@@ -1,3 +1,6 @@
+using Riptide;
+
+
 /// <summary>
 /// Clase estatica que implementa una interfaz de linea de comandos para el juego <br/>
 /// Lee la entrada del teclado caracter por caracter y ejecuta comandos al presionar Enter
@@ -63,7 +66,35 @@ public static class CMD
     public static List<string> EjecutarComando(string comando)
     {
         List<string> salida = new List<string>();
-        switch (comando)
+
+        string comandoConTrim = comando.Trim();
+        if(comandoConTrim.StartsWith("say "))
+        {
+            string mensaje = comandoConTrim[4..];
+
+            if(gestorRed.EnLinea && gestorRed.EsServidor)
+            {
+                Message message = Message.Create(MessageSendMode.Reliable,IdMensajesDeRed.chatBroadcast);
+                message.AddString(mensaje);
+                gestorServidor.EnviarMensajeATodosLosClientes(message);
+                salida.Add(mensaje);
+            }
+            else if(gestorRed.EnLinea && !gestorRed.EsServidor)
+            {
+                Message message = Message.Create(MessageSendMode.Reliable,IdMensajesDeRed.chatAServer);
+                message.AddString(mensaje);
+                gestorCliente.EnviarMensaje(message);
+                salida.Add(mensaje);
+            }
+            else
+            {
+                salida.Add(mensaje + " No estas en linea");
+            }
+
+            return salida;
+        }
+        
+        switch (comandoConTrim)
         {
             case "whoami":
                 salida.Add($"Usuario: {Usuario.nombre}");
@@ -96,6 +127,10 @@ public static class CMD
                 break;
             case "join server":
                 gestorRed.InicializarComoCliente(ConfiguracionRed.IpServidor,ConfiguracionRed.PuertoCliente);
+                break;
+            case "server status":
+                salida.Add("El servidor esta corriendo? : " + gestorServidor.server.IsRunning.ToString());
+                salida.Add("Jugadores en el servidor : " + gestorServidor.server.ClientCount.ToString());
                 break;
             default:
                 salida.Add($"Comando desconocido: {comando}");

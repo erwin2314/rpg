@@ -3,7 +3,7 @@ using Raylib_cs;
 public class ChatUI : ObjetoAbstracto
 {
 
-    private List<string> mensajes = new List<string>();
+    public static List<string> mensajes = new List<string>();
     private string entradaActual = "";
     private bool abierto = false;
 
@@ -141,4 +141,13 @@ public class ChatUI : ObjetoAbstracto
         //why are you using this one?
         InsertarACentroUI();
     }
+    public static void AgregarMensaje(List<string> listaDeMensajes)
+    {
+        foreach (string item in listaDeMensajes)
+        {
+            mensajes.Add(item);
+        }
+        
+    }
+
 }
