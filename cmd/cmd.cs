@@ -66,25 +66,34 @@ public static class CMD
     public static List<string> EjecutarComando(string comando)
     {
         List<string> salida = new List<string>();
-
         string comandoConTrim = comando.Trim();
+
+        if(comandoConTrim.StartsWith("show "))
+        {
+            salida.Add(comandoConTrim[4..]);
+            foreach (string item in salida)
+            {
+                Console.WriteLine(item);
+            }
+
+            return salida;
+        }
+
         if(comandoConTrim.StartsWith("say "))
         {
-            string mensaje = comandoConTrim;
+            string mensaje = comandoConTrim[4..];
 
             if(gestorRed.EnLinea && gestorRed.EsServidor)
             {
                 Message message = Message.Create(MessageSendMode.Reliable,IdMensajesDeRed.chatBroadcast);
                 message.AddString(mensaje);
                 gestorServidor.EnviarMensajeATodosLosClientes(message);
-                salida.Add(comandoConTrim[4..]);
             }
             else if(gestorRed.EnLinea && !gestorRed.EsServidor)
             {
                 Message message = Message.Create(MessageSendMode.Reliable,IdMensajesDeRed.chatAServer);
                 message.AddString(mensaje);
                 gestorCliente.EnviarMensaje(message);
-                salida.Add(comandoConTrim[4..]);
             }
             else
             {

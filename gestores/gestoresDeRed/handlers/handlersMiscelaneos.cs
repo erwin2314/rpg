@@ -11,7 +11,7 @@ public static class HandlersMiscelaneos
             List<string> resultado = CMD.EjecutarComando(stringMensaje);
             ChatUI.AgregarMensaje(resultado);
             Message Brodcast = Message.Create(MessageSendMode.Reliable,IdMensajesDeRed.chatBroadcast);
-            Brodcast.AddString(stringMensaje);
+            Brodcast.AddString("show "+stringMensaje);
             gestorServidor.EnviarMensajeATodosLosClientes(Brodcast, fromClientId);
         }
     }
@@ -19,7 +19,7 @@ public static class HandlersMiscelaneos
     [MessageHandler((ushort)IdMensajesDeRed.chatBroadcast)]
     private static void MensajeDeChatRecibidoEnCliente(Message mensaje)
     {
-        List<string> resultado = CMD.EjecutarComando(mensaje.GetString());
+        List<string> resultado = CMD.EjecutarComando("show "+mensaje.GetString());
         ChatUI.AgregarMensaje(resultado);
         
     }
