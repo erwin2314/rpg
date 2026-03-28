@@ -85,6 +85,7 @@ public static class CMD
 
             if(gestorRed.EnLinea && gestorRed.EsServidor)
             {
+                salida.Add(comandoConTrim[4..]);
                 Message message = Message.Create(MessageSendMode.Reliable,IdMensajesDeRed.chatBroadcast);
                 message.AddString(mensaje);
                 gestorServidor.EnviarMensajeATodosLosClientes(message);
