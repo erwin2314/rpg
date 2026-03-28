@@ -81,7 +81,7 @@ public static class CMD
 
         if(comandoConTrim.StartsWith("say "))
         {
-            string mensaje = comandoConTrim[4..];
+            string mensaje = comandoConTrim;
 
             if(gestorRed.EnLinea && gestorRed.EsServidor)
             {
