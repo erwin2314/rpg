@@ -92,6 +92,7 @@ public static class CMD
             }
             else if(gestorRed.EnLinea && !gestorRed.EsServidor)
             {
+                salida.Add(comandoConTrim[4..]);
                 Message message = Message.Create(MessageSendMode.Reliable,IdMensajesDeRed.chatAServer);
                 message.AddString(mensaje);
                 gestorCliente.EnviarMensaje(message);
