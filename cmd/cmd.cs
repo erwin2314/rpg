@@ -81,20 +81,19 @@ public static class CMD
 
         if(comandoConTrim.StartsWith("say "))
         {
-            string mensaje = comandoConTrim;
 
             if(gestorRed.EnLinea && gestorRed.EsServidor)
             {
-                salida.Add(comandoConTrim[4..]);
+                salida.Add(comandoConTrim[4..] + $"     //{ConfiguracionRed.NombreUsuario}");
                 Message message = Message.Create(MessageSendMode.Reliable,IdMensajesDeRed.chatBroadcast);
-                message.AddString(comandoConTrim[4..]);
+                message.AddString(comandoConTrim[4..] + $"     //{ConfiguracionRed.NombreUsuario}");
                 gestorServidor.EnviarMensajeATodosLosClientes(message);
             }
             else if(gestorRed.EnLinea && !gestorRed.EsServidor)
             {
-                salida.Add(comandoConTrim[4..]);
+                salida.Add(comandoConTrim[4..] + $"     //{ConfiguracionRed.NombreUsuario}");
                 Message message = Message.Create(MessageSendMode.Reliable,IdMensajesDeRed.chatAServer);
-                message.AddString(comandoConTrim[4..]);
+                message.AddString(comandoConTrim[4..] + $"     //{ConfiguracionRed.NombreUsuario}");
                 gestorCliente.EnviarMensaje(message);
             }
             else
