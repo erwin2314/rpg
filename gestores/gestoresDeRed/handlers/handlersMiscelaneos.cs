@@ -42,14 +42,14 @@ public static class HandlersMiscelaneos
         gestorCliente.EnviarMensaje(nombre);
     }
 
-    [MessageHandler((ushort)IdMensajesDeRed.clienteAServidorPedirNombreUsuario)]
+    [MessageHandler((ushort)IdMensajesDeRed.clienteAServidorEnviarNombreUsuario)]
     private static void RecepcionDeNombreEnviadoPorCliente(ushort fromClientId, Message mensaje)
     {
         string nombre = mensaje.GetString();
         gestorServidor.agregarADiccionarioDeUsuarios(fromClientId,nombre);
     }
 
-    [MessageHandler((ushort)IdMensajesDeRed.servidorAClientePedirNombreUsuario)]
+    [MessageHandler((ushort)IdMensajesDeRed.servidorAClienteEnviarNombreUsuario)]
     private static void RecepcionDeNombreEnviadoPorServidor(Message mensaje)
     {
     }
