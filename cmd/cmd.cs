@@ -76,6 +76,8 @@ public static class CMD
                 Console.WriteLine(item);
             }
 
+            ChatUI.AgregarMensaje(salida);
+
             return salida;
         }
 
