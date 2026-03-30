@@ -145,6 +145,41 @@ public static class CMD
             case "disconect":
                 gestorRed.Desconectarse();
                 break;
+            case "kickId ":
+                if(gestorRed.EsServidor)
+                {
+                    try
+                    {
+                        ushort id = Convert.ToUInt16(comandoConTrim[7..]);
+                        gestorServidor.DesconectarCliente(id);
+                    }
+                    catch
+                    {
+                        salida.Add($"No se encontro el id: {comandoConTrim[7..]}");
+                    }
+                }
+                break;
+            case "kickName ":
+                if(gestorRed.EsServidor)
+                {
+                    try
+                    {
+                        ushort? id = gestorServidor.encontrarIdPorNombre(comandoConTrim[9..]);
+                        if(id is ushort idTemp)
+                        {
+                            gestorServidor.DesconectarCliente(idTemp);
+                        }
+                        else
+                        {
+                            salida.Add($"No se encontro el nombre: {comandoConTrim[9..]}");
+                        }
+                    }
+                    catch
+                    {
+                        salida.Add($"No se encontro el nombre: {comandoConTrim[9..]}");
+                    }
+                }
+                break;
             case "join server":
                 gestorRed.InicializarComoCliente(ConfiguracionRed.IpServidor,ConfiguracionRed.PuertoCliente);
                 break;

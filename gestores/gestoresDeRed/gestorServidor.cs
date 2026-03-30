@@ -6,6 +6,8 @@ using Riptide;
 /// </summary>
 public static class gestorServidor
 {
+    public static Dictionary<ushort,string> idUsuariosConNombre = new Dictionary<ushort, string>();
+
     /// <summary>
     /// Instancia del servidor Riptide que maneja las conexiones entrantes
     /// </summary>
@@ -87,7 +89,10 @@ public static class gestorServidor
     /// <param name="e">Argumentos del evento con informacion del cliente conectado</param>
     public static void EnClienteConectadoAServidor(object? sender, ServerConnectedEventArgs e)
     {
-        CMD.EjecutarComando("show cliente conectado: " + e.Client.Id);
+        Message mensaje = Message.Create(MessageSendMode.Reliable,IdMensajesDeRed.servidorAClientePedirNombreUsuario);
+        EnviarMensajeACliente(mensaje,e.Client.Id);
+        CMD.EjecutarComando($"show cliente desconectado: id {e.Client.Id}");
+
     }
 
     /// <summary>
@@ -98,7 +103,39 @@ public static class gestorServidor
     /// <param name="e">Argumentos del evento con informacion del cliente desconectado</param>
     public static void EnClienteDesconectadoDelServidor(object? sender, ServerDisconnectedEventArgs e)
     {
-        CMD.EjecutarComando("show cliente desconectado: " + e.Client.Id);
+        CMD.EjecutarComando($"show cliente desconectado: id {e.Client.Id}, nombre {encontrarNombrePorId(e.Client.Id)}");
+        eliminarDeDicionarioDeUsuario(e.Client.Id);
     }
 
+    public static void MostrarTodosLosClientes()
+    {
+        foreach (KeyValuePair<ushort,string> item in idUsuariosConNombre)
+        {
+            CMD.EjecutarComando($"show id:{item.Key}, nombre: {item.Value}");
+        }
+    }
+
+    public static void agregarADiccionarioDeUsuarios(ushort id,string nombre)
+    {
+        idUsuariosConNombre.TryAdd(id,nombre);
+    }
+    public static void eliminarDeDicionarioDeUsuario(ushort id)
+    {
+        try{idUsuariosConNombre.Remove(id);}
+        catch{}
+    }
+    public static string? encontrarNombrePorId(ushort id)
+    {
+        idUsuariosConNombre.TryGetValue(id,out string? nombre);
+        return nombre;
+    }
+    public static ushort? encontrarIdPorNombre(string nombre)
+    {
+        KeyValuePair<ushort,string> keyValuePar = idUsuariosConNombre.FirstOrDefault(keyPar => keyPar.Value == nombre);
+        if(keyValuePar.Value == null)
+        {
+            return null;
+        }
+        return keyValuePar.Key;
+    }
 }

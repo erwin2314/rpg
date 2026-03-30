@@ -22,4 +22,35 @@ public static class HandlersMiscelaneos
         ChatUI.AgregarMensaje(resultado);
         
     }
+
+    [MessageHandler((ushort)IdMensajesDeRed.clienteAServidorPedirNombreUsuario)]
+    private static void PeticionDeNombrePorCliente(ushort fromClientId, Message mensaje)
+    {
+        if(gestorRed.EsServidor)
+        {
+            Message nombre = Message.Create(MessageSendMode.Reliable,IdMensajesDeRed.servidorAClienteEnviarNombreUsuario);
+            nombre.AddString(ConfiguracionRed.NombreUsuario);
+            gestorServidor.EnviarMensajeACliente(nombre,fromClientId);
+        }
+    }
+
+    [MessageHandler((ushort)IdMensajesDeRed.servidorAClientePedirNombreUsuario)]
+    private static void PeticionDeNombrePorServidor(Message mensaje)
+    {
+        Message nombre = Message.Create(MessageSendMode.Reliable,IdMensajesDeRed.clienteAServidorEnviarNombreUsuario);
+        nombre.AddString(ConfiguracionRed.NombreUsuario);
+        gestorCliente.EnviarMensaje(nombre);
+    }
+
+    [MessageHandler((ushort)IdMensajesDeRed.clienteAServidorPedirNombreUsuario)]
+    private static void RecepcionDeNombreEnviadoPorCliente(ushort fromClientId, Message mensaje)
+    {
+        string nombre = mensaje.GetString();
+        gestorServidor.agregarADiccionarioDeUsuarios(fromClientId,nombre);
+    }
+
+    [MessageHandler((ushort)IdMensajesDeRed.servidorAClientePedirNombreUsuario)]
+    private static void RecepcionDeNombreEnviadoPorServidor(Message mensaje)
+    {
+    }
 }
