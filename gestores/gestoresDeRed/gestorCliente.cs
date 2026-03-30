@@ -60,7 +60,7 @@ public static class gestorCliente
     {
         gestorRed.EnLinea = true;
         gestorRed.EsServidor = false;
-        Console.WriteLine("Coneccion lograda");
+        CMD.EjecutarComando("show cliente conectado al servidor");
     }
 
     /// <summary>
@@ -73,7 +73,7 @@ public static class gestorCliente
     {
         gestorRed.EnLinea = false;
         gestorRed.EsServidor = false;
-        Console.WriteLine("Desconexion realizada : " + e.Reason);
+        CMD.EjecutarComando("show cliente desconectado del servidor");
     }
 
     /// <summary>

@@ -127,10 +127,10 @@ public class ChatUI : ObjetoAbstracto
             {
                 mensajes.Add($"> {entradaActual}");
                 List<string> resultado = CMD.EjecutarComando(entradaActual.Trim());
-                foreach (string linea in resultado)
-                {
-                    mensajes.Add(linea);
-                }
+                //foreach (string linea in resultado)
+                //{
+                    //mensajes.Add(linea);
+                //}
             }
             entradaActual = "";
             return;
@@ -150,4 +150,8 @@ public class ChatUI : ObjetoAbstracto
         
     }
 
+    public static void AgregarMensaje(string mensaje)
+    {
+        mensajes.Add(mensaje); 
+    }
 }

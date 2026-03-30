@@ -88,6 +88,7 @@ public static class CMD
                 Message message = Message.Create(MessageSendMode.Reliable,IdMensajesDeRed.chatBroadcast);
                 message.AddString(comandoConTrim[4..] + $"     //{ConfiguracionRed.NombreUsuario}");
                 gestorServidor.EnviarMensajeATodosLosClientes(message);
+                ChatUI.AgregarMensaje(salida);
             }
             else if(gestorRed.EnLinea && !gestorRed.EsServidor)
             {
@@ -95,10 +96,12 @@ public static class CMD
                 Message message = Message.Create(MessageSendMode.Reliable,IdMensajesDeRed.chatAServer);
                 message.AddString(comandoConTrim[4..] + $"     //{ConfiguracionRed.NombreUsuario}");
                 gestorCliente.EnviarMensaje(message);
+                ChatUI.AgregarMensaje(salida);
             }
             else
             {
                 salida.Add(comandoConTrim[4..] + " No estas en linea");
+                ChatUI.AgregarMensaje(salida);
             }
 
             foreach (string item in salida)

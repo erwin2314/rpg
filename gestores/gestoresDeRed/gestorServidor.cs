@@ -87,7 +87,7 @@ public static class gestorServidor
     /// <param name="e">Argumentos del evento con informacion del cliente conectado</param>
     public static void EnClienteConectadoAServidor(object? sender, ServerConnectedEventArgs e)
     {
-        Console.WriteLine($"Cliente conectado:  {e.Client.Id}");
+        CMD.EjecutarComando("show cliente conectado: " + e.Client.Id);
     }
 
     /// <summary>
@@ -98,7 +98,7 @@ public static class gestorServidor
     /// <param name="e">Argumentos del evento con informacion del cliente desconectado</param>
     public static void EnClienteDesconectadoDelServidor(object? sender, ServerDisconnectedEventArgs e)
     {
-        Console.WriteLine($"Cliente desconectado:  {e.Client.Id}");
+        CMD.EjecutarComando("show cliente desconectado: " + e.Client.Id);
     }
 
 }
