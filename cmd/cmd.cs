@@ -187,6 +187,9 @@ public static class CMD
                 salida.Add("El servidor esta corriendo? : " + gestorServidor.server.IsRunning.ToString());
                 salida.Add("Jugadores en el servidor : " + gestorServidor.server.ClientCount.ToString());
                 break;
+            case "all clients":
+                gestorServidor.MostrarTodosLosClientes();
+                break;
             default:
                 salida.Add($"Comando desconocido: {comando}");
                 break;
