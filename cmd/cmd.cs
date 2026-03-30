@@ -87,14 +87,14 @@ public static class CMD
             {
                 salida.Add(comandoConTrim[4..]);
                 Message message = Message.Create(MessageSendMode.Reliable,IdMensajesDeRed.chatBroadcast);
-                message.AddString(mensaje);
+                message.AddString(comandoConTrim[4..]);
                 gestorServidor.EnviarMensajeATodosLosClientes(message);
             }
             else if(gestorRed.EnLinea && !gestorRed.EsServidor)
             {
                 salida.Add(comandoConTrim[4..]);
                 Message message = Message.Create(MessageSendMode.Reliable,IdMensajesDeRed.chatAServer);
-                message.AddString(mensaje);
+                message.AddString(comandoConTrim[4..]);
                 gestorCliente.EnviarMensaje(message);
             }
             else
