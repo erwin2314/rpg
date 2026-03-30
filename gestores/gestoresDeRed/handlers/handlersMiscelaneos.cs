@@ -9,7 +9,6 @@ public static class HandlersMiscelaneos
         {
             string stringMensaje = mensaje.GetString();
             List<string> resultado = CMD.EjecutarComando("show "+stringMensaje);
-            ChatUI.AgregarMensaje(resultado);
             Message Brodcast = Message.Create(MessageSendMode.Reliable,IdMensajesDeRed.chatBroadcast);
             Brodcast.AddString(stringMensaje);
             gestorServidor.EnviarMensajeATodosLosClientes(Brodcast, fromClientId);
