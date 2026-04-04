@@ -8,4 +8,13 @@ public static class Usuario
     /// Nombre del usuario local, se carga desde el archivo de configuracion de red
     /// </summary>
     public static string nombre = "placeHolder";
+
+    public static void CambiarNombreDeUsuario(string textoACambiar)
+    {
+        nombre = textoACambiar;
+        ConfiguracionRed.NombreUsuario = nombre;
+        string[] configuracionDeRedContenido= GestorArchivosDeTxt.ObtenerLineasValidasDeArchivo(ConfiguracionRed.pathDeArchivoDeConfiguracionDeRed);
+        configuracionDeRedContenido[0] = nombre;
+        GestorArchivosDeTxt.CrearArchivoDeConfiguracionRed(configuracionDeRedContenido);
+    }
 }

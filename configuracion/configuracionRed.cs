@@ -76,4 +76,40 @@ public static class ConfiguracionRed
             Console.ResetColor();
         }
     }
+
+    public static void CambiarIpServidor(string textoACambiar)
+    {
+        IpServidor = textoACambiar;
+        string[] configuracionDeRedContenido= GestorArchivosDeTxt.ObtenerLineasValidasDeArchivo(ConfiguracionRed.pathDeArchivoDeConfiguracionDeRed);
+        configuracionDeRedContenido[1] = textoACambiar;
+        GestorArchivosDeTxt.CrearArchivoDeConfiguracionRed(configuracionDeRedContenido);
+        
+    }
+
+    public static void CambiarPuertoCliente(string textoACambiar)
+    {
+        PuertoCliente = Convert.ToUInt16(textoACambiar);
+        string[] configuracionDeRedContenido= GestorArchivosDeTxt.ObtenerLineasValidasDeArchivo(ConfiguracionRed.pathDeArchivoDeConfiguracionDeRed);
+        configuracionDeRedContenido[2] = textoACambiar;
+        GestorArchivosDeTxt.CrearArchivoDeConfiguracionRed(configuracionDeRedContenido);
+        
+    }
+
+    public static void CambiarPuertoServidor(string textoACambiar)
+    {
+        PuertoServidor = Convert.ToUInt16(textoACambiar);
+        string[] configuracionDeRedContenido= GestorArchivosDeTxt.ObtenerLineasValidasDeArchivo(ConfiguracionRed.pathDeArchivoDeConfiguracionDeRed);
+        configuracionDeRedContenido[3] = textoACambiar;
+        GestorArchivosDeTxt.CrearArchivoDeConfiguracionRed(configuracionDeRedContenido);
+        
+    }
+
+    public static void CambiarMaximoNumeroJugadoresServidor(string textoACambiar)
+    {
+        MaximoClientesServidor = Convert.ToUInt16(textoACambiar);
+        string[] configuracionDeRedContenido= GestorArchivosDeTxt.ObtenerLineasValidasDeArchivo(ConfiguracionRed.pathDeArchivoDeConfiguracionDeRed);
+        configuracionDeRedContenido[4] = textoACambiar;
+        GestorArchivosDeTxt.CrearArchivoDeConfiguracionRed(configuracionDeRedContenido);
+        
+    }
 }

@@ -25,4 +25,10 @@ public static class Funciones
     {
         gestorRed.InicializarComoCliente(ConfiguracionRed.IpServidor,ConfiguracionRed.PuertoCliente);
     }
+
+    public static void IniciarServidor()
+    {
+        gestorRed.InciarComoServidor(ConfiguracionRed.PuertoServidor,ConfiguracionRed.MaximoClientesServidor);
+    }
+
 }

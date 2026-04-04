@@ -98,6 +98,19 @@ public static class GestorArchivosDeTxt
         CrearArchivo("configuracion","confRed.txt",lineas);
     }
 
+    public static void CrearArchivoDeConfiguracionRed(string[] textoAAgregar)
+    {
+        string[] lineas = [
+        "//nombre de usuario",textoAAgregar[0]
+        ,"//Ip del servidor a conectarse por el cual es cliente se intenta conectar",textoAAgregar[1]
+        ,"//Puerto por el cual se intenta conectar al servidor el cliente",textoAAgregar[2]
+        ,"//Puerto por el cual se abre el servidor",textoAAgregar[3]
+        ,"//Numero maximo de jugadores al crear servidor",textoAAgregar[4]];
+        
+        ConfiguracionRed.pathDeArchivoDeConfiguracionDeRed = "configuracion/confRed.txt";
+        CrearArchivo("configuracion","confRed.txt",lineas,true);
+    }
+
     public static void CrearArchivoDeConfiguracionMiscelanea()
     {
         string[] lineas = [
@@ -105,6 +118,6 @@ public static class GestorArchivosDeTxt
         ];
         
         ConfiguracionMiscelanea.pathDeArchivosDeConfiguracionMiscelanea = "configuracion/confMisc.txt";
-        CrearArchivo("configuracion","confMisc.txt",lineas);
+        CrearArchivo("configuracion","confMisc.txt",lineas,true);
     }
 }

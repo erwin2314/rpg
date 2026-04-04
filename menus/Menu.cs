@@ -16,6 +16,18 @@ public class Menu
         this.activo = activo;
     }
 
+    public Menu
+    (
+        List<ObjetoAbstracto> elemtosUIAAgregar,
+        bool visible = false,
+        bool activo = true
+    )
+    {
+        this.visible = visible;
+        this.activo = activo;
+        agregarAListaDeElementosUI(elemtosUIAAgregar);
+    }
+
     public void cambiarVisibilidad()
     {
         visible = !visible;
@@ -80,5 +92,10 @@ public class Menu
             item.activo = this.activo;
         }
         elementosUI.AddRange(elementoUI);
+    }
+    public void cambiarMenu(Menu menu)
+    {
+        cambiarVisibilidad(false);
+        menu.cambiarVisibilidadActivo(true);
     }
 }
