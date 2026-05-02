@@ -58,7 +58,7 @@ public static class Program
         CampoDeTextoIpServidor.accionAlDarEnter = (texto) => {ConfiguracionRed.CambiarIpServidor(texto);};
         CampoDeTextoPuertoCliente.accionAlDarEnter = (texto) => {ConfiguracionRed.CambiarPuertoCliente(texto);};
         CampoDeTextoPuertoServidor.accionAlDarEnter = (texto) => {ConfiguracionRed.CambiarPuertoServidor(texto);};
-        CampoDeTextoPuertoServidor.accionAlDarEnter = (texto) => {ConfiguracionRed.CambiarMaximoNumeroJugadoresServidor(texto);};
+        CampoDeTextoMaximoClientes.accionAlDarEnter = (texto) => {ConfiguracionRed.CambiarMaximoNumeroJugadoresServidor(texto);};
 
         ChatUI chatUI = new ChatUI(0,0,1280,320,16,200,Color.White,Color.Black,Color.Green);
 

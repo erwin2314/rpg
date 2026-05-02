@@ -66,4 +66,13 @@ public abstract class ObjetoAbstracto : ISerializableATxt
     {
         CentroUI.EliminarUnObjetoDeObjetosAbstractos(this);
     }
+
+    protected void InsertarAMundoRender2D()
+    {
+        Render2d.InsertarAObjetosMundo(this);
+    }
+    public void EliminarDeMundoRender2D()
+    {
+        Render2d.EliminarUnObjetoDeObjetosMundo(this);
+    }
 }

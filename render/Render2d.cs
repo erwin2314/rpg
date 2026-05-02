@@ -1,3 +1,4 @@
+using System.Numerics;
 using Raylib_cs;
 
 /// <summary>
@@ -10,6 +11,15 @@ public static class Render2d
     /// Lista de objetos de UI a controlar por el CentroUI
     /// </summary>
     private static List<ObjetoAbstracto> objetosAbstractos = new List<ObjetoAbstracto>();
+    private static List<ObjetoAbstracto> objetosMundo = new List<ObjetoAbstracto>();
+
+    public static Camera2D camara = new Camera2D
+    {
+        Target = new Vector2(0,0),
+        Offset = new Vector2(640,360), //mitad de 1280x720
+        Rotation = 0f,
+        Zoom = 1f
+    };
 
     /// <summary>
     /// Llama la funcion dibujar de todos los objetos en la lista interna <br/>
@@ -18,6 +28,10 @@ public static class Render2d
     public static void DibujarTodosObjetosAbstractos()
     {
         foreach (ObjetoAbstracto item in objetosAbstractos)
+        {
+            item.Dibujar();
+        }
+        foreach (ObjetoAbstracto item in objetosMundo)
         {
             item.Dibujar();
         }
@@ -33,6 +47,11 @@ public static class Render2d
         objetosAbstractos.Add(objetoAbstracto);
         objetosAbstractos.Sort((a,b) => a.capaDibujado.CompareTo(b.capaDibujado));
     }
+    public static void InsertarAObjetosMundo(ObjetoAbstracto objetoAbstracto)
+    {
+        objetosMundo.Add(objetoAbstracto);
+        objetosMundo.Sort((a,b) => a.capaDibujado.CompareTo(b.capaDibujado));
+    }
 
     /// <summary>
     /// Elimina el objeto abstracto de la lista interna
@@ -42,6 +61,10 @@ public static class Render2d
     {
         objetosAbstractos.Remove(objetoAbstracto);
     }
+    public static void EliminarUnObjetoDeObjetosMundo(ObjetoAbstracto objetoAbstracto)
+    {
+        objetosMundo.Remove(objetoAbstracto);
+    }
 
     /// <summary>
     /// Inicia un ciclo de dibujado y limpia la pantalla <br/>
@@ -50,11 +73,20 @@ public static class Render2d
     public static void DibujarObjetosAbstractos()
     {
         Raylib.BeginDrawing();
-        
         Raylib.ClearBackground(Color.Black);
+
+        //Mundo (Con camara)
+        Raylib.BeginMode2D(camara);
+        foreach (ObjetoAbstracto item in objetosMundo)
+        {
+            if(item.visible) item.Dibujar();
+        }
+        Raylib.EndMode2D();
+
+        //UI (Sin camara, coordenadas directas en la pantalla)
         foreach (ObjetoAbstracto item in objetosAbstractos)
         {
-            item.Dibujar();
+            if(item.visible) item.Dibujar();
         }
 
         Raylib.EndDrawing();
@@ -68,11 +100,20 @@ public static class Render2d
     public static void DibujarObjetosAbstractos(Color colorDeFondo)
     {
         Raylib.BeginDrawing();
-        
         Raylib.ClearBackground(colorDeFondo);
+
+        //Mundo (Con camara)
+        Raylib.BeginMode2D(camara);
+        foreach (ObjetoAbstracto item in objetosMundo)
+        {
+            if(item.visible) item.Dibujar();
+        }
+        Raylib.EndMode2D();
+
+        //UI (Sin camara, coordenadas directas en la pantalla)
         foreach (ObjetoAbstracto item in objetosAbstractos)
         {
-            item.Dibujar();
+            if(item.visible) item.Dibujar();
         }
 
         Raylib.EndDrawing();
@@ -87,6 +128,13 @@ public static class Render2d
         foreach (ObjetoAbstracto item in objetosAbstractos)
         {
             Console.ForegroundColor = ConsoleColor.Blue;
+            Console.WriteLine(item.GetType() + ", capaDibujado:" + item.capaDibujado);
+            Console.ForegroundColor = ConsoleColor.White;
+        }
+
+        foreach (ObjetoAbstracto item in objetosMundo)
+        {
+            Console.ForegroundColor = ConsoleColor.Yellow;
             Console.WriteLine(item.GetType() + ", capaDibujado:" + item.capaDibujado);
             Console.ForegroundColor = ConsoleColor.White;
         }
