@@ -7,6 +7,12 @@ public class ChatUI : ObjetoAbstracto
     private string entradaActual = "";
     private bool abierto = false;
 
+    /// <summary>
+    /// Cuantos mensajes saltar al dibujar (0 = mostrar los mas recientes) <br/>
+    /// Se incrementa con la rueda hacia arriba, decrece con la rueda hacia abajo
+    /// </summary>
+    private static int scrollOffset = 0;
+
 
     /// <summary>
     /// Posicion en el eje x en el que se va a dibujar el panel
@@ -81,7 +87,8 @@ public class ChatUI : ObjetoAbstracto
         int lineaY = posicionY + alto - 32;
         int inputY = posicionY + alto - 16;
 
-        for(int i = mensajes.Count - 1; i >= 0 && lineaY >= posicionY; i--)
+        int indiceInicio = mensajes.Count - 1 - scrollOffset;
+        for(int i = indiceInicio; i >= 0 && lineaY >= posicionY; i--)
         {
             Raylib.DrawText(mensajes[i],posicionX + 16, lineaY, tamañoDelTexto, colorDeltexto);
             lineaY = lineaY - (tamañoDelTexto + 4);
@@ -106,7 +113,15 @@ public class ChatUI : ObjetoAbstracto
         {
             abierto = false;
             entradaActual = "";
+            scrollOffset = 0;
             return;
+        }
+
+        float ruedaY = Raylib.GetMouseWheelMove();
+        if (ruedaY != 0)
+        {
+            int paso = Math.Sign(ruedaY);
+            scrollOffset = Math.Clamp(scrollOffset + paso, 0, Math.Max(0, mensajes.Count - 1));
         }
 
         if (Raylib.IsKeyPressed(KeyboardKey.Backspace) && entradaActual.Length > 0)
@@ -126,11 +141,7 @@ public class ChatUI : ObjetoAbstracto
             if (entradaActual.Length > 0)
             {
                 mensajes.Add($"> {entradaActual}");
-                List<string> resultado = CMD.EjecutarComando(entradaActual.Trim());
-                //foreach (string linea in resultado)
-                //{
-                    //mensajes.Add(linea);
-                //}
+                CMD.EjecutarComando(entradaActual.Trim());
             }
             entradaActual = "";
             return;
@@ -147,11 +158,13 @@ public class ChatUI : ObjetoAbstracto
         {
             mensajes.Add(item);
         }
-        
+        if (scrollOffset > 0) scrollOffset += listaDeMensajes.Count;
     }
 
+    [EventoAPI("Chat")]
     public static void AgregarMensaje(string mensaje)
     {
-        mensajes.Add(mensaje); 
+        mensajes.Add(mensaje);
+        if (scrollOffset > 0) scrollOffset++;
     }
 }

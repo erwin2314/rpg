@@ -7,7 +7,7 @@ public static class CentroUI
     /// <summary>
     /// Lista de objetos de UI a controlar por el CentroUI
     /// </summary>
-    private static List<ObjetoAbstracto> objetosAbstractos= new List<ObjetoAbstracto>();
+    public static List<ObjetoAbstracto> objetosAbstractos= new List<ObjetoAbstracto>();
 
     /// <summary>
     /// Inserta un objeto abstracto a la lista interna, tambien lo inserta al render
@@ -38,6 +38,18 @@ public static class CentroUI
         foreach (ObjetoAbstracto item in objetosAbstractos)
         {
             item.Actualizar();
+        }
+    }
+
+    /// <summary>
+    /// Llama AplicarFuenteTexto en cada componente registrado <br/>
+    /// Los componentes con fuenteTexto no nulo se sincronizan con su fuente
+    /// </summary>
+    public static void AplicarFuentesDeTexto()
+    {
+        foreach (ObjetoAbstracto item in objetosAbstractos)
+        {
+            item.AplicarFuenteTexto();
         }
     }
 }

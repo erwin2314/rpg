@@ -1,4 +1,3 @@
-//toda la estructura de esta parte es segura a cambiar
 /// <summary>
 /// Almacena los datos del usuario local de la sesion actual
 /// </summary>
@@ -9,12 +8,11 @@ public static class Usuario
     /// </summary>
     public static string nombre = "placeHolder";
 
+    [EventoAPI("Configuracion")]
     public static void CambiarNombreDeUsuario(string textoACambiar)
     {
         nombre = textoACambiar;
         ConfiguracionRed.NombreUsuario = nombre;
-        string[] configuracionDeRedContenido= GestorArchivosDeTxt.ObtenerLineasValidasDeArchivo(ConfiguracionRed.pathDeArchivoDeConfiguracionDeRed);
-        configuracionDeRedContenido[0] = nombre;
-        GestorArchivosDeTxt.CrearArchivoDeConfiguracionRed(configuracionDeRedContenido);
+        ConfiguracionRed.Guardar();
     }
 }

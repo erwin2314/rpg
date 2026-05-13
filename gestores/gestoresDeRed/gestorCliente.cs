@@ -12,6 +12,17 @@ public static class gestorCliente
     public static Client cliente = new Client();
 
     /// <summary>
+    /// Entidades de otros jugadores remotos vistos por este cliente, indexadas por su id de Riptide
+    /// </summary>
+    public static Dictionary<ushort, JugadorRemoto> jugadoresRemotos = new Dictionary<ushort, JugadorRemoto>();
+
+    /// <summary>
+    /// Ids para los que el cliente ya pidio el snapshot y aun no ha llegado <br/>
+    /// Evita spam: solo se pide una vez hasta recibir snapshot
+    /// </summary>
+    public static HashSet<ushort> idsSinNombrePendientes = new HashSet<ushort>();
+
+    /// <summary>
     /// Conecta el cliente a la direccion indicada y suscribe los eventos de conexion <br/>
     /// </summary>
     /// <param name="direccion">Direccion del servidor en formato "ip:puerto"</param>
@@ -60,7 +71,7 @@ public static class gestorCliente
     {
         gestorRed.EnLinea = true;
         gestorRed.EsServidor = false;
-        CMD.EjecutarComando("show cliente conectado al servidor");
+        API.Encolar(FuncionesCMD.Mostrar, "cliente conectado al servidor");
     }
 
     /// <summary>
@@ -73,7 +84,7 @@ public static class gestorCliente
     {
         gestorRed.EnLinea = false;
         gestorRed.EsServidor = false;
-        CMD.EjecutarComando("show cliente desconectado del servidor");
+        API.Encolar(FuncionesCMD.Mostrar, "cliente desconectado del servidor");
     }
 
     /// <summary>

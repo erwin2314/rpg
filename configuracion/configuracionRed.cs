@@ -1,67 +1,63 @@
-//toda el funcionamiento de los metodos es casi seguro a cambiar
 /// <summary>
 /// Clase estatica que almacena y gestiona la configuracion de red del juego <br/>
-/// Lee los valores desde un archivo de texto y los persiste en disco
+/// Se persiste en configuracion/confRed.json con comentarios por campo
 /// </summary>
 public static class ConfiguracionRed
 {
-    /// <summary>
-    /// Nombre del usuario local
-    /// </summary>
     public static string NombreUsuario = "placeHolder";
-
-    /// <summary>
-    /// Direccion IP del servidor al que se conecta el cliente
-    /// </summary>
     public static string IpServidor = "127.0.0.1";
-
-    /// <summary>
-    /// Puerto que usa el cliente para conectarse al servidor
-    /// </summary>
     public static ushort PuertoCliente = 7777;
-
-    /// <summary>
-    /// Puerto en el que escucha el servidor
-    /// </summary>
     public static ushort PuertoServidor = 7777;
-
-    /// <summary>
-    /// Numero maximo de clientes que acepta el servidor
-    /// </summary>
     public static ushort MaximoClientesServidor = 4;
 
-    /// <summary>
-    /// Ruta al archivo de configuracion de red
-    /// </summary>
-    public static string pathDeArchivoDeConfiguracionDeRed = "configuracion/confRed.txt";
+    public static string pathDeArchivoDeConfiguracionDeRed = "configuracion/confRed.jsonc";
 
     /// <summary>
-    /// Lee la configuracion de red desde el archivo de configuracion <br/>
-    /// Si el archivo no existe, lo crea con los valores por defecto <br/>
-    /// Actualiza tambien el nombre de usuario en la clase Usuario
+    /// DTO interno que define la forma del archivo confRed.json
+    /// </summary>
+    private class DatosConfRed
+    {
+        public string nombreUsuario = "placeHolder";
+        public string ipServidor = "127.0.0.1";
+        public ushort puertoCliente = 7777;
+        public ushort puertoServidor = 7777;
+        public ushort maximoClientesServidor = 4;
+    }
+
+    private static readonly Dictionary<string, string> comentarios = new Dictionary<string, string>
+    {
+        {"nombreUsuario", "nombre de usuario"},
+        {"ipServidor", "IP del servidor al que se conecta el cliente"},
+        {"puertoCliente", "Puerto que usa el cliente para conectarse"},
+        {"puertoServidor", "Puerto en el que escucha el servidor"},
+        {"maximoClientesServidor", "Maximo clientes simultaneos"},
+    };
+
+    /// <summary>
+    /// Lee el archivo de configuracion de red <br/>
+    /// Si no existe, lo crea con los valores por defecto y guarda el archivo
     /// </summary>
     public static void ObtenerConfiguracionDeRed()
     {
-        string[] lineas = new string[5];
         try
         {
-            if(GestorArchivosDeTxt.ExisteArchivo(pathDeArchivoDeConfiguracionDeRed))
+            if (!GestorArchivosJson.ExisteArchivo(pathDeArchivoDeConfiguracionDeRed))
             {
-                lineas = GestorArchivosDeTxt.ObtenerLineasValidasDeArchivo(pathDeArchivoDeConfiguracionDeRed);
-            }
-            else
-            {
-                GestorArchivosDeTxt.CrearArchivoDeConfiguracionRed();
+                Guardar();
                 Console.ForegroundColor = ConsoleColor.Yellow;
                 Console.WriteLine("ConfiguracionRed creada");
                 Console.ResetColor();
+                return;
             }
 
-            NombreUsuario = lineas[0];
-            IpServidor = lineas[1];
-            PuertoCliente = Convert.ToUInt16(lineas[2]);
-            PuertoServidor = Convert.ToUInt16(lineas[3]);
-            MaximoClientesServidor = Convert.ToUInt16(lineas[4]);
+            DatosConfRed? datos = GestorArchivosJson.Leer<DatosConfRed>(pathDeArchivoDeConfiguracionDeRed);
+            if (datos == null) return;
+
+            NombreUsuario = datos.nombreUsuario;
+            IpServidor = datos.ipServidor;
+            PuertoCliente = datos.puertoCliente;
+            PuertoServidor = datos.puertoServidor;
+            MaximoClientesServidor = datos.maximoClientesServidor;
 
             Usuario.nombre = NombreUsuario;
 
@@ -72,44 +68,53 @@ public static class ConfiguracionRed
         catch
         {
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("No se pudo encontrar ni crear el archivo de configuracion de red");
+            Console.WriteLine("No se pudo leer ni crear el archivo de configuracion de red");
             Console.ResetColor();
         }
     }
 
+    /// <summary>
+    /// Persiste los valores actuales en el archivo de configuracion de red
+    /// </summary>
+    public static void Guardar()
+    {
+        DatosConfRed datos = new DatosConfRed
+        {
+            nombreUsuario = NombreUsuario,
+            ipServidor = IpServidor,
+            puertoCliente = PuertoCliente,
+            puertoServidor = PuertoServidor,
+            maximoClientesServidor = MaximoClientesServidor,
+        };
+        GestorArchivosJson.Escribir(pathDeArchivoDeConfiguracionDeRed, datos, comentarios);
+        InterfazUI.RecargarUI();
+    }
+
+    [EventoAPI("Configuracion")]
     public static void CambiarIpServidor(string textoACambiar)
     {
         IpServidor = textoACambiar;
-        string[] configuracionDeRedContenido= GestorArchivosDeTxt.ObtenerLineasValidasDeArchivo(ConfiguracionRed.pathDeArchivoDeConfiguracionDeRed);
-        configuracionDeRedContenido[1] = textoACambiar;
-        GestorArchivosDeTxt.CrearArchivoDeConfiguracionRed(configuracionDeRedContenido);
-        
+        Guardar();
     }
 
+    [EventoAPI("Configuracion")]
     public static void CambiarPuertoCliente(string textoACambiar)
     {
         PuertoCliente = Convert.ToUInt16(textoACambiar);
-        string[] configuracionDeRedContenido= GestorArchivosDeTxt.ObtenerLineasValidasDeArchivo(ConfiguracionRed.pathDeArchivoDeConfiguracionDeRed);
-        configuracionDeRedContenido[2] = textoACambiar;
-        GestorArchivosDeTxt.CrearArchivoDeConfiguracionRed(configuracionDeRedContenido);
-        
+        Guardar();
     }
 
+    [EventoAPI("Configuracion")]
     public static void CambiarPuertoServidor(string textoACambiar)
     {
         PuertoServidor = Convert.ToUInt16(textoACambiar);
-        string[] configuracionDeRedContenido= GestorArchivosDeTxt.ObtenerLineasValidasDeArchivo(ConfiguracionRed.pathDeArchivoDeConfiguracionDeRed);
-        configuracionDeRedContenido[3] = textoACambiar;
-        GestorArchivosDeTxt.CrearArchivoDeConfiguracionRed(configuracionDeRedContenido);
-        
+        Guardar();
     }
 
+    [EventoAPI("Configuracion")]
     public static void CambiarMaximoNumeroJugadoresServidor(string textoACambiar)
     {
         MaximoClientesServidor = Convert.ToUInt16(textoACambiar);
-        string[] configuracionDeRedContenido= GestorArchivosDeTxt.ObtenerLineasValidasDeArchivo(ConfiguracionRed.pathDeArchivoDeConfiguracionDeRed);
-        configuracionDeRedContenido[4] = textoACambiar;
-        GestorArchivosDeTxt.CrearArchivoDeConfiguracionRed(configuracionDeRedContenido);
-        
+        Guardar();
     }
 }

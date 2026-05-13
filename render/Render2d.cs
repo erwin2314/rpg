@@ -22,6 +22,41 @@ public static class Render2d
     };
 
     /// <summary>
+    /// Cuando es true, dibuja los contornos de las hitboxes de cada entidad (debug)
+    /// </summary>
+    public static bool mostrarHitboxes = false;
+
+    /// <summary>
+    /// Alterna el dibujo de las hitboxes de las entidades
+    /// </summary>
+    [EventoAPI("Debug")]
+    public static void AlternarHitboxes()
+    {
+        mostrarHitboxes = !mostrarHitboxes;
+        ChatUI.AgregarMensaje($"mostrarHitboxes = {mostrarHitboxes}");
+    }
+
+    private static void DibujarHitboxes()
+    {
+        if (!mostrarHitboxes) return;
+        foreach (EntidadBase ent in GestorEntidades.ObtenerEntidades())
+        {
+            if (ent.forma == FormaColision.Circulo)
+            {
+                Raylib.DrawCircleLines((int)ent.posicion.X, (int)ent.posicion.Y, ent.radio, Color.Red);
+            }
+            else
+            {
+                Raylib.DrawRectangleLines(
+                    (int)(ent.posicion.X - ent.tamanoColision.X / 2),
+                    (int)(ent.posicion.Y - ent.tamanoColision.Y / 2),
+                    (int)ent.tamanoColision.X, (int)ent.tamanoColision.Y,
+                    Color.Red);
+            }
+        }
+    }
+
+    /// <summary>
     /// Llama la funcion dibujar de todos los objetos en la lista interna <br/>
     /// Unicamente se debe llamar en el bucle principal del programa
     /// </summary>
@@ -72,16 +107,26 @@ public static class Render2d
     /// </summary>
     public static void DibujarObjetosAbstractos()
     {
-        Raylib.BeginDrawing();
-        Raylib.ClearBackground(Color.Black);
+        if (GestorEntidades.jugadorLocal != null)
+            camara.Target = GestorEntidades.jugadorLocal.posicion;
+            camara.Zoom = 2f;
 
-        //Mundo (Con camara)
-        Raylib.BeginMode2D(camara);
-        foreach (ObjetoAbstracto item in objetosMundo)
+        Raylib.BeginDrawing();
+        
+
+        if (Mapa.partidaIniciada)
         {
-            if(item.visible) item.Dibujar();
+            Raylib.ClearBackground(Mapa.colorFondo);
+            //Mundo (Con camara)
+            Raylib.BeginMode2D(camara);
+            foreach (ObjetoAbstracto item in objetosMundo)
+            {
+                if(item.visible) item.Dibujar();
+            }
+            DibujarHitboxes();
+            Raylib.EndMode2D();
         }
-        Raylib.EndMode2D();
+        else Raylib.ClearBackground(Color.Black);
 
         //UI (Sin camara, coordenadas directas en la pantalla)
         foreach (ObjetoAbstracto item in objetosAbstractos)
@@ -99,16 +144,23 @@ public static class Render2d
     /// </summary>
     public static void DibujarObjetosAbstractos(Color colorDeFondo)
     {
+        if (GestorEntidades.jugadorLocal != null)
+            camara.Target = GestorEntidades.jugadorLocal.posicion;
+
         Raylib.BeginDrawing();
         Raylib.ClearBackground(colorDeFondo);
 
-        //Mundo (Con camara)
-        Raylib.BeginMode2D(camara);
-        foreach (ObjetoAbstracto item in objetosMundo)
+        if (Mapa.partidaIniciada)
         {
-            if(item.visible) item.Dibujar();
+            //Mundo (Con camara)
+            Raylib.BeginMode2D(camara);
+            foreach (ObjetoAbstracto item in objetosMundo)
+            {
+                if(item.visible) item.Dibujar();
+            }
+            DibujarHitboxes();
+            Raylib.EndMode2D();
         }
-        Raylib.EndMode2D();
 
         //UI (Sin camara, coordenadas directas en la pantalla)
         foreach (ObjetoAbstracto item in objetosAbstractos)

@@ -11,6 +11,18 @@ public abstract class EntidadBase : ObjetoAbstracto
     public int vidaActual;
     public int vidaMaxima;
 
+    /// <summary>Si es true y la otra entidad tambien lo es, se separan al colisionar</summary>
+    public bool solido = false;
+
+    /// <summary>Si es true la entidad nunca se mueve por colisiones (pared)</summary>
+    public bool inmovil = false;
+
+    /// <summary>Forma geometrica usada para detectar colisiones</summary>
+    public FormaColision forma = FormaColision.Circulo;
+
+    /// <summary>Tamaño de la caja de colision (solo usado si forma == Rectangulo)</summary>
+    public Vector2 tamanoColision = Vector2.Zero;
+
     protected EntidadBase
     (
         Vector2 posicion,
@@ -48,5 +60,11 @@ public abstract class EntidadBase : ObjetoAbstracto
     {
         GestorEntidades.EliminarEntidad(this);
     }
+
+    /// <summary>
+    /// Se llama una vez por frame por cada otra entidad con la que esta solapando <br/>
+    /// Implementacion por defecto vacia; cada subclase decide que hacer
+    /// </summary>
+    public virtual void EnColision(EntidadBase otra) { }
 
 }

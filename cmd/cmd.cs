@@ -1,26 +1,19 @@
-using Riptide;
-
+using System.Reflection;
 
 /// <summary>
-/// Clase estatica que implementa una interfaz de linea de comandos para el juego <br/>
-/// Lee la entrada del teclado caracter por caracter y ejecuta comandos al presionar Enter
+/// Dispatcher textual que conecta la consola y el chat con la API <br/>
+/// Parsea un comando, busca la funcion correspondiente por nombre en la API y la encola
 /// </summary>
 public static class CMD
 {
-    /// <summary>
-    /// Acumulador de caracteres que forman el comando actual en proceso de escritura
-    /// </summary>
     private static string bufferActual = "";
 
     /// <summary>
-    /// Lee los caracteres disponibles en la consola y construye el comando actual <br/>
-    /// Al presionar Enter ejecuta el comando acumulado y limpia el buffer <br/>
-    /// Soporta Backspace para borrar el ultimo caracter escrito <br/>
+    /// Lee la consola caracter por caracter; al pulsar Enter ejecuta el comando acumulado <br/>
     /// No hace nada si la consola no esta disponible (modo debug)
     /// </summary>
     public static void ProcesarComandos()
     {
-        
         try
         {
             if (!Console.IsInputRedirected)
@@ -58,159 +51,116 @@ public static class CMD
     }
 
     /// <summary>
-    /// Interpreta y ejecuta el comando de texto recibido <br/>
-    /// Comandos disponibles: whoami, status, client port, server port, server ip, server info,
-    /// start server, disconect, join server, exit
+    /// Wrapper invocable desde la API; delega al EjecutarComando publico
     /// </summary>
-    /// <param name="comando">Cadena de texto con el comando a ejecutar</param>
-    public static List<string> EjecutarComando(string comando)
+    [EventoAPI("CMD")]
+    public static void EjecutarComandoSinReturn(string comando)
     {
-        List<string> salida = new List<string>();
-        string comandoConTrim = comando.Trim();
+        EjecutarComando(comando);
+    }
 
-        if(comandoConTrim.StartsWith("show "))
+    /// <summary>
+    /// Interpreta y ejecuta el comando de texto recibido <br/>
+    /// Meta-comandos (api help, api list) se atienden directamente; el resto se busca en la API por nombre
+    /// </summary>
+    public static void EjecutarComando(string comando)
+    {
+        string trim = comando.Trim();
+        if (trim.Length == 0) return;
+
+        // Meta-comandos: consultan la propia API
+        if (trim == "api help") { ImprimirYChat(API.Help()); return; }
+        if (trim.StartsWith("api help ")) { ImprimirYChat(API.Help(trim[9..].Trim())); return; }
+        if (trim == "api list") { ImprimirYChat(ListarTodo()); return; }
+        if (trim.StartsWith("api list ")) { ImprimirYChat(ListarUnaSeccion(trim[9..].Trim())); return; }
+
+        // Dispatcher: nombre + args -> lookup -> encolar
+        (string nombre, string[] args) = ParsearComando(trim);
+        Delegate? fn = API.ObtenerFuncion(nombre);
+        if (fn == null)
         {
-            salida.Add(comandoConTrim[4..]);
-            foreach (string item in salida)
-            {
-                Console.WriteLine(item);
-            }
-
-            ChatUI.AgregarMensaje(salida);
-
-            return salida;
+            ImprimirYChat(new List<string> { $"Comando desconocido: {nombre}" });
+            return;
         }
 
-        if(comandoConTrim.StartsWith("say "))
+        object[] convertidos;
+        try
         {
-
-            if(gestorRed.EnLinea && gestorRed.EsServidor)
-            {
-                salida.Add(comandoConTrim[4..] + $"     //{ConfiguracionRed.NombreUsuario}");
-                Message message = Message.Create(MessageSendMode.Reliable,IdMensajesDeRed.chatBroadcast);
-                message.AddString(comandoConTrim[4..] + $"     //{ConfiguracionRed.NombreUsuario}");
-                gestorServidor.EnviarMensajeATodosLosClientes(message);
-                ChatUI.AgregarMensaje(salida);
-            }
-            else if(gestorRed.EnLinea && !gestorRed.EsServidor)
-            {
-                salida.Add(comandoConTrim[4..] + $"     //{ConfiguracionRed.NombreUsuario}");
-                Message message = Message.Create(MessageSendMode.Reliable,IdMensajesDeRed.chatAServer);
-                message.AddString(comandoConTrim[4..] + $"     //{ConfiguracionRed.NombreUsuario}");
-                gestorCliente.EnviarMensaje(message);
-                ChatUI.AgregarMensaje(salida);
-            }
-            else
-            {
-                salida.Add(comandoConTrim[4..] + " No estas en linea");
-                ChatUI.AgregarMensaje(salida);
-            }
-
-            foreach (string item in salida)
-            {
-                Console.WriteLine(item);
-            }
-
-            return salida;
+            convertidos = ConvertirArgs(fn.Method, args);
         }
-        
-        if(comandoConTrim.StartsWith("kickId "))
+        catch (Exception ex)
         {
-            if(gestorRed.EsServidor)
-            {
-                try
-                {
-                    ushort id = Convert.ToUInt16(comandoConTrim[7..]);
-                    gestorServidor.DesconectarCliente(id);
-                }
-                catch
-                {
-                    salida.Add($"No se encontro el id: {comandoConTrim[7..]}");
-                }
-            }
-
-            foreach (string item in salida)
-            {
-                Console.WriteLine(item);
-            }
-
-            return salida;
+            ImprimirYChat(new List<string> { $"Argumentos invalidos: {ex.Message}" });
+            return;
         }
 
-        if(comandoConTrim.StartsWith("kickName "))
+        API.EncolarDinamico(fn, convertidos);
+    }
+
+    private static (string nombre, string[] args) ParsearComando(string texto)
+    {
+        int sp = texto.IndexOf(' ');
+        if (sp < 0) return (texto, new string[0]);
+        string nombre = texto[..sp];
+        string resto = texto[(sp + 1)..];
+        return (nombre, resto.Split(' ', StringSplitOptions.RemoveEmptyEntries));
+    }
+
+    private static object[] ConvertirArgs(MethodInfo metodo, string[] args)
+    {
+        ParameterInfo[] parametros = metodo.GetParameters();
+
+        // Caso especial: 1 parametro string -> todo lo que sigue al nombre va concatenado
+        if (parametros.Length == 1 && parametros[0].ParameterType == typeof(string))
         {
-            if(gestorRed.EsServidor)
+            return new object[] { string.Join(' ', args) };
+        }
+
+        if (args.Length != parametros.Length)
+        {
+            throw new ArgumentException($"Se esperaban {parametros.Length} argumentos, se recibieron {args.Length}");
+        }
+
+        object[] resultado = new object[parametros.Length];
+        for (int i = 0; i < parametros.Length; i++)
+        {
+            resultado[i] = Convert.ChangeType(args[i], parametros[i].ParameterType);
+        }
+        return resultado;
+    }
+
+    private static List<string> ListarTodo()
+    {
+        List<string> lineas = new List<string>();
+        foreach (string seccion in API.ListarSecciones())
+        {
+            lineas.Add($"== {seccion} ==");
+            foreach (Delegate fn in API.ListarSeccion(seccion))
             {
-                try
-                {
-                    ushort? id = gestorServidor.encontrarIdPorNombre(comandoConTrim[9..]);
-                    if(id is ushort idTemp)
-                    {
-                        gestorServidor.DesconectarCliente(idTemp);
-                    }
-                    else
-                    {
-                        salida.Add($"No se encontro el nombre: {comandoConTrim[9..]}");
-                    }
-                }
-                catch
-                {
-                    salida.Add($"No se encontro el nombre: {comandoConTrim[9..]}");
-                }
+                lineas.Add($"  {fn.Method.Name}");
             }
         }
-        
-        switch (comandoConTrim)
-        {
-            case "whoami":
-                salida.Add($"Usuario: {Usuario.nombre}");
-                break;
-            case "status":
-                salida.Add($"Soy servidor: {gestorRed.EsServidor}");
-                salida.Add($"En línea: {gestorRed.EnLinea}");
-                break;
-            case "client port":
-                salida.Add($"Puerto del servidor: {ConfiguracionRed.PuertoCliente}");
-                break;
-            case "exit":
-                Eventos.ObtenerFuncion("Salir")?.Invoke();
-                break;
-            case "server port":
-                salida.Add($"Puerto del servidor: {ConfiguracionRed.PuertoServidor}");
-                break;
-            case "server ip":
-                salida.Add($"Puerto del servidor: {ConfiguracionRed.IpServidor}");
-                break;
-            case "server info":
-                salida.Add($"Puerto del servidor: {ConfiguracionRed.PuertoServidor}");
-                salida.Add($"Puerto del servidor: {ConfiguracionRed.IpServidor}");
-                break;
-            case "start server":
-                gestorRed.InciarComoServidor(ConfiguracionRed.PuertoServidor,ConfiguracionRed.MaximoClientesServidor);
-                break;
-            case "disconect":
-                gestorRed.Desconectarse();
-                break;
-            case "join server":
-                gestorRed.InicializarComoCliente(ConfiguracionRed.IpServidor,ConfiguracionRed.PuertoCliente);
-                break;
-            case "server status":
-                salida.Add("El servidor esta corriendo? : " + gestorServidor.server.IsRunning.ToString());
-                salida.Add("Jugadores en el servidor : " + gestorServidor.server.ClientCount.ToString());
-                break;
-            case "all clients":
-                gestorServidor.MostrarTodosLosClientes();
-                break;
-            default:
-                salida.Add($"Comando desconocido: {comando}");
-                break;
-        }
+        return lineas;
+    }
 
-        foreach (string item in salida)
+    private static List<string> ListarUnaSeccion(string seccion)
+    {
+        List<Delegate> funciones = API.ListarSeccion(seccion);
+        if (funciones.Count == 0)
         {
-            Console.WriteLine(item);
+            return new List<string> { $"Seccion desconocida: {seccion}" };
         }
+        List<string> lineas = new List<string> { $"== {seccion} ==" };
+        foreach (Delegate fn in funciones)
+        {
+            lineas.Add($"  {fn.Method.Name}");
+        }
+        return lineas;
+    }
 
-        return salida;
+    private static void ImprimirYChat(List<string> lineas)
+    {
+        foreach (string l in lineas) Console.WriteLine(l);
+        ChatUI.AgregarMensaje(lineas);
     }
 }

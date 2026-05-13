@@ -1,7 +1,7 @@
 /// <summary>
 /// Es la clase padre de todas las clases que van a ser dibujadas
 /// </summary>
-public abstract class ObjetoAbstracto : ISerializableATxt
+public abstract class ObjetoAbstracto : ISerializable
 {
     /// <summary>
     /// Los objetos en capas superiores apareceran arriba de los que estan en capas inferiores
@@ -15,10 +15,29 @@ public abstract class ObjetoAbstracto : ISerializableATxt
     /// Si el objeto no es activo, no se va a actualizar ni va a responder a eventos
     /// </summary>
     public bool activo = true;
+
+    /// <summary>
+    /// Funcion opcional que produce el texto del componente cuando se recarga la UI <br/>
+    /// Si es null, el texto se mantiene tal cual fue asignado
+    /// </summary>
+    public Func<string>? fuenteTexto = null;
+
+    /// <summary>
+    /// Contador estatico para asignar ids unicos a cada objeto abstracto creado
+    /// </summary>
+    private static int contadorIds = 0;
+
+    /// <summary>
+    /// Identificador unico autoincremental del objeto (asignado al construirse) <br/>
+    /// Permite referenciar este objeto desde la API (ej. InterfazUI.CambiarActivo)
+    /// </summary>
+    public readonly int id;
+
     protected ObjetoAbstracto(int capaDibujado = 0)
     {
+        this.id = ++contadorIds;
         this.capaDibujado = capaDibujado;
-    } 
+    }
     
     /// <summary>
     /// Se debe llamar cuando un objeto es creado a partir de un constructor vacio
@@ -34,6 +53,12 @@ public abstract class ObjetoAbstracto : ISerializableATxt
     /// Cada objeto se dibuja a si mismo, pero el bucle de  dibujado (StartDrawing y EndDrawing) unicamente lo controla el Render
     /// </summary>
     public abstract void Dibujar();
+
+    /// <summary>
+    /// Aplica fuenteTexto() al texto del componente si esta definida <br/>
+    /// Implementacion por defecto vacia; cada subclase con texto la sobreescribe
+    /// </summary>
+    public virtual void AplicarFuenteTexto() { }
     
     /// <summary>
     /// Inserta el objeto directamente a la lista de objetos del render

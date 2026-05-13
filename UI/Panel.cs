@@ -158,6 +158,11 @@ public class Panel : ObjetoAbstracto
         }
     }
 
+    public override void AplicarFuenteTexto()
+    {
+        if (fuenteTexto != null) textoAMostrar = fuenteTexto();
+    }
+
     /// <summary>
     /// Inicializa el panel despues de la deserializacion <br/>
     /// Asigna la textura segun el id y registra el panel en CentroUI

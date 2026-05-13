@@ -188,6 +188,11 @@ public class Boton : ObjetoAbstracto
         }
     }
 
+    public override void AplicarFuenteTexto()
+    {
+        if (fuenteTexto != null) textoAMostrar = fuenteTexto();
+    }
+
     /// <summary>
     /// Inicializa el boton despues de la deserializacion <br/>
     /// Asigna la textura segun el id y registra el boton en CentroUI

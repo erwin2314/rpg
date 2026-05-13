@@ -195,4 +195,9 @@ public class CampoDeTexto:ObjetoAbstracto
         this.rectangulo = new Rectangle(posicionX,posicionY,ancho,alto);
         InsertarACentroUI();
     }
+
+    public override void AplicarFuenteTexto()
+    {
+        if (fuenteTexto != null && !enfocado) textoAMostrar = fuenteTexto();
+    }
 }

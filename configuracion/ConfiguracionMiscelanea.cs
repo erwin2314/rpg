@@ -1,28 +1,43 @@
+/// <summary>
+/// Configuracion miscelanea persistida en configuracion/confMisc.json
+/// </summary>
 public static class ConfiguracionMiscelanea
 {
     public static bool chatAccesibleDesdeRaylib = false;
 
-    public static string pathDeArchivosDeConfiguracionMiscelanea = "configuracion/confMisc.txt";
+    public static string pathDeArchivosDeConfiguracionMiscelanea = "configuracion/confMisc.jsonc";
 
+    private class DatosConfMisc
+    {
+        public bool chatAccesibleDesdeRaylib = false;
+    }
+
+    private static readonly Dictionary<string, string> comentarios = new Dictionary<string, string>
+    {
+        {"chatAccesibleDesdeRaylib", "permite abrir el chat directamente desde la ventana grafica"},
+    };
+
+    /// <summary>
+    /// Lee el archivo de configuracion miscelanea <br/>
+    /// Si no existe, lo crea con los valores por defecto
+    /// </summary>
     public static void ObtenerConfiguracionMiscelanea()
     {
-        string[] lineas = new string[1];
-
         try
         {
-            if(GestorArchivosDeTxt.ExisteArchivo(pathDeArchivosDeConfiguracionMiscelanea))
+            if (!GestorArchivosJson.ExisteArchivo(pathDeArchivosDeConfiguracionMiscelanea))
             {
-                lineas = GestorArchivosDeTxt.ObtenerLineasValidasDeArchivo(pathDeArchivosDeConfiguracionMiscelanea);
-            }
-            else
-            {
-                GestorArchivosDeTxt.CrearArchivoDeConfiguracionMiscelanea();
+                Guardar();
                 Console.ForegroundColor = ConsoleColor.Yellow;
                 Console.WriteLine("ConfiguracionMiscelanea creada");
                 Console.ResetColor();
+                return;
             }
 
-            chatAccesibleDesdeRaylib = Convert.ToBoolean(lineas[0]);
+            DatosConfMisc? datos = GestorArchivosJson.Leer<DatosConfMisc>(pathDeArchivosDeConfiguracionMiscelanea);
+            if (datos == null) return;
+
+            chatAccesibleDesdeRaylib = datos.chatAccesibleDesdeRaylib;
 
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("ConfiguracionMiscelanea encontrada con exito");
@@ -31,8 +46,17 @@ public static class ConfiguracionMiscelanea
         catch
         {
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("No se pudo encontrar ni crear el archivo de configuracion de Miscelaneos");
+            Console.WriteLine("No se pudo leer ni crear el archivo de configuracion miscelanea");
             Console.ResetColor();
         }
+    }
+
+    public static void Guardar()
+    {
+        DatosConfMisc datos = new DatosConfMisc
+        {
+            chatAccesibleDesdeRaylib = chatAccesibleDesdeRaylib,
+        };
+        GestorArchivosJson.Escribir(pathDeArchivosDeConfiguracionMiscelanea, datos, comentarios);
     }
 }

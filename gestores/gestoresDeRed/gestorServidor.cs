@@ -1,3 +1,4 @@
+using Raylib_cs;
 using Riptide;
 
 /// <summary>
@@ -6,136 +7,158 @@ using Riptide;
 /// </summary>
 public static class gestorServidor
 {
-    public static Dictionary<ushort,string> idUsuariosConNombre = new Dictionary<ushort, string>();
+    /// <summary>
+    /// Datos sincronizados de cada jugador conectado al servidor (incluido el propio servidor con id 0)
+    /// </summary>
+    public static Dictionary<ushort, DatosJugador> datosJugadores = new Dictionary<ushort, DatosJugador>();
 
     /// <summary>
     /// Instancia del servidor Riptide que maneja las conexiones entrantes
     /// </summary>
     public static Server server = new Server();
 
-    /// <summary>
-    /// Inicializa y arranca el servidor en el puerto indicado <br/>
-    /// Suscribe los eventos de conexion y desconexion de clientes
-    /// </summary>
-    /// <param name="puerto">Puerto en el que el servidor escuchara conexiones</param>
-    /// <param name="maximoClientes">Numero maximo de clientes que pueden conectarse simultaneamente</param>
     public static void InicializarServidor(ushort puerto = 7777, ushort maximoClientes = 4)
     {
         server.ClientConnected += EnClienteConectadoAServidor;
         server.ClientDisconnected += EnClienteDesconectadoDelServidor;
         server.Start(puerto, maximoClientes);
+
+        // El servidor mismo entra en la lista con id 0
+        datosJugadores[0] = new DatosJugador
+        {
+            id = 0,
+            nombre = ConfiguracionRed.NombreUsuario,
+            color = Color.White,
+            vidaMaxima = 100,
+        };
+        BroadcastSnapshot();
     }
 
     /// <summary>
-    /// Procesa los mensajes y eventos de red pendientes del servidor <br/>
-    /// Se debe llamar una vez por frame en el bucle principal
+    /// Envia el snapshot completo a todos los clientes y actualiza el cache local de gestorRed
     /// </summary>
+    public static void BroadcastSnapshot()
+    {
+        Message m = Message.Create(MessageSendMode.Reliable, IdMensajesDeRed.snapshotJugadores);
+        m.AddInt(datosJugadores.Count);
+        foreach (DatosJugador d in datosJugadores.Values)
+        {
+            m.AddUShort(d.id);
+            m.AddString(d.nombre);
+            m.AddByte(d.color.R);
+            m.AddByte(d.color.G);
+            m.AddByte(d.color.B);
+            m.AddByte(d.color.A);
+            m.AddInt(d.vidaMaxima);
+            m.AddInt(d.puntuacion);
+        }
+        EnviarMensajeATodosLosClientes(m);
+
+        gestorRed.jugadoresConectados.Clear();
+        foreach (DatosJugador d in datosJugadores.Values)
+        {
+            gestorRed.jugadoresConectados[d.id] = new DatosJugador
+            {
+                id = d.id,
+                nombre = d.nombre,
+                color = d.color,
+                vidaMaxima = d.vidaMaxima,
+                puntuacion = d.puntuacion,
+            };
+        }
+    }
+
     public static void Actualizar()
     {
         server?.Update();
     }
 
-    /// <summary>
-    /// Detiene el servidor y cierra todas las conexiones activas
-    /// </summary>
     public static void DetenerServidor()
     {
         server.Stop();
     }
 
-    /// <summary>
-    /// Envia un mensaje a todos los clientes conectados al servidor
-    /// </summary>
-    /// <param name="mensaje">Mensaje Riptide a enviar a todos los clientes</param>
     public static void EnviarMensajeATodosLosClientes(Message mensaje)
     {
         server.SendToAll(mensaje);
     }
 
-    /// <summary>
-    /// Envia un mensaje a todos los clientes conectados excepto al indicado
-    /// </summary>
-    /// <param name="mensaje">Mensaje Riptide a enviar</param>
-    /// <param name="idClienteAExcluir">Id del cliente que no recibira el mensaje</param>
     public static void EnviarMensajeATodosLosClientes(Message mensaje, ushort idClienteAExcluir)
     {
         server.SendToAll(mensaje, idClienteAExcluir);
     }
 
-    /// <summary>
-    /// Envia un mensaje a un cliente especifico
-    /// </summary>
-    /// <param name="mensaje">Mensaje Riptide a enviar</param>
-    /// <param name="clienteId">Id del cliente destinatario</param>
     public static void EnviarMensajeACliente(Message mensaje, ushort clienteId)
     {
-        server.Send(mensaje,clienteId);
+        server.Send(mensaje, clienteId);
     }
 
-    /// <summary>
-    /// Desconecta a un cliente especifico del servidor
-    /// </summary>
-    /// <param name="idClienteADesconectar">Id del cliente a desconectar</param>
     public static void DesconectarCliente(ushort idClienteADesconectar)
     {
         server.DisconnectClient(idClienteADesconectar);
     }
 
-    /// <summary>
-    /// Manejador del evento que se dispara cuando un cliente se conecta al servidor <br/>
-    /// Imprime el Id del cliente conectado en consola
-    /// </summary>
-    /// <param name="sender">Origen del evento</param>
-    /// <param name="e">Argumentos del evento con informacion del cliente conectado</param>
     public static void EnClienteConectadoAServidor(object? sender, ServerConnectedEventArgs e)
     {
-        Message mensaje = Message.Create(MessageSendMode.Reliable,IdMensajesDeRed.servidorAClientePedirNombreUsuario);
-        EnviarMensajeACliente(mensaje,e.Client.Id);
-        CMD.EjecutarComando($"show cliente desconectado: id {e.Client.Id}");
+        Message mensaje = Message.Create(MessageSendMode.Reliable, IdMensajesDeRed.servidorAClientePedirNombreUsuario);
+        EnviarMensajeACliente(mensaje, e.Client.Id);
+        API.Encolar(FuncionesCMD.Mostrar, $"cliente conectado: id {e.Client.Id}");
 
+        // Crear entrada vacia y broadcastear; el nombre llegara despues por mensaje
+        datosJugadores[e.Client.Id] = new DatosJugador
+        {
+            id = e.Client.Id,
+            nombre = "",
+            color = Color.White,
+            vidaMaxima = 100,
+        };
+        BroadcastSnapshot();
     }
 
-    /// <summary>
-    /// Manejador del evento que se dispara cuando un cliente se desconecta del servidor <br/>
-    /// Imprime el Id del cliente desconectado en consola
-    /// </summary>
-    /// <param name="sender">Origen del evento</param>
-    /// <param name="e">Argumentos del evento con informacion del cliente desconectado</param>
     public static void EnClienteDesconectadoDelServidor(object? sender, ServerDisconnectedEventArgs e)
     {
-        CMD.EjecutarComando($"show cliente desconectado: id {e.Client.Id}, nombre {encontrarNombrePorId(e.Client.Id)}");
-        eliminarDeDicionarioDeUsuario(e.Client.Id);
+        API.Encolar(FuncionesCMD.Mostrar, $"cliente desconectado: id {e.Client.Id}, nombre {encontrarNombrePorId(e.Client.Id)}");
+        datosJugadores.Remove(e.Client.Id);
+
+        Message m = Message.Create(MessageSendMode.Reliable, IdMensajesDeRed.jugadorDesconectado);
+        m.AddUShort(e.Client.Id);
+        EnviarMensajeATodosLosClientes(m);
+
+        BroadcastSnapshot();
     }
 
+    [EventoAPI("Red")]
     public static void MostrarTodosLosClientes()
     {
-        foreach (KeyValuePair<ushort,string> item in idUsuariosConNombre)
+        foreach (DatosJugador d in datosJugadores.Values)
         {
-            CMD.EjecutarComando($"show id:{item.Key}, nombre: {item.Value}");
+            ChatUI.AgregarMensaje($"id:{d.id}, nombre: {d.nombre}");
         }
     }
 
-    public static void agregarADiccionarioDeUsuarios(ushort id,string nombre)
+    public static void agregarADiccionarioDeUsuarios(ushort id, string nombre)
     {
-        idUsuariosConNombre.TryAdd(id,nombre);
+        if (datosJugadores.TryGetValue(id, out DatosJugador? d))
+        {
+            d.nombre = nombre;
+        }
+        else
+        {
+            datosJugadores[id] = new DatosJugador { id = id, nombre = nombre };
+        }
     }
-    public static void eliminarDeDicionarioDeUsuario(ushort id)
-    {
-        try{idUsuariosConNombre.Remove(id);}
-        catch{}
-    }
+
     public static string? encontrarNombrePorId(ushort id)
     {
-        idUsuariosConNombre.TryGetValue(id,out string? nombre);
-        return nombre;
+        return datosJugadores.TryGetValue(id, out DatosJugador? d) ? d.nombre : null;
     }
+
     public static ushort? encontrarIdPorNombre(string nombre)
     {
-        KeyValuePair<ushort,string> keyValuePar = idUsuariosConNombre.FirstOrDefault(keyPar => keyPar.Value == nombre);
-        if(keyValuePar.Value == null)
+        foreach (DatosJugador d in datosJugadores.Values)
         {
-            return null;
+            if (d.nombre == nombre) return d.id;
         }
-        return keyValuePar.Key;
+        return null;
     }
 }
