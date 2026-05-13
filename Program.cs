@@ -37,7 +37,6 @@ public static class Program
             .Build();
 
         botonIniciarPartida.visible = false;
-        Observadores.Observar(() => gestorRed.EsServidor && !Mapa.partidaIniciada, () => botonIniciarPartida.visible = true);
 
         Menu menuSeleccionModo = new MenuBuilder()
             .Panel("Puntuacion max:", 500, 90, ancho: 200, alto: 30, colorTexto: Color.Black, colorRectangulo: Color.Beige)
@@ -72,6 +71,11 @@ public static class Program
         botonRegresar.accionAlHacerClick = () => API.Encolar(Menus.CambiarMenu, menuPrincipal);
 
         Menus.menuActivo = menuPrincipal;
+
+        // Visibilidad del boton "Iniciar Partida": solo visible si soy servidor, no estoy en partida y estoy en el menu principal
+        Observadores.Observar(
+            () => true,
+            () => botonIniciarPartida.visible = gestorRed.EsServidor && !Mapa.partidaIniciada && Menus.menuActivo == menuPrincipal);
 
         ChatUI chatUI = new ChatUI(0,0,1280,320,16,200,Color.White,Color.Black,Color.Green);
 

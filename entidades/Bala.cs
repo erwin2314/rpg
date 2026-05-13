@@ -73,9 +73,16 @@ public class Bala : EntidadBase
         // Aplica daño si la otra entidad es el Jugador local de ESTE cliente
         if (otra is Jugador j && j == GestorEntidades.jugadorLocal)
         {
+            // Si ya esta muerto (otra bala en el mismo frame lo mato), eliminar bala sin doble dano
+            if (j.vidaActual <= 0)
+            {
+                GestorEntidades.EliminarEntidad(this);
+                return;
+            }
+            bool sobreviveAntesDelGolpe = j.vidaActual > 0;
             j.RecibirDaño(dano);
             GestorEntidades.EliminarEntidad(this);
-            if (j.vidaActual <= 0)
+            if (sobreviveAntesDelGolpe && j.vidaActual <= 0)
             {
                 FuncionesPartida.NotificarMuerte(idDueno);
             }

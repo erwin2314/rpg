@@ -17,6 +17,9 @@ public class Jugador : EntidadBase
     /// <summary>Tiempo restante hasta poder disparar de nuevo</summary>
     private float cooldownDisparo = 0f;
 
+    /// <summary>Evita que el primer clic (el que selecciono el modo) dispare al crear el jugador</summary>
+    private bool clicSoltadoUnaVez = false;
+
     /// <summary>RNG local para calcular dispersion del disparo</summary>
     private Random rng = new Random();
 
@@ -47,7 +50,12 @@ public class Jugador : EntidadBase
         if (this == GestorEntidades.jugadorLocal)
         {
             cooldownDisparo -= Raylib.GetFrameTime();
+
+            // No disparar hasta que el clic se haya soltado al menos una vez (evita disparo accidental al pulsar "Deathmatch")
+            if (!Raylib.IsMouseButtonDown(MouseButton.Left)) clicSoltadoUnaVez = true;
+
             if (armaActual != null && armaActual.municionActual > 0 && cooldownDisparo <= 0
+                && clicSoltadoUnaVez
                 && Raylib.IsMouseButtonDown(MouseButton.Left))
             {
                 Vector2 mouseMundo = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), Render2d.camara);
@@ -57,9 +65,11 @@ public class Jugador : EntidadBase
                     dirDisparo = Vector2.Normalize(dirDisparo);
                     armaActual.municionActual--;
                     cooldownDisparo = armaActual.cadenciaSegundos;
+                    // Origen de la bala fuera del propio cuerpo para no auto-colisionar
+                    Vector2 origen = posicion + dirDisparo * (radio + 10);
                     List<Vector2> dirs = FuncionesArmas.CalcularDireccionesDisparo(dirDisparo, armaActual, rng);
-                    FuncionesArmas.DispararLocal(idRiptide, posicion, dirs, armaActual);
-                    FuncionesArmas.EnviarDisparo(posicion, dirs, armaActual);
+                    FuncionesArmas.DispararLocal(idRiptide, origen, dirs, armaActual);
+                    FuncionesArmas.EnviarDisparo(origen, dirs, armaActual);
                 }
             }
 
@@ -134,5 +144,10 @@ public class Jugador : EntidadBase
     }
 
     public override void RecibirDaño(int cantidad) => base.RecibirDaño(cantidad);
-    public override void AlMorir() => base.AlMorir();
+
+    /// <summary>
+    /// El jugador no se elimina al morir: FuncionesPartida.NotificarMuerte respawnea su vida y posicion. <br/>
+    /// Si eliminaramos la entidad, dejariamos de dibujarla, actualizarla y colisionarla.
+    /// </summary>
+    public override void AlMorir() { }
 }
