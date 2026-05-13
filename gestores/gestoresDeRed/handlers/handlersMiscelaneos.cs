@@ -63,7 +63,7 @@ public static class HandlersMiscelaneos
         FuncionesPartida.CrearMundoLocal(esServidor: false);
     }
 
-    // SERVIDOR recibe la posicion+vida de un cliente -> reenviar a todos
+    // SERVIDOR recibe la posicion+vida de un cliente -> reenviar a todos Y aplicar local
     [MessageHandler((ushort)IdMensajesDeRed.posicionJugador)]
     private static void PosicionJugadorEnServidor(ushort fromClientId, Message mensaje)
     {
@@ -78,6 +78,9 @@ public static class HandlersMiscelaneos
         b.AddFloat(y);
         b.AddInt(vida);
         gestorServidor.EnviarMensajeATodosLosClientes(b);
+
+        // El servidor tambien debe ver al cliente: crear/actualizar JugadorRemoto local
+        AplicarPosicionRemota(fromClientId, x, y, vida);
     }
 
     // CLIENTE recibe pos+vida de un id -> crear/actualizar JugadorRemoto
@@ -91,6 +94,23 @@ public static class HandlersMiscelaneos
 
         if (id == gestorCliente.cliente.Id) return;
 
+        AplicarPosicionRemota(id, x, y, vida);
+
+        // Si no conocemos el nombre, pedir el snapshot (una sola vez por id)
+        if (!gestorRed.jugadoresConectados.ContainsKey(id) && !gestorCliente.idsSinNombrePendientes.Contains(id))
+        {
+            gestorCliente.idsSinNombrePendientes.Add(id);
+            Message p = Message.Create(MessageSendMode.Reliable, IdMensajesDeRed.pedirSnapshotJugadores);
+            gestorCliente.EnviarMensaje(p);
+        }
+    }
+
+    /// <summary>
+    /// Crea (si no existe) o actualiza el JugadorRemoto con la posicion y vida indicadas <br/>
+    /// Usado tanto por el cliente al recibir broadcast como por el servidor al recibir posicionJugador
+    /// </summary>
+    private static void AplicarPosicionRemota(ushort id, float x, float y, int vida)
+    {
         if (!gestorCliente.jugadoresRemotos.TryGetValue(id, out JugadorRemoto? jr))
         {
             jr = new JugadorRemoto(id, new Vector2(x, y));
@@ -101,14 +121,6 @@ public static class HandlersMiscelaneos
             jr.posicion = new Vector2(x, y);
         }
         jr.vidaActual = vida;
-
-        // Si no conocemos el nombre, pedir el snapshot (una sola vez por id)
-        if (!gestorRed.jugadoresConectados.ContainsKey(id) && !gestorCliente.idsSinNombrePendientes.Contains(id))
-        {
-            gestorCliente.idsSinNombrePendientes.Add(id);
-            Message p = Message.Create(MessageSendMode.Reliable, IdMensajesDeRed.pedirSnapshotJugadores);
-            gestorCliente.EnviarMensaje(p);
-        }
     }
 
     // CLIENTE recibe que alguien se desconecto -> eliminar su entidad

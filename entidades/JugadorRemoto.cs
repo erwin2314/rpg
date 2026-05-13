@@ -8,7 +8,6 @@ using Raylib_cs;
 public class JugadorRemoto : EntidadBase
 {
     public ushort idRiptide;
-    public Color color = Color.Maroon;
 
     public JugadorRemoto(ushort idRiptide, Vector2 posicion)
         : base(posicion, Vector2.Zero, 0f, 0f, 20f, 100, 100, capaDibujado: 50)
@@ -24,14 +23,16 @@ public class JugadorRemoto : EntidadBase
 
     public override void Dibujar()
     {
+        gestorRed.jugadoresConectados.TryGetValue(idRiptide, out DatosJugador? d);
+        Color tinte = d?.color ?? Color.White;
+
         Texture2D tex = GestorTexturas.ObtenerTextura(IdTextura.jugador1);
         Raylib.DrawTexturePro(
             tex,
             new Rectangle(0, 0, tex.Width, tex.Height),
             new Rectangle(posicion.X - radio, posicion.Y - radio, radio * 2, radio * 2),
-            Vector2.Zero, 0f, color);
+            Vector2.Zero, 0f, tinte);
 
-        gestorRed.jugadoresConectados.TryGetValue(idRiptide, out DatosJugador? d);
         string nombre = d?.nombre ?? $"?({idRiptide})";
         int vidaMax = d?.vidaMaxima ?? 100;
         int puntuacion = d?.puntuacion ?? 0;
