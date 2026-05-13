@@ -171,7 +171,7 @@ public static class HandlersMiscelaneos
         gestorServidor.BroadcastSnapshot();
     }
 
-    // SERVIDOR recibe peticion de disparo -> rebroadcast a todos
+    // SERVIDOR recibe peticion de disparo -> rebroadcast a todos Y crear balas locales
     [MessageHandler((ushort)IdMensajesDeRed.disparar)]
     private static void DispararEnServidor(ushort fromClientId, Message mensaje)
     {
@@ -186,6 +186,7 @@ public static class HandlersMiscelaneos
         float[] dxs = new float[n], dys = new float[n];
         for (int i = 0; i < n; i++) { dxs[i] = mensaje.GetFloat(); dys[i] = mensaje.GetFloat(); }
 
+        // 1. Reenviar a todos los clientes
         Message b = Message.Create(MessageSendMode.Reliable, IdMensajesDeRed.broadcastDisparo);
         b.AddUShort(fromClientId);
         b.AddFloat(posX); b.AddFloat(posY);
@@ -193,6 +194,12 @@ public static class HandlersMiscelaneos
         b.AddInt(n);
         for (int i = 0; i < n; i++) { b.AddFloat(dxs[i]); b.AddFloat(dys[i]); }
         gestorServidor.EnviarMensajeATodosLosClientes(b);
+
+        // 2. Crear las balas tambien localmente en el servidor (para que las vea y aplique daño si tocan a alguien)
+        for (int i = 0; i < n; i++)
+        {
+            new Bala(new Vector2(posX, posY), new Vector2(dxs[i], dys[i]), vel, dano, (IdTextura)sprite, fromClientId, tv);
+        }
     }
 
     // CLIENTE recibe broadcast de disparo -> crear N balas locales (una por direccion)

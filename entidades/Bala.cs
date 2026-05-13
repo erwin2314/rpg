@@ -58,8 +58,20 @@ public class Bala : EntidadBase
             return;
         }
 
-        // Aplica danio si la otra entidad es el Jugador local de ESTE cliente
-        if (otra is Jugador j && j == GestorEntidades.jugadorLocal && idDueno != j.idRiptide)
+        // Si choca con su propio dueño (Jugador o JugadorRemoto con el mismo id), eliminarla sin daño
+        if (otra is Jugador jp && jp.idRiptide == idDueno)
+        {
+            GestorEntidades.EliminarEntidad(this);
+            return;
+        }
+        if (otra is JugadorRemoto jrp && jrp.idRiptide == idDueno)
+        {
+            GestorEntidades.EliminarEntidad(this);
+            return;
+        }
+
+        // Aplica daño si la otra entidad es el Jugador local de ESTE cliente
+        if (otra is Jugador j && j == GestorEntidades.jugadorLocal)
         {
             j.RecibirDaño(dano);
             GestorEntidades.EliminarEntidad(this);
@@ -70,7 +82,7 @@ public class Bala : EntidadBase
             return;
         }
 
-        // Si choca con JugadorRemoto: el daño lo procesa el dueño remoto en su propio cliente
+        // Otro JugadorRemoto (no es el dueño): el daño lo procesa su dueño en su propio cliente
         if (otra is JugadorRemoto)
         {
             GestorEntidades.EliminarEntidad(this);
