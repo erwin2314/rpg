@@ -2,12 +2,32 @@ using Raylib_cs;
 
 /// <summary>
 /// HUD del arma equipada por el jugador local (esquina inferior derecha) <br/>
-/// Muestra el sprite del arma y la munición actual sobre un fondo del color de su rareza
+/// Compuesto por 4 Panels: fondo del color de rareza, sprite del arma, nombre y municion
 /// </summary>
 public class HUDArma : ObjetoAbstracto
 {
+    private Panel fondo;
+    private Panel sprite;
+    private Panel textoNombre;
+    private Panel textoMunicion;
+
     public HUDArma() : base(capaDibujado: 105)
     {
+        int w = 180, h = 110;
+        int x = 1280 - w - 20;
+        int y = 720 - h - 20;
+
+        fondo = new Panel(x, y, w, h, Color.Black, Color.Gray, "",
+            idTextura: IdTextura.vacio, tamañoDelTexto: 16, capaDibujado: 105);
+        sprite = new Panel(x + 10, y + 5, w - 20, h - 40, Color.White, Color.White, "",
+            idTextura: IdTextura.placeholder, tamañoDelTexto: 16, capaDibujado: 106);
+        textoNombre = new Panel(x + 10, y + h - 50, w - 20, 18, Color.Black,
+            new Color((byte)0, (byte)0, (byte)0, (byte)0), "",
+            idTextura: IdTextura.vacio, tamañoDelTexto: 14, capaDibujado: 107);
+        textoMunicion = new Panel(x + 10, y + h - 28, w - 20, 24, Color.White,
+            new Color((byte)0, (byte)0, (byte)0, (byte)0), "",
+            idTextura: IdTextura.vacio, tamañoDelTexto: 20, capaDibujado: 107);
+
         InsertarACentroUI();
     }
 
@@ -16,35 +36,20 @@ public class HUDArma : ObjetoAbstracto
         InsertarACentroUI();
     }
 
-    public override void Actualizar() { }
-
-    public override void Dibujar()
+    public override void Actualizar()
     {
         Jugador? j = GestorEntidades.jugadorLocal;
-        if (j == null || j.armaActual == null) return;
-        Arma a = j.armaActual;
+        bool hayArma = j?.armaActual != null;
+        fondo.visible = sprite.visible = textoNombre.visible = textoMunicion.visible = hayArma;
+        if (!hayArma) return;
 
-        int w = 180, h = 110;
-        int x = 1280 - w - 20;
-        int y = 720 - h - 20;
-
-        // Fondo con color de rareza
-        Raylib.DrawRectangle(x, y, w, h, RarezaColor.Color(a.rareza));
-        Raylib.DrawRectangleLines(x, y, w, h, Color.Black);
-
-        // Sprite del arma grande
-        Texture2D tex = GestorTexturas.ObtenerTextura(a.spriteArma);
-        Raylib.DrawTexturePro(
-            tex,
-            new Rectangle(0, 0, tex.Width, tex.Height),
-            new Rectangle(x + 10, y + 5, w - 20, h - 40),
-            new System.Numerics.Vector2(0, 0), 0f, Color.White);
-
-        // Texto de municion
-        string txt = $"{a.municionActual} / {a.municionMaxima}";
-        Raylib.DrawText(txt, x + 10, y + h - 28, 20, Color.White);
-
-        // Nombre del arma (pequeño arriba)
-        Raylib.DrawText(a.nombre, x + 10, y + h - 50, 14, Color.Black);
+        Arma a = j!.armaActual!;
+        fondo.colorDelRectangulo = RarezaColor.Color(a.rareza);
+        sprite.idTextura = a.spriteArma;
+        sprite.imagen = GestorTexturas.ObtenerTextura(a.spriteArma);
+        textoNombre.textoAMostrar = a.nombre;
+        textoMunicion.textoAMostrar = $"{a.municionActual} / {a.municionMaxima}";
     }
+
+    public override void Dibujar() { }
 }

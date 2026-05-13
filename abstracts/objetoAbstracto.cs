@@ -33,6 +33,12 @@ public abstract class ObjetoAbstracto : ISerializable
     /// </summary>
     public readonly int id;
 
+    /// <summary>
+    /// Si true, el componente se dibuja DENTRO de BeginMode2D(camara) en coordenadas de mundo <br/>
+    /// Si false (default), se dibuja en coordenadas de pantalla (HUD)
+    /// </summary>
+    public bool enMundo = false;
+
     protected ObjetoAbstracto(int capaDibujado = 0)
     {
         this.id = ++contadorIds;
@@ -82,6 +88,14 @@ public abstract class ObjetoAbstracto : ISerializable
     protected void InsertarACentroUI()
     {
         CentroUI.InsertarAObjetosAbstractos(this);
+    }
+
+    /// <summary>
+    /// Como InsertarACentroUI pero el componente se dibuja en mundo (con camara aplicada)
+    /// </summary>
+    protected void InsertarACentroUIEnMundo()
+    {
+        CentroUI.InsertarComoMundo(this);
     }
     
     /// <summary>

@@ -101,14 +101,15 @@ public class BarraDeProgreso : ObjetoAbstracto
         int ancho,
         int alto,
         bool autoIncremental,
-        int capaDibujado = 101
-
+        int capaDibujado = 101,
+        bool enMundo = false
     )
     :base
     (
         capaDibujado
     )
     {
+        this.enMundo = enMundo;
         this.total = total;
         this.progreso = progreso;
         this.avance = avance;
@@ -119,7 +120,8 @@ public class BarraDeProgreso : ObjetoAbstracto
         this.ancho = ancho;
         this.alto = alto;
         this.autoIncremental =autoIncremental;
-        InsertarACentroUI();
+        if (enMundo) InsertarACentroUIEnMundo();
+        else InsertarACentroUI();
     }
 
     /// <summary>
@@ -134,7 +136,8 @@ public class BarraDeProgreso : ObjetoAbstracto
     /// </summary>
     public override void Inicializar()
     {
-        InsertarACentroUI();
+        if (enMundo) InsertarACentroUIEnMundo();
+        else InsertarACentroUI();
     }
 
     /// <summary>

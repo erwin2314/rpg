@@ -130,6 +130,8 @@ public static class HandlersMiscelaneos
         ushort id = mensaje.GetUShort();
         if (gestorCliente.jugadoresRemotos.TryGetValue(id, out JugadorRemoto? jr))
         {
+            CentroUI.EliminarUnObjetoDeObjetosAbstractos(jr.barraVida);
+            CentroUI.EliminarUnObjetoDeObjetosAbstractos(jr.etiquetaNombre);
             GestorEntidades.EliminarEntidad(jr);
             gestorCliente.jugadoresRemotos.Remove(id);
         }

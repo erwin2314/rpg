@@ -96,13 +96,15 @@ public class Boton : ObjetoAbstracto
         Action? accionAlHacerClic = null,
         IdTextura idTextura = IdTextura.vacio,
         int tamañoDelTexto = 16,
-        int capaDibujado = 101
+        int capaDibujado = 101,
+        bool enMundo = false
     )
     :base
     (
         capaDibujado
     )
     {
+        this.enMundo = enMundo;
         this.textoAMostrar = textoAMostrar;
         this.posicionX = posicionX;
         this.posicionY = posicionY;
@@ -126,7 +128,8 @@ public class Boton : ObjetoAbstracto
         }
 
         this.rectangulo = new Rectangle(posicionX,posicionY,ancho,alto);
-        InsertarACentroUI();
+        if (enMundo) InsertarACentroUIEnMundo();
+        else InsertarACentroUI();
     }
 
     /// <summary>
@@ -159,7 +162,11 @@ public class Boton : ObjetoAbstracto
     public override void Actualizar()
     {
         if(!activo) return;
-        if(Raylib.IsMouseButtonPressed(MouseButton.Left) == true && Raylib.CheckCollisionPointRec(Raylib.GetMousePosition(),rectangulo))
+        rectangulo = new Rectangle(posicionX, posicionY, ancho, alto);
+        System.Numerics.Vector2 mouse = enMundo
+            ? Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), Render2d.camara)
+            : Raylib.GetMousePosition();
+        if(Raylib.IsMouseButtonPressed(MouseButton.Left) == true && Raylib.CheckCollisionPointRec(mouse, rectangulo))
         {
             click();
         }
@@ -174,6 +181,7 @@ public class Boton : ObjetoAbstracto
     public override void Dibujar()
     {
         if(!visible) return;
+        rectangulo = new Rectangle(posicionX, posicionY, ancho, alto);
         int largoDeTexto = Raylib.MeasureText(textoAMostrar,tamañoDelTexto);
         int altoDelTextoAprox = tamañoDelTexto;
         if(imagen != null)
@@ -209,7 +217,7 @@ public class Boton : ObjetoAbstracto
         }
 
         this.rectangulo = new Rectangle(posicionX,posicionY,ancho,alto);
-        InsertarACentroUI();
-
+        if (enMundo) InsertarACentroUIEnMundo();
+        else InsertarACentroUI();
     }
 }
