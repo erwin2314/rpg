@@ -17,6 +17,12 @@ public static class gestorCliente
     public static Dictionary<ushort, JugadorRemoto> jugadoresRemotos = new Dictionary<ushort, JugadorRemoto>();
 
     /// <summary>
+    /// Enemigos sincronizados por el servidor, indexados por el ObjetoAbstracto.id que tienen en el servidor <br/>
+    /// Solo se rellena en modo Oleadas (el servidor envia spawn/posicion/muerte)
+    /// </summary>
+    public static Dictionary<int, EnemigoRemoto> enemigosRemotos = new Dictionary<int, EnemigoRemoto>();
+
+    /// <summary>
     /// Ids para los que el cliente ya pidio el snapshot y aun no ha llegado <br/>
     /// Evita spam: solo se pide una vez hasta recibir snapshot
     /// </summary>

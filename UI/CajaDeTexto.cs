@@ -72,13 +72,15 @@ public class CampoDeTexto:ObjetoAbstracto
         Action<string>? accionAlDarEnter = null,
         IdTextura idTextura = IdTextura.vacio,
         int tamañoDelTexto = 16,
-        int capaDibujado = 101
+        int capaDibujado = 101,
+        bool enMundo = false
     )
     :base
     (
         capaDibujado
     )
     {
+        this.enMundo = enMundo;
         this.textoAMostrar = textoAMostrar;
         this.posicionX = posicionX;
         this.posicionY = posicionY;
@@ -101,18 +103,23 @@ public class CampoDeTexto:ObjetoAbstracto
         {
             this.imagen = GestorTexturas.ObtenerTextura(idTextura);
         }
-        
+
 
         this.rectangulo = new Rectangle(posicionX,posicionY,ancho,alto);
-        InsertarACentroUI();
+        if (enMundo) InsertarACentroUIEnMundo();
+        else InsertarACentroUI();
     }
 
     public override void Actualizar()
     {
         if (!activo) return;
+        rectangulo = new Rectangle(posicionX, posicionY, ancho, alto);
 
-        // Detectar click para enfocar/desenfocar
-        bool mouseEncima = Raylib.CheckCollisionPointRec(Raylib.GetMousePosition(), rectangulo);
+        // Detectar click para enfocar/desenfocar (convertir a mundo si aplica)
+        System.Numerics.Vector2 mousePos = enMundo
+            ? Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), Render2d.camara)
+            : Raylib.GetMousePosition();
+        bool mouseEncima = Raylib.CheckCollisionPointRec(mousePos, rectangulo);
 
         if (Raylib.IsMouseButtonPressed(MouseButton.Left))
         {
@@ -152,6 +159,7 @@ public class CampoDeTexto:ObjetoAbstracto
     public override void Dibujar()
     {
         if (!visible) return;
+        rectangulo = new Rectangle(posicionX, posicionY, ancho, alto);
 
         // Fondo
         if (imagen != null)
@@ -193,7 +201,8 @@ public class CampoDeTexto:ObjetoAbstracto
         }
 
         this.rectangulo = new Rectangle(posicionX,posicionY,ancho,alto);
-        InsertarACentroUI();
+        if (enMundo) InsertarACentroUIEnMundo();
+        else InsertarACentroUI();
     }
 
     public override void AplicarFuenteTexto()

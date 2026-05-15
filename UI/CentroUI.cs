@@ -21,6 +21,18 @@ public static class CentroUI
     }
 
     /// <summary>
+    /// Inserta el objeto pero su dibujado se hace dentro de BeginMode2D(camara) <br/>
+    /// Sigue siendo actualizado por CentroUI.Actualizar como cualquier otro componente
+    /// </summary>
+    public static void InsertarComoMundo(ObjetoAbstracto obj)
+    {
+        objetosAbstractos.Add(obj);
+        objetosAbstractos.Sort((a,b) => a.capaDibujado.CompareTo(b.capaDibujado));
+        Render2d.InsertarAObjetosMundo(obj);
+        obj.enMundo = true;
+    }
+
+    /// <summary>
     /// Elimina el objeto abstracto de la lista interna y de la lista interna del render
     /// </summary>
     /// <param name="objetoAbstractoAEliminar">objeto abstracto a eliminar</param>
@@ -28,6 +40,7 @@ public static class CentroUI
     {
         objetosAbstractos.Remove(objetoAbstractoAEliminar);
         Render2d.EliminarUnObjetoDeObjetosAbstractos(objetoAbstractoAEliminar);
+        Render2d.EliminarUnObjetoDeObjetosMundo(objetoAbstractoAEliminar);
     }
 
     /// <summary>

@@ -88,13 +88,15 @@ public class Panel : ObjetoAbstracto
         string textoAMostrar = "",
         IdTextura idTextura = IdTextura.vacio,
         int tamañoDelTexto = 16,
-        int capaDibujado = 101
+        int capaDibujado = 101,
+        bool enMundo = false
     )
     :base
     (
         capaDibujado
     )
     {
+        this.enMundo = enMundo;
         this.textoAMostrar = textoAMostrar;
         this.posicionX = posicionX;
         this.posicionY = posicionY;
@@ -115,10 +117,11 @@ public class Panel : ObjetoAbstracto
         {
             this.imagen = GestorTexturas.ObtenerTextura(idTextura);
         }
-        
+
 
         this.rectangulo = new Rectangle(posicionX,posicionY,ancho,alto);
-        InsertarACentroUI();
+        if (enMundo) InsertarACentroUIEnMundo();
+        else InsertarACentroUI();
     }
 
     /// <summary>
@@ -144,6 +147,7 @@ public class Panel : ObjetoAbstracto
     public override void Dibujar()
     {
         if(!visible) return;
+        rectangulo = new Rectangle(posicionX, posicionY, ancho, alto);
         int largoDeTexto = Raylib.MeasureText(textoAMostrar,tamañoDelTexto);
         int altoDelTextoAprox = tamañoDelTexto;
         if(imagen != null)
@@ -179,6 +183,7 @@ public class Panel : ObjetoAbstracto
         }
 
         this.rectangulo = new Rectangle(posicionX,posicionY,ancho,alto);
-        InsertarACentroUI();
+        if (enMundo) InsertarACentroUIEnMundo();
+        else InsertarACentroUI();
     }
 }

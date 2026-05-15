@@ -13,11 +13,12 @@ public static class UI
     public static Boton Boton(string texto = "", int x = 0, int y = 0,
         Action? onClick = null, int ancho = 200, int alto = 50,
         Func<string>? fuenteTexto = null,
-        Color? colorTexto = null, Color? colorRectangulo = null)
+        Color? colorTexto = null, Color? colorRectangulo = null,
+        bool enMundo = false)
     {
         Color ct = colorTexto ?? Color.Black;
         Color cr = colorRectangulo ?? Color.White;
-        var b = new Boton(x, y, ancho, alto, ct, cr, texto, onClick, IdTextura.placeholder);
+        var b = new Boton(x, y, ancho, alto, ct, cr, texto, onClick, IdTextura.placeholder, enMundo: enMundo);
         b.fuenteTexto = fuenteTexto;
         if (fuenteTexto != null) b.AplicarFuenteTexto();
         return b;
@@ -29,11 +30,12 @@ public static class UI
     public static Panel Panel(string texto = "", int x = 0, int y = 0,
         int ancho = 200, int alto = 50,
         Func<string>? fuenteTexto = null,
-        Color? colorTexto = null, Color? colorRectangulo = null)
+        Color? colorTexto = null, Color? colorRectangulo = null,
+        bool enMundo = false)
     {
         Color ct = colorTexto ?? Color.White;
         Color cr = colorRectangulo ?? Color.Black;
-        var p = new Panel(x, y, ancho, alto, ct, cr, texto);
+        var p = new Panel(x, y, ancho, alto, ct, cr, texto, enMundo: enMundo);
         p.fuenteTexto = fuenteTexto;
         if (fuenteTexto != null) p.AplicarFuenteTexto();
         return p;
@@ -47,11 +49,12 @@ public static class UI
         Action<string>? onEnter = null, string textoInicial = "",
         int ancho = 800, int alto = 30,
         Func<string>? fuenteTexto = null,
-        Color? colorTexto = null, Color? colorRectangulo = null)
+        Color? colorTexto = null, Color? colorRectangulo = null,
+        bool enMundo = false)
     {
         Color ct = colorTexto ?? Color.Black;
         Color cr = colorRectangulo ?? Color.White;
-        var c = new CampoDeTexto(x, y, ancho, alto, ct, cr, textoInicial, onEnter);
+        var c = new CampoDeTexto(x, y, ancho, alto, ct, cr, textoInicial, onEnter, enMundo: enMundo);
         c.fuenteTexto = fuenteTexto;
         if (fuenteTexto != null) c.AplicarFuenteTexto();
         return c;

@@ -20,18 +20,20 @@ public class MenuBuilder
     public MenuBuilder Boton(string texto = "", int x = 0, int y = 0,
         Action? onClick = null, int ancho = 200, int alto = 50,
         Func<string>? fuenteTexto = null,
-        Color? colorTexto = null, Color? colorRectangulo = null)
+        Color? colorTexto = null, Color? colorRectangulo = null,
+        bool enMundo = false)
     {
-        elementos.Add(UI.Boton(texto, x, y, onClick, ancho, alto, fuenteTexto, colorTexto, colorRectangulo));
+        elementos.Add(UI.Boton(texto, x, y, onClick, ancho, alto, fuenteTexto, colorTexto, colorRectangulo, enMundo));
         return this;
     }
 
     public MenuBuilder Boton(string texto, int x, int y, out Boton refOut,
         Action? onClick = null, int ancho = 200, int alto = 50,
         Func<string>? fuenteTexto = null,
-        Color? colorTexto = null, Color? colorRectangulo = null)
+        Color? colorTexto = null, Color? colorRectangulo = null,
+        bool enMundo = false)
     {
-        refOut = UI.Boton(texto, x, y, onClick, ancho, alto, fuenteTexto, colorTexto, colorRectangulo);
+        refOut = UI.Boton(texto, x, y, onClick, ancho, alto, fuenteTexto, colorTexto, colorRectangulo, enMundo);
         elementos.Add(refOut);
         return this;
     }
@@ -39,18 +41,20 @@ public class MenuBuilder
     public MenuBuilder Panel(string texto = "", int x = 0, int y = 0,
         int ancho = 200, int alto = 50,
         Func<string>? fuenteTexto = null,
-        Color? colorTexto = null, Color? colorRectangulo = null)
+        Color? colorTexto = null, Color? colorRectangulo = null,
+        bool enMundo = false)
     {
-        elementos.Add(UI.Panel(texto, x, y, ancho, alto, fuenteTexto, colorTexto, colorRectangulo));
+        elementos.Add(UI.Panel(texto, x, y, ancho, alto, fuenteTexto, colorTexto, colorRectangulo, enMundo));
         return this;
     }
 
     public MenuBuilder Panel(string texto, int x, int y, out Panel refOut,
         int ancho = 200, int alto = 50,
         Func<string>? fuenteTexto = null,
-        Color? colorTexto = null, Color? colorRectangulo = null)
+        Color? colorTexto = null, Color? colorRectangulo = null,
+        bool enMundo = false)
     {
-        refOut = UI.Panel(texto, x, y, ancho, alto, fuenteTexto, colorTexto, colorRectangulo);
+        refOut = UI.Panel(texto, x, y, ancho, alto, fuenteTexto, colorTexto, colorRectangulo, enMundo);
         elementos.Add(refOut);
         return this;
     }
@@ -59,9 +63,10 @@ public class MenuBuilder
         Action<string>? onEnter = null, string textoInicial = "",
         int ancho = 800, int alto = 30,
         Func<string>? fuenteTexto = null,
-        Color? colorTexto = null, Color? colorRectangulo = null)
+        Color? colorTexto = null, Color? colorRectangulo = null,
+        bool enMundo = false)
     {
-        elementos.Add(UI.Campo(x, y, onEnter, textoInicial, ancho, alto, fuenteTexto, colorTexto, colorRectangulo));
+        elementos.Add(UI.Campo(x, y, onEnter, textoInicial, ancho, alto, fuenteTexto, colorTexto, colorRectangulo, enMundo));
         return this;
     }
 
@@ -69,9 +74,10 @@ public class MenuBuilder
         Action<string>? onEnter = null, string textoInicial = "",
         int ancho = 800, int alto = 30,
         Func<string>? fuenteTexto = null,
-        Color? colorTexto = null, Color? colorRectangulo = null)
+        Color? colorTexto = null, Color? colorRectangulo = null,
+        bool enMundo = false)
     {
-        refOut = UI.Campo(x, y, onEnter, textoInicial, ancho, alto, fuenteTexto, colorTexto, colorRectangulo);
+        refOut = UI.Campo(x, y, onEnter, textoInicial, ancho, alto, fuenteTexto, colorTexto, colorRectangulo, enMundo);
         elementos.Add(refOut);
         return this;
     }

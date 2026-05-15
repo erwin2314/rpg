@@ -24,13 +24,37 @@ public static class FuncionesPartida
     }
 
     /// <summary>
-    /// Iniciar partida en modo Por Equipos
+    /// Iniciar partida en modo Oleadas (PvE) <br/>
+    /// El servidor construye la rejilla de pathfinding y arranca GestorOleadas
     /// </summary>
     [EventoAPI("Partida")]
-    public static void IniciarPartidaPorEquipos()
+    public static void IniciarPartidaOleadas()
     {
-        modoActual = ModoDeJuego.PorEquipos;
+        modoActual = ModoDeJuego.Oleadas;
         IniciarPartida();
+        if (gestorRed.EsServidor)
+        {
+            Pathfinding.Construir();
+            GestorOleadas.Iniciar();
+        }
+    }
+
+    /// <summary>
+    /// Solo servidor: termina la partida PvE anunciando victoria o derrota <br/>
+    /// Reutiliza el mensaje finPartida con un idGanador sentinela (0 = victoria, 0xFFFE = derrota)
+    /// </summary>
+    public static void TerminarPartidaPvE(bool victoria)
+    {
+        if (!gestorRed.EsServidor) return;
+        GestorOleadas.Detener();
+        ushort idGanador = victoria ? (ushort)0 : (ushort)0xFFFE;
+        if (gestorRed.EnLinea)
+        {
+            Message m = Message.Create(MessageSendMode.Reliable, IdMensajesDeRed.finPartida);
+            m.AddUShort(idGanador);
+            gestorServidor.EnviarMensajeATodosLosClientes(m);
+        }
+        AplicarFinPartidaLocal(idGanador);
     }
 
     /// <summary>

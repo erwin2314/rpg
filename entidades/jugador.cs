@@ -23,6 +23,12 @@ public class Jugador : EntidadBase
     /// <summary>RNG local para calcular dispersion del disparo</summary>
     private Random rng = new Random();
 
+    /// <summary>Barra de vida visible encima del jugador</summary>
+    public BarraDeProgreso barraVida;
+
+    /// <summary>Etiqueta con nombre + puntuacion encima de la barra</summary>
+    public Panel etiquetaNombre;
+
     public Jugador(Vector2 posicion, ushort idRiptide, Color color)
         : base(posicion, Vector2.Zero, 400f, 0f, 20f, 100, 100, capaDibujado: 50)
     {
@@ -31,6 +37,26 @@ public class Jugador : EntidadBase
         forma = FormaColision.Circulo;
         solido = true;
         GestorEntidades.InsertarEntidad(this);
+
+        barraVida = new BarraDeProgreso(
+            total: vidaMaxima, progreso: vidaActual, avance: 0f,
+            colorRectanguloFondo: Color.Red, colorRectanguloFrente: Color.Green,
+            posicionX: (int)posicion.X - 25,
+            posicionY: (int)(posicion.Y - radio - 12),
+            ancho: 50, alto: 6, autoIncremental: false,
+            capaDibujado: 51, enMundo: true);
+
+        etiquetaNombre = new Panel(
+            posicionX: (int)posicion.X - 50,
+            posicionY: (int)(posicion.Y - radio - 28),
+            ancho: 100, alto: 14,
+            colorDelTexto: Color.White,
+            colorDelRectangulo: new Color((byte)0, (byte)0, (byte)0, (byte)0),
+            textoAMostrar: "",
+            idTextura: IdTextura.vacio,
+            tamañoDelTexto: 12,
+            capaDibujado: 52,
+            enMundo: true);
     }
 
     public override void Inicializar() { }
@@ -80,7 +106,22 @@ public class Jugador : EntidadBase
             }
         }
 
+        ActualizarHUD();
         EnviarPosicion();
+    }
+
+    private void ActualizarHUD()
+    {
+        int anchoBarra = 50;
+        barraVida.posicionX = (int)(posicion.X - anchoBarra / 2);
+        barraVida.posicionY = (int)(posicion.Y - radio - 12);
+        barraVida.total = vidaMaxima;
+        barraVida.progreso = vidaActual;
+
+        int punt = gestorRed.jugadoresConectados.TryGetValue(idRiptide, out DatosJugador? d) ? d.puntuacion : 0;
+        etiquetaNombre.textoAMostrar = $"{ConfiguracionRed.NombreUsuario} [{punt}]";
+        etiquetaNombre.posicionX = (int)(posicion.X - 50);
+        etiquetaNombre.posicionY = (int)(posicion.Y - radio - 28);
     }
 
     private void EnviarPosicion()
@@ -114,33 +155,6 @@ public class Jugador : EntidadBase
             new Rectangle(0, 0, tex.Width, tex.Height),
             new Rectangle(posicion.X - radio, posicion.Y - radio, radio * 2, radio * 2),
             Vector2.Zero, 0f, color);
-
-        int puntuacion = gestorRed.jugadoresConectados.TryGetValue(idRiptide, out DatosJugador? dl) ? dl.puntuacion : 0;
-        DibujarNombreYVida(posicion, radio, ConfiguracionRed.NombreUsuario, vidaActual, vidaMaxima, puntuacion);
-    }
-
-    /// <summary>
-    /// Dibuja la barra de vida y el nombre (con puntuacion) encima de la entidad <br/>
-    /// Usado tanto por Jugador como por JugadorRemoto
-    /// </summary>
-    public static void DibujarNombreYVida(Vector2 posicion, float radio, string nombre, int vidaActual, int vidaMaxima, int puntuacion)
-    {
-        int anchoBarra = 50;
-        int altoBarra = 6;
-        int x = (int)(posicion.X - anchoBarra / 2);
-        int yBarra = (int)(posicion.Y - radio - 12);
-
-        Raylib.DrawRectangle(x, yBarra, anchoBarra, altoBarra, Color.Red);
-        float frac = vidaMaxima > 0 ? (float)vidaActual / vidaMaxima : 0;
-        Raylib.DrawRectangle(x, yBarra, (int)(anchoBarra * frac), altoBarra, Color.Green);
-
-        string texto = $"{nombre} [{puntuacion}]";
-        int tam = 12;
-        int anchoTexto = Raylib.MeasureText(texto, tam);
-        Raylib.DrawText(texto,
-            (int)(posicion.X - anchoTexto / 2),
-            yBarra - tam - 2,
-            tam, Color.White);
     }
 
     public override void RecibirDaño(int cantidad) => base.RecibirDaño(cantidad);

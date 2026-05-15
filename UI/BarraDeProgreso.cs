@@ -101,14 +101,15 @@ public class BarraDeProgreso : ObjetoAbstracto
         int ancho,
         int alto,
         bool autoIncremental,
-        int capaDibujado = 101
-
+        int capaDibujado = 101,
+        bool enMundo = false
     )
     :base
     (
         capaDibujado
     )
     {
+        this.enMundo = enMundo;
         this.total = total;
         this.progreso = progreso;
         this.avance = avance;
@@ -119,7 +120,8 @@ public class BarraDeProgreso : ObjetoAbstracto
         this.ancho = ancho;
         this.alto = alto;
         this.autoIncremental =autoIncremental;
-        InsertarACentroUI();
+        if (enMundo) InsertarACentroUIEnMundo();
+        else InsertarACentroUI();
     }
 
     /// <summary>
@@ -134,39 +136,31 @@ public class BarraDeProgreso : ObjetoAbstracto
     /// </summary>
     public override void Inicializar()
     {
-        InsertarACentroUI();
+        if (enMundo) InsertarACentroUIEnMundo();
+        else InsertarACentroUI();
     }
 
     /// <summary>
-    /// Calcula el nivel de progreso y comprueba si esta vacia o completa
+    /// Recalcula porcentaje, completo y vacia cada frame en funcion del progreso actual <br/>
+    /// Si autoIncremental esta activo y la barra no esta llena, suma avance*deltaTime al progreso <br/>
+    /// Mantiene progreso clamped a [0, total] y porcentaje a [0, 1]
     /// </summary>
     public override void Actualizar()
     {
         if(!activo) return;
-        if(completo != true)
+
+        if(autoIncremental && progreso < total)
         {
-            if(progreso >= total && avance >= 0)
-            {
-                progreso = total;
-                porcentaje = 1;
-                completo = true;
-            }
-            else if(autoIncremental == true)
-            {
-                progreso = progreso + (avance * Raylib.GetFrameTime());
-                
-            }
-            porcentaje = progreso/total;
+            progreso += avance * Raylib.GetFrameTime();
         }
-        if(progreso <= 0)
-        {
-            vacia = true;
-        }
-        else
-        {
-            vacia = false;
-        }
-        
+
+        if(progreso >= total) { progreso = total; completo = true; }
+        else                  { completo = false; }
+
+        if(progreso <= 0)     { progreso = 0; vacia = true; }
+        else                  { vacia = false; }
+
+        porcentaje = total > 0 ? progreso / total : 0f;
     }
 
     /// <summary>
