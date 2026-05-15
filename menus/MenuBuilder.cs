@@ -20,20 +20,24 @@ public class MenuBuilder
     public MenuBuilder Boton(string texto = "", int x = 0, int y = 0,
         Action? onClick = null, int ancho = 200, int alto = 50,
         Func<string>? fuenteTexto = null,
+        Func<bool>? fuenteVisible = null,
         Color? colorTexto = null, Color? colorRectangulo = null,
+        IdTextura idTextura = IdTextura.placeholder,
         bool enMundo = false)
     {
-        elementos.Add(UI.Boton(texto, x, y, onClick, ancho, alto, fuenteTexto, colorTexto, colorRectangulo, enMundo));
+        elementos.Add(UI.Boton(texto, x, y, onClick, ancho, alto, fuenteTexto, fuenteVisible, colorTexto, colorRectangulo, idTextura, enMundo));
         return this;
     }
 
     public MenuBuilder Boton(string texto, int x, int y, out Boton refOut,
         Action? onClick = null, int ancho = 200, int alto = 50,
         Func<string>? fuenteTexto = null,
+        Func<bool>? fuenteVisible = null,
         Color? colorTexto = null, Color? colorRectangulo = null,
+        IdTextura idTextura = IdTextura.placeholder,
         bool enMundo = false)
     {
-        refOut = UI.Boton(texto, x, y, onClick, ancho, alto, fuenteTexto, colorTexto, colorRectangulo, enMundo);
+        refOut = UI.Boton(texto, x, y, onClick, ancho, alto, fuenteTexto, fuenteVisible, colorTexto, colorRectangulo, idTextura, enMundo);
         elementos.Add(refOut);
         return this;
     }
@@ -41,20 +45,24 @@ public class MenuBuilder
     public MenuBuilder Panel(string texto = "", int x = 0, int y = 0,
         int ancho = 200, int alto = 50,
         Func<string>? fuenteTexto = null,
+        Func<bool>? fuenteVisible = null,
         Color? colorTexto = null, Color? colorRectangulo = null,
+        int capaDibujado = 101,
         bool enMundo = false)
     {
-        elementos.Add(UI.Panel(texto, x, y, ancho, alto, fuenteTexto, colorTexto, colorRectangulo, enMundo));
+        elementos.Add(UI.Panel(texto, x, y, ancho, alto, fuenteTexto, fuenteVisible, colorTexto, colorRectangulo, capaDibujado, enMundo));
         return this;
     }
 
     public MenuBuilder Panel(string texto, int x, int y, out Panel refOut,
         int ancho = 200, int alto = 50,
         Func<string>? fuenteTexto = null,
+        Func<bool>? fuenteVisible = null,
         Color? colorTexto = null, Color? colorRectangulo = null,
+        int capaDibujado = 101,
         bool enMundo = false)
     {
-        refOut = UI.Panel(texto, x, y, ancho, alto, fuenteTexto, colorTexto, colorRectangulo, enMundo);
+        refOut = UI.Panel(texto, x, y, ancho, alto, fuenteTexto, fuenteVisible, colorTexto, colorRectangulo, capaDibujado, enMundo);
         elementos.Add(refOut);
         return this;
     }
@@ -63,10 +71,11 @@ public class MenuBuilder
         Action<string>? onEnter = null, string textoInicial = "",
         int ancho = 800, int alto = 30,
         Func<string>? fuenteTexto = null,
+        Func<bool>? fuenteVisible = null,
         Color? colorTexto = null, Color? colorRectangulo = null,
         bool enMundo = false)
     {
-        elementos.Add(UI.Campo(x, y, onEnter, textoInicial, ancho, alto, fuenteTexto, colorTexto, colorRectangulo, enMundo));
+        elementos.Add(UI.Campo(x, y, onEnter, textoInicial, ancho, alto, fuenteTexto, fuenteVisible, colorTexto, colorRectangulo, enMundo));
         return this;
     }
 
@@ -74,11 +83,24 @@ public class MenuBuilder
         Action<string>? onEnter = null, string textoInicial = "",
         int ancho = 800, int alto = 30,
         Func<string>? fuenteTexto = null,
+        Func<bool>? fuenteVisible = null,
         Color? colorTexto = null, Color? colorRectangulo = null,
         bool enMundo = false)
     {
-        refOut = UI.Campo(x, y, onEnter, textoInicial, ancho, alto, fuenteTexto, colorTexto, colorRectangulo, enMundo);
+        refOut = UI.Campo(x, y, onEnter, textoInicial, ancho, alto, fuenteTexto, fuenteVisible, colorTexto, colorRectangulo, enMundo);
         elementos.Add(refOut);
+        return this;
+    }
+
+    public MenuBuilder Desplegable(int x, int y, int ancho, int alto,
+        List<string> opciones,
+        Func<string>? fuenteValor = null,
+        Action<string>? accionAlSeleccionar = null,
+        Func<bool>? fuenteVisible = null,
+        Func<List<string>>? fuenteOpciones = null,
+        Color? colorTexto = null, Color? colorRectangulo = null)
+    {
+        elementos.Add(UI.Desplegable(x, y, ancho, alto, opciones, fuenteValor, accionAlSeleccionar, fuenteVisible, fuenteOpciones, colorTexto, colorRectangulo));
         return this;
     }
 

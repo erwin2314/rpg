@@ -23,6 +23,12 @@ public abstract class ObjetoAbstracto : ISerializable
     public Func<string>? fuenteTexto = null;
 
     /// <summary>
+    /// Funcion opcional que determina si el componente esta visible cuando se recarga la UI <br/>
+    /// Si es null, se respeta el valor manual del campo `visible`
+    /// </summary>
+    public Func<bool>? fuenteVisible = null;
+
+    /// <summary>
     /// Contador estatico para asignar ids unicos a cada objeto abstracto creado
     /// </summary>
     private static int contadorIds = 0;
@@ -65,6 +71,17 @@ public abstract class ObjetoAbstracto : ISerializable
     /// Implementacion por defecto vacia; cada subclase con texto la sobreescribe
     /// </summary>
     public virtual void AplicarFuenteTexto() { }
+
+    /// <summary>
+    /// Aplica fuenteVisible() al flag `visible` del componente si esta definida <br/>
+    /// Se respeta `activo`: si el menu nos desactivo, NO se reescribe `visible` (la jerarquia de menus toma precedencia) <br/>
+    /// Se llama desde CentroUI cada frame
+    /// </summary>
+    public virtual void AplicarVisibilidad()
+    {
+        if (!activo) return;
+        if (fuenteVisible != null) visible = fuenteVisible();
+    }
     
     /// <summary>
     /// Inserta el objeto directamente a la lista de objetos del render

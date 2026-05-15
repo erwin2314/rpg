@@ -112,7 +112,7 @@ public class CampoDeTexto:ObjetoAbstracto
 
     public override void Actualizar()
     {
-        if (!activo) return;
+        if (!activo || !visible) return;
         rectangulo = new Rectangle(posicionX, posicionY, ancho, alto);
 
         // Detectar click para enfocar/desenfocar (convertir a mundo si aplica)

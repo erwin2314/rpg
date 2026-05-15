@@ -55,13 +55,14 @@ public static class CentroUI
     }
 
     /// <summary>
-    /// Llama AplicarFuenteTexto en cada componente registrado <br/>
-    /// Los componentes con fuenteTexto no nulo se sincronizan con su fuente
+    /// Llama AplicarFuenteTexto y AplicarVisibilidad en cada componente registrado <br/>
+    /// Los componentes con fuenteTexto/fuenteVisible no nulos se sincronizan con su fuente
     /// </summary>
     public static void AplicarFuentesDeTexto()
     {
         foreach (ObjetoAbstracto item in objetosAbstractos)
         {
+            item.AplicarVisibilidad();
             item.AplicarFuenteTexto();
         }
     }

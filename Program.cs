@@ -26,6 +26,9 @@ public static class Program
         ConfiguracionRed.ObtenerConfiguracionDeRed();
         ConfiguracionMiscelanea.ObtenerConfiguracionMiscelanea();
 
+        // Crea comportamientos/Basico.jsonc, Agresivo.jsonc, Torreta.jsonc si no existen
+        ComportamientoIA.BootstrapDefaults();
+
         GestorTexturas.CargarTexturas();
 
         Menu menuPrincipal = new MenuBuilder(visible: true)
@@ -42,7 +45,9 @@ public static class Program
                        ? "(nadie)"
                        : string.Join(" / ", gestorRed.jugadoresConectados.Values.Select(d => d.nombre)))
             .Boton("Iniciar Partida", 1000, 50, out Boton botonIniciarPartida, ancho: 200, alto: 100)
-            .Boton("Configuracion", 1000, 300, out Boton botonAConfiguracion, ancho: 200, alto: 100)
+            .Boton("Editor de mapas", 1000, 175, onClick: () => API.Encolar(EditorMapa.Entrar), ancho: 200, alto: 60)
+            .Boton("Editor de IA", 1000, 245, onClick: () => API.Encolar(EditorComportamientoIA.Entrar), ancho: 200, alto: 60)
+            .Boton("Configuracion", 1000, 315, out Boton botonAConfiguracion, ancho: 200, alto: 60)
             .Build();
 
         botonIniciarPartida.visible = false;
@@ -79,6 +84,9 @@ public static class Program
         botonAConfiguracion.accionAlHacerClick = () => API.Encolar(Menus.CambiarMenu, menuConfiguracion);
         botonRegresar.accionAlHacerClick = () => API.Encolar(Menus.CambiarMenu, menuPrincipal);
 
+        UIEditor.Construir(menuPrincipal);
+        UIEditorComportamientoIA.Construir(menuPrincipal);
+
         Menus.menuActivo = menuPrincipal;
 
         // Visibilidad del boton "Iniciar Partida": solo visible si soy servidor, no estoy en partida y estoy en el menu principal
@@ -93,10 +101,22 @@ public static class Program
         while(!Raylib.WindowShouldClose())
         {
             CMD.ProcesarComandos();
-            gestorRed.Actualizar();
-            GestorOleadas.Actualizar();
-            GestorEntidades.Actualizar();
-            GestorEntidades.ProcesarColisiones();
+            if (!EditorMapa.activo && !EditorComportamientoIA.activo)
+            {
+                gestorRed.Actualizar();
+                GestorOleadas.Actualizar();
+                FuncionesArmas.Actualizar();
+                GestorEntidades.Actualizar();
+                GestorEntidades.ProcesarColisiones();
+            }
+            else if (EditorMapa.activo)
+            {
+                EditorMapa.Actualizar();
+            }
+            else if (EditorComportamientoIA.activo)
+            {
+                EditorComportamientoIA.Actualizar();
+            }
             CentroUI.Actualizar();
             API.Procesar();
             Observadores.Procesar();

@@ -4,28 +4,51 @@ using Riptide;
 
 /// <summary>
 /// Entidad hostil controlada por IA. Solo el servidor la simula; los clientes ven un EnemigoRemoto sincronizado por red <br/>
-/// Toda su logica viene del ComportamientoIA recibido en el constructor (estados disponibles + parametros) <br/>
+/// Logica: cada tick recorre el arbol de decision de ComportamientoIA hasta una Accion, y la ejecuta via EjecutorAcciones <br/>
 /// Usa el id heredado de ObjetoAbstracto como identificador unico para serializacion de red
 /// </summary>
 public class Enemigo : EntidadBase
 {
     public ComportamientoIA comportamiento;
     public Arma armaActual;
-    public IEstadoIA estado;
     public List<Vector2> caminoActual = new List<Vector2>();
     public int indiceCamino = 0;
     public float cooldownDisparo = 0f;
     public float tiempoUltimoRecalcular = 0f;
     public EntidadBase? objetivoActual;
 
+    /// <summary>Posicion del SpawnEnemigoDatos que lo creo (o posicion inicial si fue random)</summary>
+    public Vector2 origenSpawn;
+
+    /// <summary>Copia de caminoPatrulla del spawn (waypoints absolutos); vacio si el spawn no definio camino</summary>
+    public List<Vector2> caminoPatrulla = new List<Vector2>();
+
+    /// <summary>Indice del waypoint actual en caminoPatrulla (cicla)</summary>
+    public int indiceCaminoPatrulla = 0;
+
+    /// <summary>Destino actual de la patrulla aleatoria (mientras camina hacia el)</summary>
+    public Vector2? destinoAleatorio;
+
+    /// <summary>Radio alrededor de origenSpawn donde se generan los destinos aleatorios</summary>
+    public float radioPatrullaAleatoria = 200f;
+
+    /// <summary>Indice del spawn en Mapa.mapaActivo.spawnsEnemigo (-1 si fue generado fuera del sistema de spawns)</summary>
+    public int spawnOrigenIndex = -1;
+
     public BarraDeProgreso barraVida;
 
-    public Enemigo(Vector2 posicion, int vidaMax, ComportamientoIA comportamiento)
+    public Enemigo(Vector2 posicion, int vidaMax, ComportamientoIA comportamiento, SpawnEnemigoDatos? spawnDatos = null, int spawnIndex = -1)
         : base(posicion, Vector2.Zero, comportamiento.velocidad, 0f, 20f, vidaMax, vidaMax, capaDibujado: 50)
     {
         this.comportamiento = comportamiento;
-        this.armaActual = comportamiento.armaInicial;
-        this.estado = comportamiento.estadoInicial;
+        this.armaActual = Mapa.presetsArma.TryGetValue(comportamiento.armaInicial, out var fa) ? fa() : Arma.Pistola1();
+        this.origenSpawn = posicion;
+        this.spawnOrigenIndex = spawnIndex;
+        if (spawnDatos != null)
+        {
+            this.caminoPatrulla = new List<Vector2>(spawnDatos.caminoPatrulla);
+            this.radioPatrullaAleatoria = spawnDatos.radioPatrullaAleatoria;
+        }
         forma = FormaColision.Circulo;
         solido = true;
         GestorEntidades.InsertarEntidad(this);
@@ -37,6 +60,8 @@ public class Enemigo : EntidadBase
             posicionY: (int)(posicion.Y - radio - 12),
             ancho: 50, alto: 6, autoIncremental: false,
             capaDibujado: 51, enMundo: true);
+        barraVida.mostrarTexto = true;
+        barraVida.tamanoTexto = 10;
     }
 
     public override void Inicializar() { }
@@ -44,9 +69,35 @@ public class Enemigo : EntidadBase
     public override void Actualizar()
     {
         if (!gestorRed.EsServidor) return;
-        estado.Actualizar(this);
+
+        // Working memory: actualizar timers y reanudar objetivo cada tick
+        cooldownDisparo -= Raylib.GetFrameTime();
+        tiempoUltimoRecalcular += Raylib.GetFrameTime();
+        objetivoActual = FuncionesIA.JugadorMasCercano(this);
+
+        string accion = EvaluarArbol(comportamiento, this);
+        EjecutorAcciones.Ejecutar(accion, this);
+
         ActualizarHUD();
         BroadcastPosicion();
+    }
+
+    /// <summary>Recorre el arbol desde la raiz evaluando Condiciones hasta encontrar una Accion</summary>
+    private static string EvaluarArbol(ComportamientoIA c, Enemigo e)
+    {
+        NodoIA? actual = null;
+        foreach (NodoIA n in c.nodos) if (n.id == c.raizId) { actual = n; break; }
+
+        int limite = 64; // proteccion contra ciclos por referencias circulares
+        while (actual != null && actual.tipo == TipoNodo.Condicion && limite-- > 0)
+        {
+            bool ok = EvaluadorPredicados.Evaluar(actual.predicado, actual.umbral, e);
+            int siguiente = ok ? actual.siId : actual.noId;
+            NodoIA? hijo = null;
+            foreach (NodoIA n in c.nodos) if (n.id == siguiente) { hijo = n; break; }
+            actual = hijo;
+        }
+        return actual?.accion ?? "Idle";
     }
 
     private void ActualizarHUD()
@@ -57,9 +108,6 @@ public class Enemigo : EntidadBase
         barraVida.total = vidaMaxima;
         barraVida.progreso = vidaActual;
     }
-
-    /// <summary>Cambia el estado activo; usado por los IEstadoIA al transicionar</summary>
-    public void CambiarEstado(IEstadoIA nuevo) => estado = nuevo;
 
     public override void Dibujar()
     {
