@@ -11,6 +11,12 @@ public static class Menus
     public static Menu? menuActivo;
 
     /// <summary>
+    /// Referencia al menu principal del juego (asignada en Program tras construirlo) <br/>
+    /// Permite a otros sistemas (ej. FuncionesPartida.AplicarFinPartidaLocal) volver al menu principal
+    /// </summary>
+    public static Menu? menuPrincipal;
+
+    /// <summary>
     /// Oculta el menu activo y muestra el destino como nuevo activo
     /// </summary>
     [EventoAPI("Menus")]

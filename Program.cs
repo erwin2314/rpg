@@ -15,7 +15,6 @@ public static class Program
     {
 
         Raylib.InitWindow(1280,720,"prueba");
-        Raylib.SetTargetFPS(60);
 
         Serializador.RegistrarClase<Panel>();
         Serializador.RegistrarClase<BarraDeProgreso>();
@@ -25,6 +24,9 @@ public static class Program
 
         ConfiguracionRed.ObtenerConfiguracionDeRed();
         ConfiguracionMiscelanea.ObtenerConfiguracionMiscelanea();
+
+        // FPS objetivo = tasa real de envio de paquetes de posicion (Jugador/Enemigo envian 1 vez por frame)
+        Raylib.SetTargetFPS(ConfiguracionMiscelanea.fpsObjetivo);
 
         // Crea comportamientos/Basico.jsonc, Agresivo.jsonc, Torreta.jsonc si no existen
         ComportamientoIA.BootstrapDefaults();
@@ -53,11 +55,12 @@ public static class Program
         botonIniciarPartida.visible = false;
 
         Menu menuSeleccionModo = new MenuBuilder()
-            .Panel("Puntuacion max:", 500, 90, ancho: 200, alto: 30, colorTexto: Color.Black, colorRectangulo: Color.Beige)
-            .Campo(720, 90,
-                onEnter: t => { if (int.TryParse(t, out int n) && n > 0) FuncionesPartida.puntuacionMaxima = n; },
-                fuenteTexto: () => FuncionesPartida.puntuacionMaxima.ToString(),
-                ancho: 80, alto: 30)
+            .Panel("Mapa:", 500, 50, ancho: 100, alto: 30, colorTexto: Color.Black, colorRectangulo: Color.Beige)
+            .Desplegable(610, 50, ancho: 200, alto: 30,
+                opciones: Mapa.ListarNombresMapas(),
+                fuenteValor: () => Path.GetFileNameWithoutExtension(Mapa.mapaPorDefecto),
+                accionAlSeleccionar: v => Mapa.mapaPorDefecto = Path.Combine(Mapa.carpetaMapas, v + ".jsonc"),
+                fuenteOpciones: () => Mapa.ListarNombresMapas())
             .Boton("Deathmatch", 500, 200, onClick: () => API.Encolar(FuncionesPartida.IniciarPartidaDeathmatch), ancho: 280, alto: 100)
             .Boton("Oleadas", 500, 350, onClick: () => API.Encolar(FuncionesPartida.IniciarPartidaOleadas), ancho: 280, alto: 100)
             .Boton("Regresar", 500, 500, out Boton botonVolverPrincipal, ancho: 280, alto: 100)
@@ -87,6 +90,7 @@ public static class Program
         UIEditor.Construir(menuPrincipal);
         UIEditorComportamientoIA.Construir(menuPrincipal);
 
+        Menus.menuPrincipal = menuPrincipal;
         Menus.menuActivo = menuPrincipal;
 
         // Visibilidad del boton "Iniciar Partida": solo visible si soy servidor, no estoy en partida y estoy en el menu principal

@@ -141,6 +141,11 @@ public class Enemigo : EntidadBase
         GestorEntidades.EliminarEntidad(this);
     }
 
+    public override void Limpiar()
+    {
+        CentroUI.EliminarUnObjetoDeObjetosAbstractos(barraVida);
+    }
+
     private void BroadcastPosicion()
     {
         if (!gestorRed.EnLinea || !gestorRed.EsServidor) return;

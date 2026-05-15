@@ -183,4 +183,10 @@ public class Jugador : EntidadBase
     /// Si eliminaramos la entidad, dejariamos de dibujarla, actualizarla y colisionarla.
     /// </summary>
     public override void AlMorir() { }
+
+    public override void Limpiar()
+    {
+        CentroUI.EliminarUnObjetoDeObjetosAbstractos(barraVida);
+        CentroUI.EliminarUnObjetoDeObjetosAbstractos(etiquetaNombre);
+    }
 }

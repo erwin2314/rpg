@@ -67,4 +67,9 @@ public abstract class EntidadBase : ObjetoAbstracto
     /// </summary>
     public virtual void EnColision(EntidadBase otra) { }
 
+    /// <summary>
+    /// Hook de limpieza al fin de partida. Cada subclase con componentes UI auxiliares (barras, etiquetas) los desregistra aqui <br/>
+    /// Implementacion por defecto vacia
+    /// </summary>
+    public virtual void Limpiar() { }
 }

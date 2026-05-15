@@ -37,6 +37,20 @@ public static class GestorEntidades
     }
 
     /// <summary>
+    /// Elimina TODAS las entidades del mundo + sus componentes UI auxiliares (via Limpiar() de cada una). <br/>
+    /// Usado al terminar partida para dejar el mundo limpio antes de volver al menu principal
+    /// </summary>
+    public static void LimpiarMundo()
+    {
+        foreach (EntidadBase e in entidades.ToList())
+        {
+            e.Limpiar();
+            EliminarEntidad(e);
+        }
+        jugadorLocal = null;
+    }
+
+    /// <summary>
     /// Invoca Actualizar() en cada entidad registrada (recorre al reves para tolerar eliminacion)
     /// </summary>
     public static void Actualizar()

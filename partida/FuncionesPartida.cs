@@ -130,13 +130,18 @@ public static class FuncionesPartida
     }
 
     /// <summary>
-    /// Aplica el fin de partida en cualquier cliente: mensaje en chat y desactiva la partida
+    /// Aplica el fin de partida en cualquier cliente: mensaje en chat, limpieza del mundo y vuelta al menu principal
     /// </summary>
     public static void AplicarFinPartidaLocal(ushort idGanador)
     {
         string nombre = gestorRed.jugadoresConectados.TryGetValue(idGanador, out DatosJugador? d) ? d.nombre : "?";
         ChatUI.AgregarMensaje($"=== Fin de partida. Ganador: {nombre} ===");
         Mapa.partidaIniciada = false;
+        GestorOleadas.Detener();
+        GestorEntidades.LimpiarMundo();
+        gestorCliente.jugadoresRemotos.Clear();
+        gestorCliente.enemigosRemotos.Clear();
+        if (Menus.menuPrincipal != null) Menus.CambiarMenu(Menus.menuPrincipal);
     }
 
     /// <summary>

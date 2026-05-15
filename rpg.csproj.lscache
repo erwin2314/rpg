@@ -132,6 +132,7 @@ Serializador/SerializadorJson.cs
 UI/
  BarraDeProgreso.cs
  Boton.cs
+ BufferInterpolacion.cs
  CajaDeTexto.cs
  CentroUI.cs
  ChatUi.cs

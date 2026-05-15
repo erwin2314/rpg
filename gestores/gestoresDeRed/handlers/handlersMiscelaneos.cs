@@ -139,15 +139,13 @@ public static class HandlersMiscelaneos
     /// </summary>
     private static void AplicarPosicionRemota(ushort id, float x, float y, int vida)
     {
+        float ahora = (float)Raylib.GetTime();
         if (!gestorCliente.jugadoresRemotos.TryGetValue(id, out JugadorRemoto? jr))
         {
             jr = new JugadorRemoto(id, new Vector2(x, y));
             gestorCliente.jugadoresRemotos[id] = jr;
         }
-        else
-        {
-            jr.posicion = new Vector2(x, y);
-        }
+        jr.buffer.Registrar(new Vector2(x, y), ahora);
         jr.vidaActual = vida;
     }
 
@@ -303,7 +301,7 @@ public static class HandlersMiscelaneos
         int vida = mensaje.GetInt();
         if (gestorCliente.enemigosRemotos.TryGetValue(idEnemigoServidor, out EnemigoRemoto? er))
         {
-            er.posicion = new Vector2(x, y);
+            er.buffer.Registrar(new Vector2(x, y), (float)Raylib.GetTime());
             er.vidaActual = vida;
         }
     }
