@@ -17,6 +17,9 @@ public static class gestorServidor
     /// </summary>
     public static Server server = new Server();
 
+    /// <summary>
+    /// Arranca el servidor Riptide, suscribe los handlers de conexion/desconexion y registra al servidor mismo (id 0) en el snapshot
+    /// </summary>
     public static void InicializarServidor(ushort puerto = 7777, ushort maximoClientes = 4)
     {
         server.ClientConnected += EnClienteConectadoAServidor;
@@ -68,36 +71,57 @@ public static class gestorServidor
         }
     }
 
+    /// <summary>
+    /// Procesa los mensajes entrantes y pendientes del servidor (se llama una vez por frame desde gestorRed)
+    /// </summary>
     public static void Actualizar()
     {
         server?.Update();
     }
 
+    /// <summary>
+    /// Detiene el servidor y libera el puerto
+    /// </summary>
     public static void DetenerServidor()
     {
         server.Stop();
     }
 
+    /// <summary>
+    /// Envia un mensaje a todos los clientes conectados
+    /// </summary>
     public static void EnviarMensajeATodosLosClientes(Message mensaje)
     {
         server.SendToAll(mensaje);
     }
 
+    /// <summary>
+    /// Envia un mensaje a todos los clientes conectados excepto el indicado por id (usado para reenviar broadcasts evitando eco al emisor)
+    /// </summary>
     public static void EnviarMensajeATodosLosClientes(Message mensaje, ushort idClienteAExcluir)
     {
         server.SendToAll(mensaje, idClienteAExcluir);
     }
 
+    /// <summary>
+    /// Envia un mensaje a un unico cliente identificado por su id Riptide
+    /// </summary>
     public static void EnviarMensajeACliente(Message mensaje, ushort clienteId)
     {
         server.Send(mensaje, clienteId);
     }
 
+    /// <summary>
+    /// Desconecta un cliente del servidor (handler de "expulsar")
+    /// </summary>
     public static void DesconectarCliente(ushort idClienteADesconectar)
     {
         server.DisconnectClient(idClienteADesconectar);
     }
 
+    /// <summary>
+    /// Callback de Riptide cuando un cliente se conecta: registra entrada vacia, le pide su nombre y rebroadcastea el snapshot
+    /// </summary>
     public static void EnClienteConectadoAServidor(object? sender, ServerConnectedEventArgs e)
     {
         Message mensaje = Message.Create(MessageSendMode.Reliable, IdMensajesDeRed.servidorAClientePedirNombreUsuario);
@@ -115,6 +139,9 @@ public static class gestorServidor
         BroadcastSnapshot();
     }
 
+    /// <summary>
+    /// Callback de Riptide cuando un cliente se desconecta: lo quita del registro, lo anuncia a los demas y rebroadcastea snapshot
+    /// </summary>
     public static void EnClienteDesconectadoDelServidor(object? sender, ServerDisconnectedEventArgs e)
     {
         API.Encolar(FuncionesCMD.Mostrar, $"cliente desconectado: id {e.Client.Id}, nombre {encontrarNombrePorId(e.Client.Id)}");
@@ -127,6 +154,9 @@ public static class gestorServidor
         BroadcastSnapshot();
     }
 
+    /// <summary>
+    /// Imprime en el chat la lista de id+nombre de los jugadores conectados (comando de la API)
+    /// </summary>
     [EventoAPI("Red")]
     public static void MostrarTodosLosClientes()
     {
@@ -136,6 +166,9 @@ public static class gestorServidor
         }
     }
 
+    /// <summary>
+    /// Asocia el nombre indicado al id en el snapshot (creando la entrada si no existia)
+    /// </summary>
     public static void agregarADiccionarioDeUsuarios(ushort id, string nombre)
     {
         if (datosJugadores.TryGetValue(id, out DatosJugador? d))
@@ -148,11 +181,17 @@ public static class gestorServidor
         }
     }
 
+    /// <summary>
+    /// Busca el nombre asociado a un id (o null si no esta registrado)
+    /// </summary>
     public static string? encontrarNombrePorId(ushort id)
     {
         return datosJugadores.TryGetValue(id, out DatosJugador? d) ? d.nombre : null;
     }
 
+    /// <summary>
+    /// Busca el id asociado a un nombre (o null si nadie con ese nombre esta conectado)
+    /// </summary>
     public static ushort? encontrarIdPorNombre(string nombre)
     {
         foreach (DatosJugador d in datosJugadores.Values)

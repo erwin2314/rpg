@@ -109,7 +109,7 @@ public static class Render2d
     {
         if (GestorEntidades.jugadorLocal != null)
             camara.Target = GestorEntidades.jugadorLocal.posicion;
-            camara.Zoom = 2f;
+            camara.Zoom = 1.5f;
 
         Raylib.BeginDrawing();
         

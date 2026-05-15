@@ -32,13 +32,24 @@ public static class FuncionesArmas
     }
 
     /// <summary>
-    /// Crea N balas locales (una por direccion) sin enviarlas por red
+    /// Crea N balas locales de un Jugador (una por direccion) sin enviarlas por red
     /// </summary>
     public static void DispararLocal(ushort idDueno, Vector2 pos, List<Vector2> direcciones, Arma arma)
     {
         foreach (Vector2 d in direcciones)
         {
             new Bala(pos, d, arma.velocidadBala, arma.dano, arma.spriteBala, idDueno, arma.tiempoVidaBala);
+        }
+    }
+
+    /// <summary>
+    /// Crea N balas locales originadas por un Enemigo del servidor (idEnemigoDueno = enemigo.id)
+    /// </summary>
+    public static void DispararLocalDeEnemigo(int idEnemigoDueno, Vector2 pos, List<Vector2> direcciones, Arma arma)
+    {
+        foreach (Vector2 d in direcciones)
+        {
+            new Bala(pos, d, arma.velocidadBala, arma.dano, arma.spriteBala, 0, arma.tiempoVidaBala, idEnemigoDueno);
         }
     }
 
@@ -65,11 +76,32 @@ public static class FuncionesArmas
         m.AddFloat(arma.velocidadBala);
         m.AddFloat(arma.tiempoVidaBala);
         m.AddInt((int)arma.spriteBala);
+        m.AddInt(-1); // idEnemigoDueno: -1 = bala de jugador
         m.AddInt(dirs.Count);
         foreach (Vector2 d in dirs) { m.AddFloat(d.X); m.AddFloat(d.Y); }
 
         if (gestorRed.EsServidor) gestorServidor.EnviarMensajeATodosLosClientes(m);
         else gestorCliente.EnviarMensaje(m);
+    }
+
+    /// <summary>
+    /// Solo servidor: envia el disparo de un Enemigo a todos los clientes (broadcast directo, sin pasar por el cliente)
+    /// </summary>
+    public static void EnviarDisparoDeEnemigo(int idEnemigoDueno, Vector2 pos, List<Vector2> dirs, Arma arma)
+    {
+        if (!gestorRed.EnLinea || !gestorRed.EsServidor) return;
+
+        Message m = Message.Create(MessageSendMode.Reliable, IdMensajesDeRed.broadcastDisparo);
+        m.AddUShort(0);
+        m.AddFloat(pos.X); m.AddFloat(pos.Y);
+        m.AddInt(arma.dano);
+        m.AddFloat(arma.velocidadBala);
+        m.AddFloat(arma.tiempoVidaBala);
+        m.AddInt((int)arma.spriteBala);
+        m.AddInt(idEnemigoDueno);
+        m.AddInt(dirs.Count);
+        foreach (Vector2 d in dirs) { m.AddFloat(d.X); m.AddFloat(d.Y); }
+        gestorServidor.EnviarMensajeATodosLosClientes(m);
     }
 
     /// <summary>

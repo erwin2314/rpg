@@ -1,7 +1,16 @@
 using Raylib_cs;
-// Campo de pruebas
+
+/// <summary>
+/// Punto de entrada del juego. <br/>
+/// Inicializa ventana, configuracion, recursos y monta los menus iniciales <br/>
+/// El bucle principal coordina cada subsistema (red, entidades, UI, eventos, render) en el orden esperado
+/// </summary>
 public static class Program
 {
+    /// <summary>
+    /// Arranca Raylib, registra clases serializables, inicializa la API, carga texturas y construye los menus <br/>
+    /// El game loop principal (while !WindowShouldClose) itera CMD, red, entidades, UI, API, observadores y render
+    /// </summary>
     public static void Main()
     {
 
@@ -45,7 +54,7 @@ public static class Program
                 fuenteTexto: () => FuncionesPartida.puntuacionMaxima.ToString(),
                 ancho: 80, alto: 30)
             .Boton("Deathmatch", 500, 200, onClick: () => API.Encolar(FuncionesPartida.IniciarPartidaDeathmatch), ancho: 280, alto: 100)
-            .Boton("Por Equipos", 500, 350, onClick: () => API.Encolar(FuncionesPartida.IniciarPartidaPorEquipos), ancho: 280, alto: 100)
+            .Boton("Oleadas", 500, 350, onClick: () => API.Encolar(FuncionesPartida.IniciarPartidaOleadas), ancho: 280, alto: 100)
             .Boton("Regresar", 500, 500, out Boton botonVolverPrincipal, ancho: 280, alto: 100)
             .Build();
 
@@ -85,6 +94,7 @@ public static class Program
         {
             CMD.ProcesarComandos();
             gestorRed.Actualizar();
+            GestorOleadas.Actualizar();
             GestorEntidades.Actualizar();
             GestorEntidades.ProcesarColisiones();
             CentroUI.Actualizar();
