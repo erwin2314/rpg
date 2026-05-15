@@ -15,6 +15,9 @@ public class JugadorRemoto : EntidadBase
     /// <summary>Etiqueta con nombre + puntuacion encima de la barra</summary>
     public Panel etiquetaNombre;
 
+    /// <summary>Buffer de posiciones recibidas por red; cada frame la posicion se interpola/extrapola desde aqui</summary>
+    public BufferInterpolacion buffer = new BufferInterpolacion();
+
     public JugadorRemoto(ushort idRiptide, Vector2 posicion)
         : base(posicion, Vector2.Zero, 0f, 0f, 20f, 100, 100, capaDibujado: 50)
     {
@@ -48,6 +51,9 @@ public class JugadorRemoto : EntidadBase
 
     public override void Actualizar()
     {
+        // Suavizado de posicion: interpola/extrapola desde las muestras recibidas por red
+        posicion = buffer.Calcular(posicion);
+
         int anchoBarra = 50;
         barraVida.posicionX = (int)(posicion.X - anchoBarra / 2);
         barraVida.posicionY = (int)(posicion.Y - radio - 12);
@@ -75,5 +81,11 @@ public class JugadorRemoto : EntidadBase
             new Rectangle(0, 0, tex.Width, tex.Height),
             new Rectangle(posicion.X - radio, posicion.Y - radio, radio * 2, radio * 2),
             Vector2.Zero, 0f, tinte);
+    }
+
+    public override void Limpiar()
+    {
+        CentroUI.EliminarUnObjetoDeObjetosAbstractos(barraVida);
+        CentroUI.EliminarUnObjetoDeObjetosAbstractos(etiquetaNombre);
     }
 }

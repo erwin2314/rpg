@@ -75,6 +75,15 @@ public class BarraDeProgreso : ObjetoAbstracto
     /// </summary>
     public bool autoIncremental;
 
+    /// <summary>Si true, dibuja "progreso/total" centrado dentro de la barra</summary>
+    public bool mostrarTexto = false;
+
+    /// <summary>Color del texto centrado cuando mostrarTexto es true</summary>
+    public Color colorTexto = Color.White;
+
+    /// <summary>Tamaño en pixeles del texto centrado</summary>
+    public int tamanoTexto = 12;
+
     /// <summary>
     /// Crea una nueva barra de progreso y la registra automaticamente en CentroUI
     /// </summary>
@@ -172,6 +181,14 @@ public class BarraDeProgreso : ObjetoAbstracto
         if(!visible) return;
         Raylib.DrawRectangle(posicionX,posicionY,ancho,alto,colorRectanguloFondo);
         Raylib.DrawRectangle(posicionX,posicionY,(int)(ancho*porcentaje),alto,colorRectanguloFrente);
+        if (mostrarTexto)
+        {
+            string texto = $"{(int)progreso}/{(int)total}";
+            int anchoTexto = Raylib.MeasureText(texto, tamanoTexto);
+            int x = posicionX + (ancho - anchoTexto) / 2;
+            int y = posicionY + (alto - tamanoTexto) / 2;
+            Raylib.DrawText(texto, x, y, tamanoTexto, colorTexto);
+        }
     }
 
     /// <summary>

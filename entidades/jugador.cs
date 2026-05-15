@@ -23,6 +23,12 @@ public class Jugador : EntidadBase
     /// <summary>RNG local para calcular dispersion del disparo</summary>
     private Random rng = new Random();
 
+    /// <summary>HP regenerados por segundo mientras se este vivo (asignado desde SpawnJugadorDatos del mapa)</summary>
+    public float regeneracionPorSegundo = 0f;
+
+    /// <summary>Acumulador de regen fraccional; cuando llega a 1 se suma un HP entero</summary>
+    private float regenAcumulado = 0f;
+
     /// <summary>Barra de vida visible encima del jugador</summary>
     public BarraDeProgreso barraVida;
 
@@ -45,6 +51,8 @@ public class Jugador : EntidadBase
             posicionY: (int)(posicion.Y - radio - 12),
             ancho: 50, alto: 6, autoIncremental: false,
             capaDibujado: 51, enMundo: true);
+        barraVida.mostrarTexto = true;
+        barraVida.tamanoTexto = 10;
 
         etiquetaNombre = new Panel(
             posicionX: (int)posicion.X - 50,
@@ -71,6 +79,17 @@ public class Jugador : EntidadBase
         if (dir.LengthSquared() > 0) dir = Vector2.Normalize(dir);
 
         posicion += dir * velocidadMaxima * Raylib.GetFrameTime();
+
+        // Regeneracion HP/s (acumulada fraccionalmente; suma 1 cuando llega a entero)
+        if (regeneracionPorSegundo > 0f && vidaActual > 0 && vidaActual < vidaMaxima)
+        {
+            regenAcumulado += regeneracionPorSegundo * Raylib.GetFrameTime();
+            while (regenAcumulado >= 1f && vidaActual < vidaMaxima)
+            {
+                vidaActual++;
+                regenAcumulado -= 1f;
+            }
+        }
 
         // Input de disparo (solo el jugador local)
         if (this == GestorEntidades.jugadorLocal)
@@ -164,4 +183,10 @@ public class Jugador : EntidadBase
     /// Si eliminaramos la entidad, dejariamos de dibujarla, actualizarla y colisionarla.
     /// </summary>
     public override void AlMorir() { }
+
+    public override void Limpiar()
+    {
+        CentroUI.EliminarUnObjetoDeObjetosAbstractos(barraVida);
+        CentroUI.EliminarUnObjetoDeObjetosAbstractos(etiquetaNombre);
+    }
 }

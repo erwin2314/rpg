@@ -6,13 +6,22 @@ using Raylib_cs;
 /// </summary>
 public class Pared : EntidadBase
 {
+    public Color color = Color.DarkGray;
+
     public Pared(Vector2 posicion, Vector2 tamano)
-        : base(posicion, Vector2.Zero, 0f, 0f, 0f, 1, 1, capaDibujado: 49)
+        : this(posicion, tamano, Color.DarkGray, 49) { }
+
+    public Pared(Vector2 posicion, Vector2 tamano, Color color)
+        : this(posicion, tamano, color, 49) { }
+
+    public Pared(Vector2 posicion, Vector2 tamano, Color color, int capa)
+        : base(posicion, Vector2.Zero, 0f, 0f, 0f, 1, 1, capaDibujado: capa)
     {
         forma = FormaColision.Rectangulo;
         tamanoColision = tamano;
         solido = true;
         inmovil = true;
+        this.color = color;
         GestorEntidades.InsertarEntidad(this);
     }
 
@@ -26,6 +35,6 @@ public class Pared : EntidadBase
             (int)(posicion.Y - tamanoColision.Y / 2),
             (int)tamanoColision.X,
             (int)tamanoColision.Y,
-            Color.DarkGray);
+            color);
     }
 }

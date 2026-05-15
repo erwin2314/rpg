@@ -8,13 +8,21 @@ using System.Text.Json;
 /// </summary>
 public static class GestorArchivosJson
 {
-    private static JsonSerializerOptions opciones = new JsonSerializerOptions
+    private static JsonSerializerOptions opciones = CrearOpciones();
+
+    private static JsonSerializerOptions CrearOpciones()
     {
-        WriteIndented = true,
-        ReadCommentHandling = JsonCommentHandling.Skip,
-        AllowTrailingCommas = true,
-        IncludeFields = true,
-    };
+        var opts = new JsonSerializerOptions
+        {
+            WriteIndented = true,
+            ReadCommentHandling = JsonCommentHandling.Skip,
+            AllowTrailingCommas = true,
+            IncludeFields = true,
+        };
+        opts.Converters.Add(new ColorJsonConverter());
+        opts.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+        return opts;
+    }
 
     public static bool ExisteArchivo(string path)
     {

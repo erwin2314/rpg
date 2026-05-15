@@ -88,7 +88,7 @@ public static class FuncionesPartida
         if (jl != null)
         {
             jl.vidaActual = jl.vidaMaxima;
-            jl.posicion = PosicionAleatoria();
+            jl.posicion = ElegirSpawnJugador();
         }
 
         if (gestorRed.EsServidor)
@@ -130,32 +130,94 @@ public static class FuncionesPartida
     }
 
     /// <summary>
-    /// Aplica el fin de partida en cualquier cliente: mensaje en chat y desactiva la partida
+    /// Aplica el fin de partida en cualquier cliente: mensaje en chat, limpieza del mundo y vuelta al menu principal
     /// </summary>
     public static void AplicarFinPartidaLocal(ushort idGanador)
     {
         string nombre = gestorRed.jugadoresConectados.TryGetValue(idGanador, out DatosJugador? d) ? d.nombre : "?";
         ChatUI.AgregarMensaje($"=== Fin de partida. Ganador: {nombre} ===");
         Mapa.partidaIniciada = false;
+        GestorOleadas.Detener();
+        GestorEntidades.LimpiarMundo();
+        gestorCliente.jugadoresRemotos.Clear();
+        gestorCliente.enemigosRemotos.Clear();
+        if (Menus.menuPrincipal != null) Menus.CambiarMenu(Menus.menuPrincipal);
     }
 
-    private static Vector2 PosicionAleatoria()
+    /// <summary>
+    /// Devuelve la posicion donde debe aparecer un jugador. Si el mapa activo tiene spawnsJugador, elige uno al azar;
+    /// si no, cae al centro del mapa
+    /// </summary>
+    public static Vector2 ElegirSpawnJugador()
     {
-        Random r = new Random();
-        return new Vector2(r.Next(60, Mapa.ancho - 60), r.Next(60, Mapa.alto - 60));
+        SpawnJugadorDatos? s = ElegirSpawnJugadorDatos();
+        return s?.posicion ?? new Vector2(Mapa.ancho / 2f, Mapa.alto / 2f);
+    }
+
+    /// <summary>
+    /// Como ElegirSpawnJugador pero devuelve el SpawnJugadorDatos completo (con vidaMaxima, regen, etc.) o null si no hay spawns
+    /// </summary>
+    public static SpawnJugadorDatos? ElegirSpawnJugadorDatos()
+    {
+        if (Mapa.mapaActivo != null && Mapa.mapaActivo.spawnsJugador.Count > 0)
+        {
+            Random r = new Random();
+            return Mapa.mapaActivo.spawnsJugador[r.Next(Mapa.mapaActivo.spawnsJugador.Count)];
+        }
+        return null;
     }
 
     /// <summary>
     /// Crea las paredes del mapa y el Jugador local <br/>
-    /// Usado tanto por el servidor (en IniciarPartida) como por cada cliente al recibir el mensaje iniciarPartida
+    /// Usado tanto por el servidor (en IniciarPartida) como por cada cliente al recibir el mensaje iniciarPartida <br/>
+    /// Si existe el archivo mapas/default.jsonc se aplica; si no, fallback a las 4 paredes de borde
     /// </summary>
     public static void CrearMundoLocal(bool esServidor)
     {
-        Mapa.CrearParedes();
+        if (Mapa.Cargar(Mapa.mapaPorDefecto))
+        {
+            Mapa.AplicarMapaActivo();
+        }
+        else
+        {
+            Mapa.CrearParedes();
+        }
+
+        // Aplica configuracion por modo del mapa: kills para ganar y multiplicador de vida del jugador
+        if (Mapa.mapaActivo != null)
+        {
+            if (modoActual == ModoDeJuego.Oleadas)
+            {
+                puntuacionMaxima = Mapa.mapaActivo.configOleadas.cantidadOleadas;
+            }
+            else
+            {
+                puntuacionMaxima = Mapa.mapaActivo.configDeathmatch.puntuacionParaGanar;
+            }
+        }
+
         ushort id = esServidor ? (ushort)0 : gestorCliente.cliente.Id;
-        Vector2 posInicial = new Vector2(Mapa.ancho / 2f, Mapa.alto / 2f);
+        SpawnJugadorDatos? spawnJug = ElegirSpawnJugadorDatos();
+        Vector2 posInicial = spawnJug?.posicion ?? new Vector2(Mapa.ancho / 2f, Mapa.alto / 2f);
         Color color = Color.White;
         Jugador jugador = new Jugador(posInicial, id, color);
+
+        // Aplica vidaMaxima y regen del SpawnJugadorDatos (si hay), luego el multiplicador del modo
+        if (spawnJug != null)
+        {
+            jugador.vidaMaxima = Math.Max(1, spawnJug.vidaMaxima);
+            jugador.vidaActual = jugador.vidaMaxima;
+            jugador.regeneracionPorSegundo = spawnJug.regeneracionPorSegundo;
+        }
+        if (Mapa.mapaActivo != null)
+        {
+            float multJug = modoActual == ModoDeJuego.Oleadas
+                ? Mapa.mapaActivo.configOleadas.multiplicadorVidaJugadores
+                : Mapa.mapaActivo.configDeathmatch.multiplicadorVidaJugadores;
+            jugador.vidaMaxima = Math.Max(1, (int)(jugador.vidaMaxima * multJug));
+            jugador.vidaActual = jugador.vidaMaxima;
+        }
+
         GestorEntidades.jugadorLocal = jugador;
 
         Mapa.partidaIniciada = true;

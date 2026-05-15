@@ -27,6 +27,11 @@ public static class Render2d
     public static bool mostrarHitboxes = false;
 
     /// <summary>
+    /// Cuando es true, dibuja el id de cada entidad sobre ella (debug)
+    /// </summary>
+    public static bool mostrarIds = false;
+
+    /// <summary>
     /// Alterna el dibujo de las hitboxes de las entidades
     /// </summary>
     [EventoAPI("Debug")]
@@ -34,6 +39,16 @@ public static class Render2d
     {
         mostrarHitboxes = !mostrarHitboxes;
         ChatUI.AgregarMensaje($"mostrarHitboxes = {mostrarHitboxes}");
+    }
+
+    /// <summary>
+    /// Alterna el dibujo del id de cada entidad sobre ella
+    /// </summary>
+    [EventoAPI("Debug")]
+    public static void AlternarIds()
+    {
+        mostrarIds = !mostrarIds;
+        ChatUI.AgregarMensaje($"mostrarIds = {mostrarIds}");
     }
 
     private static void DibujarHitboxes()
@@ -53,6 +68,17 @@ public static class Render2d
                     (int)ent.tamanoColision.X, (int)ent.tamanoColision.Y,
                     Color.Red);
             }
+        }
+    }
+
+    private static void DibujarIds()
+    {
+        if (!mostrarIds) return;
+        foreach (EntidadBase ent in GestorEntidades.ObtenerEntidades())
+        {
+            string texto = ent.id.ToString();
+            int anchoTexto = Raylib.MeasureText(texto, 12);
+            Raylib.DrawText(texto, (int)ent.posicion.X - anchoTexto / 2, (int)ent.posicion.Y - 6, 12, Color.Yellow);
         }
     }
 
@@ -107,24 +133,37 @@ public static class Render2d
     /// </summary>
     public static void DibujarObjetosAbstractos()
     {
-        if (GestorEntidades.jugadorLocal != null)
-            camara.Target = GestorEntidades.jugadorLocal.posicion;
+        if (!EditorMapa.activo && !EditorComportamientoIA.activo)
+        {
+            if (GestorEntidades.jugadorLocal != null)
+            {
+                camara.Target = GestorEntidades.jugadorLocal.posicion;
+            }
             camara.Zoom = 1.5f;
+        }
 
         Raylib.BeginDrawing();
-        
 
-        if (Mapa.partidaIniciada)
+
+        if (Mapa.partidaIniciada || EditorMapa.activo || EditorComportamientoIA.activo)
         {
-            Raylib.ClearBackground(Mapa.colorFondo);
+            Color cf = EditorMapa.activo ? EditorMapa.mapaEnEdicion.colorFondo
+                     : EditorComportamientoIA.activo ? Color.Black
+                     : Mapa.colorFondo;
+            Raylib.ClearBackground(cf);
             //Mundo (Con camara)
             Raylib.BeginMode2D(camara);
             foreach (ObjetoAbstracto item in objetosMundo)
             {
                 if(item.visible) item.Dibujar();
             }
+            if (EditorMapa.activo) EditorMapa.Dibujar();
             DibujarHitboxes();
+            DibujarIds();
             Raylib.EndMode2D();
+
+            // El editor de IA dibuja su arbol en coordenadas de pantalla
+            if (EditorComportamientoIA.activo) EditorComportamientoIA.Dibujar();
         }
         else Raylib.ClearBackground(Color.Black);
 

@@ -11,6 +11,9 @@ public class EnemigoRemoto : EntidadBase
     public int idEnemigoServidor;
     public BarraDeProgreso barraVida;
 
+    /// <summary>Buffer de posiciones recibidas por red; cada frame la posicion se interpola/extrapola desde aqui</summary>
+    public BufferInterpolacion buffer = new BufferInterpolacion();
+
     public EnemigoRemoto(int idEnemigoServidor, Vector2 posicion, int vidaMax)
         : base(posicion, Vector2.Zero, 0f, 0f, 20f, vidaMax, vidaMax, capaDibujado: 50)
     {
@@ -32,6 +35,9 @@ public class EnemigoRemoto : EntidadBase
 
     public override void Actualizar()
     {
+        // Suavizado de posicion: interpola/extrapola desde las muestras recibidas por red
+        posicion = buffer.Calcular(posicion);
+
         int anchoBarra = 50;
         barraVida.posicionX = (int)(posicion.X - anchoBarra / 2);
         barraVida.posicionY = (int)(posicion.Y - radio - 12);
@@ -55,5 +61,10 @@ public class EnemigoRemoto : EntidadBase
         {
             GestorEntidades.EliminarEntidad(b);
         }
+    }
+
+    public override void Limpiar()
+    {
+        CentroUI.EliminarUnObjetoDeObjetosAbstractos(barraVida);
     }
 }

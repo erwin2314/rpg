@@ -1,4 +1,5 @@
 using System.Numerics;
+using Raylib_cs;
 using Riptide;
 
 /// <summary>
@@ -10,6 +11,12 @@ public static class FuncionesArmas
     /// Proximo id para los pickups que crea el servidor
     /// </summary>
     private static int proximoIdPickup = 1;
+
+    /// <summary>Mapea idPickup -> indice en Mapa.mapaActivo.spawnsArma; identifica que spawn quedo libre al recoger</summary>
+    private static Dictionary<int, int> pickupASpawn = new Dictionary<int, int>();
+
+    /// <summary>Indices de spawns vacios con su tiempo restante hasta repoblar (solo servidor)</summary>
+    private static Dictionary<int, float> temporizadoresSpawn = new Dictionary<int, float>();
 
     /// <summary>
     /// Calcula N direcciones de disparo segun la dispersion del arma <br/>
@@ -160,56 +167,219 @@ public static class FuncionesArmas
 
         if (gestorRed.EsServidor)
         {
-            GenerarArmaEnPosicionAleatoria();
+            // Si el pickup estaba asociado a un SpawnArmaDatos, programar respawn en esa misma ranura tras su tiempoRespawn
+            if (pickupASpawn.TryGetValue(idPickup, out int spawnIdx)
+                && Mapa.mapaActivo != null
+                && spawnIdx < Mapa.mapaActivo.spawnsArma.Count)
+            {
+                pickupASpawn.Remove(idPickup);
+                temporizadoresSpawn[spawnIdx] = Mapa.mapaActivo.spawnsArma[spawnIdx].tiempoRespawn;
+            }
+            else
+            {
+                // Modo random fallback (sin SpawnArma definidos): respawn instantaneo como antes
+                GenerarArmaEnPosicionAleatoria();
+            }
         }
     }
 
     /// <summary>
-    /// Solo servidor: crea un pickup nuevo aleatorio y broadcastea su aparicion
+    /// Resuelve el nombre de un arma del .jsonc a una instancia Arma. "Aleatoria" o nombre desconocido => arma aleatoria
+    /// </summary>
+    private static Arma ResolverArma(string nombre, Random rng)
+    {
+        if (nombre == "Aleatoria") return Arma.Aleatoria(rng);
+        if (Mapa.presetsArma.TryGetValue(nombre, out Func<Arma>? factoria)) return factoria();
+        return Arma.Aleatoria(rng);
+    }
+
+    /// <summary>
+    /// Solo servidor: crea un pickup nuevo y broadcastea su aparicion <br/>
+    /// Si el mapa activo define spawnsArma, intenta colocar el pickup en un spawn libre (sin pickup activo) <br/>
+    /// Si no hay spawns definidos, busca una posicion aleatoria que NO colisione con ninguna Pared
     /// </summary>
     public static void GenerarArmaEnPosicionAleatoria()
     {
         if (!gestorRed.EsServidor) return;
         Random rng = new Random();
-        Arma a = Arma.Aleatoria(rng);
-        float x = rng.Next(60, Mapa.ancho - 60);
-        float y = rng.Next(60, Mapa.alto - 60);
+
+        Vector2? pos = ElegirPosicionLibreParaArma(rng);
+        if (pos == null) return; // no se encontro posicion libre tras varios intentos
+
+        int? spawnIdx = null;
+        Arma a;
+        if (Mapa.mapaActivo != null && Mapa.mapaActivo.spawnsArma.Count > 0)
+        {
+            // Si la posicion corresponde a un spawn definido, respeta el arma declarada y guarda el indice
+            for (int i = 0; i < Mapa.mapaActivo.spawnsArma.Count; i++)
+            {
+                if (Vector2.DistanceSquared(Mapa.mapaActivo.spawnsArma[i].posicion, pos.Value) < 0.5f)
+                {
+                    spawnIdx = i;
+                    break;
+                }
+            }
+            a = spawnIdx.HasValue
+                ? ResolverArma(Mapa.mapaActivo.spawnsArma[spawnIdx.Value].arma, rng)
+                : Arma.Aleatoria(rng);
+        }
+        else
+        {
+            a = Arma.Aleatoria(rng);
+        }
+
+        SpawnPickup(pos.Value, a, spawnIdx);
+    }
+
+    /// <summary>
+    /// Crea un ArmaEnSuelo en la posicion indicada, registra su asociacion con un spawnIndex (si aplica), y broadcastea
+    /// </summary>
+    private static void SpawnPickup(Vector2 pos, Arma a, int? spawnIndex)
+    {
         int id = proximoIdPickup++;
-        new ArmaEnSuelo(id, a, new Vector2(x, y));
+        if (spawnIndex.HasValue) pickupASpawn[id] = spawnIndex.Value;
+        new ArmaEnSuelo(id, a, pos);
 
         Message m = Message.Create(MessageSendMode.Reliable, IdMensajesDeRed.nuevoPickup);
         m.AddInt(id);
-        m.AddFloat(x);
-        m.AddFloat(y);
+        m.AddFloat(pos.X);
+        m.AddFloat(pos.Y);
         m.AddInt((int)a.spriteArma);
         gestorServidor.EnviarMensajeATodosLosClientes(m);
     }
 
     /// <summary>
-    /// Solo servidor: genera N armas aleatorias dentro del mapa y broadcastea el snapshot
+    /// Tick por frame (solo servidor en partida): decrementa los timers de respawn y dispara los que vencen
+    /// </summary>
+    public static void Actualizar()
+    {
+        if (!gestorRed.EsServidor || !Mapa.partidaIniciada) return;
+        if (temporizadoresSpawn.Count == 0) return;
+
+        float dt = Raylib.GetFrameTime();
+        Random rng = new Random();
+        List<int> listos = new List<int>();
+        List<int> claves = temporizadoresSpawn.Keys.ToList();
+        foreach (int k in claves)
+        {
+            float restante = temporizadoresSpawn[k] - dt;
+            if (restante <= 0f) listos.Add(k);
+            else temporizadoresSpawn[k] = restante;
+        }
+        foreach (int idx in listos)
+        {
+            temporizadoresSpawn.Remove(idx);
+            if (Mapa.mapaActivo == null || idx >= Mapa.mapaActivo.spawnsArma.Count) continue;
+            SpawnArmaDatos sa = Mapa.mapaActivo.spawnsArma[idx];
+            Arma a = ResolverArma(sa.arma, rng);
+            SpawnPickup(sa.posicion, a, idx);
+        }
+    }
+
+    /// <summary>
+    /// Elige una posicion donde spawnear un pickup. Prefiere spawnsArma libres, si no, posicion aleatoria sin colisionar con paredes
+    /// </summary>
+    private static Vector2? ElegirPosicionLibreParaArma(Random rng)
+    {
+        const float radioPickup = 20f; // coincide con ArmaEnSuelo.radio
+        const int maxIntentos = 50;
+
+        if (Mapa.mapaActivo != null && Mapa.mapaActivo.spawnsArma.Count > 0)
+        {
+            // Listar spawns sin pickup activo cercano
+            List<SpawnArmaDatos> libres = new List<SpawnArmaDatos>();
+            foreach (SpawnArmaDatos s in Mapa.mapaActivo.spawnsArma)
+            {
+                if (PosicionSinPickup(s.posicion, radioPickup * 2f)) libres.Add(s);
+            }
+            if (libres.Count > 0) return libres[rng.Next(libres.Count)].posicion;
+            // Todos ocupados: devolver uno cualquiera (no nuevo pickup pero al menos no hay duplicado)
+            return Mapa.mapaActivo.spawnsArma[rng.Next(Mapa.mapaActivo.spawnsArma.Count)].posicion;
+        }
+
+        // Sin spawns definidos: buscar posicion aleatoria sin chocar contra paredes
+        for (int i = 0; i < maxIntentos; i++)
+        {
+            float x = rng.Next(60, Mapa.ancho - 60);
+            float y = rng.Next(60, Mapa.alto - 60);
+            Vector2 p = new Vector2(x, y);
+            if (PosicionLibreDeParedes(p, radioPickup) && PosicionSinPickup(p, radioPickup * 2f)) return p;
+        }
+        return null;
+    }
+
+    /// <summary>Devuelve true si la posicion (circulo de radio) NO se solapa con ninguna Pared registrada</summary>
+    private static bool PosicionLibreDeParedes(Vector2 pos, float radio)
+    {
+        foreach (EntidadBase ent in GestorEntidades.ObtenerEntidades())
+        {
+            if (ent is Pared p)
+            {
+                float dx = MathF.Max(0f, MathF.Abs(pos.X - p.posicion.X) - p.tamanoColision.X / 2f);
+                float dy = MathF.Max(0f, MathF.Abs(pos.Y - p.posicion.Y) - p.tamanoColision.Y / 2f);
+                if (dx * dx + dy * dy < radio * radio) return false;
+            }
+        }
+        return true;
+    }
+
+    /// <summary>Devuelve true si NO hay ya un ArmaEnSuelo dentro de `dist` pixeles de la posicion</summary>
+    private static bool PosicionSinPickup(Vector2 pos, float dist)
+    {
+        float d2 = dist * dist;
+        foreach (EntidadBase ent in GestorEntidades.ObtenerEntidades())
+        {
+            if (ent is ArmaEnSuelo p)
+            {
+                if (Vector2.DistanceSquared(p.posicion, pos) < d2) return false;
+            }
+        }
+        return true;
+    }
+
+    /// <summary>
+    /// Solo servidor: genera las armas iniciales y broadcastea el snapshot <br/>
+    /// Si el mapa activo tiene spawnsArma, las crea exactamente en esas posiciones; si no, 5 aleatorias
     /// </summary>
     public static void GenerarArmasIniciales()
     {
         if (!gestorRed.EsServidor) return;
 
-        // Borrar pickups previos
+        // Borrar pickups previos y limpiar estado de respawn
         List<ArmaEnSuelo> existentes = new List<ArmaEnSuelo>();
         foreach (EntidadBase ent in GestorEntidades.ObtenerEntidades())
         {
             if (ent is ArmaEnSuelo p) existentes.Add(p);
         }
         foreach (ArmaEnSuelo p in existentes) GestorEntidades.EliminarEntidad(p);
+        pickupASpawn.Clear();
+        temporizadoresSpawn.Clear();
 
         Random rng = new Random();
-        int cantidad = 5;
         List<ArmaEnSuelo> creados = new List<ArmaEnSuelo>();
-        for (int i = 0; i < cantidad; i++)
+
+        if (Mapa.mapaActivo != null && Mapa.mapaActivo.spawnsArma.Count > 0)
         {
-            Arma a = Arma.Aleatoria(rng);
-            float x = rng.Next(60, Mapa.ancho - 60);
-            float y = rng.Next(60, Mapa.alto - 60);
-            int id = proximoIdPickup++;
-            creados.Add(new ArmaEnSuelo(id, a, new Vector2(x, y)));
+            for (int i = 0; i < Mapa.mapaActivo.spawnsArma.Count; i++)
+            {
+                SpawnArmaDatos sa = Mapa.mapaActivo.spawnsArma[i];
+                Arma a = ResolverArma(sa.arma, rng);
+                int id = proximoIdPickup++;
+                pickupASpawn[id] = i;
+                creados.Add(new ArmaEnSuelo(id, a, sa.posicion));
+            }
+        }
+        else
+        {
+            int cantidad = 5;
+            for (int i = 0; i < cantidad; i++)
+            {
+                Arma a = Arma.Aleatoria(rng);
+                float x = rng.Next(60, Mapa.ancho - 60);
+                float y = rng.Next(60, Mapa.alto - 60);
+                int id = proximoIdPickup++;
+                creados.Add(new ArmaEnSuelo(id, a, new Vector2(x, y)));
+            }
         }
 
         // Broadcast del snapshot a los clientes

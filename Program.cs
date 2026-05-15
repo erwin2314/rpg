@@ -15,7 +15,6 @@ public static class Program
     {
 
         Raylib.InitWindow(1280,720,"prueba");
-        Raylib.SetTargetFPS(60);
 
         Serializador.RegistrarClase<Panel>();
         Serializador.RegistrarClase<BarraDeProgreso>();
@@ -25,6 +24,12 @@ public static class Program
 
         ConfiguracionRed.ObtenerConfiguracionDeRed();
         ConfiguracionMiscelanea.ObtenerConfiguracionMiscelanea();
+
+        // FPS objetivo = tasa real de envio de paquetes de posicion (Jugador/Enemigo envian 1 vez por frame)
+        Raylib.SetTargetFPS(ConfiguracionMiscelanea.fpsObjetivo);
+
+        // Crea comportamientos/Basico.jsonc, Agresivo.jsonc, Torreta.jsonc si no existen
+        ComportamientoIA.BootstrapDefaults();
 
         GestorTexturas.CargarTexturas();
 
@@ -42,17 +47,20 @@ public static class Program
                        ? "(nadie)"
                        : string.Join(" / ", gestorRed.jugadoresConectados.Values.Select(d => d.nombre)))
             .Boton("Iniciar Partida", 1000, 50, out Boton botonIniciarPartida, ancho: 200, alto: 100)
-            .Boton("Configuracion", 1000, 300, out Boton botonAConfiguracion, ancho: 200, alto: 100)
+            .Boton("Editor de mapas", 1000, 175, onClick: () => API.Encolar(EditorMapa.Entrar), ancho: 200, alto: 60)
+            .Boton("Editor de IA", 1000, 245, onClick: () => API.Encolar(EditorComportamientoIA.Entrar), ancho: 200, alto: 60)
+            .Boton("Configuracion", 1000, 315, out Boton botonAConfiguracion, ancho: 200, alto: 60)
             .Build();
 
         botonIniciarPartida.visible = false;
 
         Menu menuSeleccionModo = new MenuBuilder()
-            .Panel("Puntuacion max:", 500, 90, ancho: 200, alto: 30, colorTexto: Color.Black, colorRectangulo: Color.Beige)
-            .Campo(720, 90,
-                onEnter: t => { if (int.TryParse(t, out int n) && n > 0) FuncionesPartida.puntuacionMaxima = n; },
-                fuenteTexto: () => FuncionesPartida.puntuacionMaxima.ToString(),
-                ancho: 80, alto: 30)
+            .Panel("Mapa:", 500, 50, ancho: 100, alto: 30, colorTexto: Color.Black, colorRectangulo: Color.Beige)
+            .Desplegable(610, 50, ancho: 200, alto: 30,
+                opciones: Mapa.ListarNombresMapas(),
+                fuenteValor: () => Path.GetFileNameWithoutExtension(Mapa.mapaPorDefecto),
+                accionAlSeleccionar: v => Mapa.mapaPorDefecto = Path.Combine(Mapa.carpetaMapas, v + ".jsonc"),
+                fuenteOpciones: () => Mapa.ListarNombresMapas())
             .Boton("Deathmatch", 500, 200, onClick: () => API.Encolar(FuncionesPartida.IniciarPartidaDeathmatch), ancho: 280, alto: 100)
             .Boton("Oleadas", 500, 350, onClick: () => API.Encolar(FuncionesPartida.IniciarPartidaOleadas), ancho: 280, alto: 100)
             .Boton("Regresar", 500, 500, out Boton botonVolverPrincipal, ancho: 280, alto: 100)
@@ -79,6 +87,10 @@ public static class Program
         botonAConfiguracion.accionAlHacerClick = () => API.Encolar(Menus.CambiarMenu, menuConfiguracion);
         botonRegresar.accionAlHacerClick = () => API.Encolar(Menus.CambiarMenu, menuPrincipal);
 
+        UIEditor.Construir(menuPrincipal);
+        UIEditorComportamientoIA.Construir(menuPrincipal);
+
+        Menus.menuPrincipal = menuPrincipal;
         Menus.menuActivo = menuPrincipal;
 
         // Visibilidad del boton "Iniciar Partida": solo visible si soy servidor, no estoy en partida y estoy en el menu principal
@@ -93,10 +105,22 @@ public static class Program
         while(!Raylib.WindowShouldClose())
         {
             CMD.ProcesarComandos();
-            gestorRed.Actualizar();
-            GestorOleadas.Actualizar();
-            GestorEntidades.Actualizar();
-            GestorEntidades.ProcesarColisiones();
+            if (!EditorMapa.activo && !EditorComportamientoIA.activo)
+            {
+                gestorRed.Actualizar();
+                GestorOleadas.Actualizar();
+                FuncionesArmas.Actualizar();
+                GestorEntidades.Actualizar();
+                GestorEntidades.ProcesarColisiones();
+            }
+            else if (EditorMapa.activo)
+            {
+                EditorMapa.Actualizar();
+            }
+            else if (EditorComportamientoIA.activo)
+            {
+                EditorComportamientoIA.Actualizar();
+            }
             CentroUI.Actualizar();
             API.Procesar();
             Observadores.Procesar();

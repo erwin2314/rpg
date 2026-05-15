@@ -4,17 +4,20 @@
 public static class ConfiguracionMiscelanea
 {
     public static bool chatAccesibleDesdeRaylib = false;
+    public static int fpsObjetivo = 144;
 
     public static string pathDeArchivosDeConfiguracionMiscelanea = "configuracion/confMisc.jsonc";
 
     private class DatosConfMisc
     {
         public bool chatAccesibleDesdeRaylib = false;
+        public int fpsObjetivo = 144;
     }
 
     private static readonly Dictionary<string, string> comentarios = new Dictionary<string, string>
     {
         {"chatAccesibleDesdeRaylib", "permite abrir el chat directamente desde la ventana grafica"},
+        {"fpsObjetivo", "framerate objetivo (= tasa de envio de paquetes de posicion remota; 60=ligero, 144/240=suave)"},
     };
 
     /// <summary>
@@ -38,6 +41,7 @@ public static class ConfiguracionMiscelanea
             if (datos == null) return;
 
             chatAccesibleDesdeRaylib = datos.chatAccesibleDesdeRaylib;
+            fpsObjetivo = datos.fpsObjetivo > 0 ? datos.fpsObjetivo : 144;
 
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("ConfiguracionMiscelanea encontrada con exito");
@@ -56,6 +60,7 @@ public static class ConfiguracionMiscelanea
         DatosConfMisc datos = new DatosConfMisc
         {
             chatAccesibleDesdeRaylib = chatAccesibleDesdeRaylib,
+            fpsObjetivo = fpsObjetivo,
         };
         GestorArchivosJson.Escribir(pathDeArchivosDeConfiguracionMiscelanea, datos, comentarios);
     }
