@@ -282,9 +282,16 @@ public static class HandlersMiscelaneos
         float x = mensaje.GetFloat();
         float y = mensaje.GetFloat();
         int vidaMax = mensaje.GetInt();
+        int sprite = mensaje.GetInt();
+        byte r = mensaje.GetByte();
+        byte g = mensaje.GetByte();
+        byte b = mensaje.GetByte();
+        byte a = mensaje.GetByte();
+        float escala = mensaje.GetFloat();
         if (!gestorCliente.enemigosRemotos.ContainsKey(idEnemigoServidor))
         {
-            EnemigoRemoto er = new EnemigoRemoto(idEnemigoServidor, new Vector2(x, y), vidaMax);
+            EnemigoRemoto er = new EnemigoRemoto(idEnemigoServidor, new Vector2(x, y), vidaMax,
+                (IdTextura)sprite, new Color(r, g, b, a), escala);
             gestorCliente.enemigosRemotos[idEnemigoServidor] = er;
         }
     }

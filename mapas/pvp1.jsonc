@@ -1,0 +1,379 @@
+{
+    // Nombre legible del mapa
+    "nombre": "pvp1",
+    // Ancho en pixeles
+    "ancho": 1280,
+    // Alto en pixeles
+    "alto": 720,
+    // Color de fondo (nombre Raylib: DarkGreen, Black, etc., u objeto {r,g,b,a})
+    "colorFondo": "DarkGreen",
+    // Si true, ademas de las paredes definidas se generan 4 paredes en los limites
+    "generarParedesBorde": false,
+    // Paredes rectangulares (posicion = centro, tamano = ancho/alto)
+    "paredes": [
+  {
+    "posicion": {
+      "X": 9.166641,
+      "Y": 359.99994
+    },
+    "tamano": {
+      "X": 48.333344,
+      "Y": 763.3334
+    },
+    "color": "DarkGray",
+    "capa": 49
+  },
+  {
+    "posicion": {
+      "X": 654.1666,
+      "Y": 714.99994
+    },
+    "tamano": {
+      "X": 1318.3333,
+      "Y": 43.333374
+    },
+    "color": "DarkGray",
+    "capa": 49
+  },
+  {
+    "posicion": {
+      "X": 1285,
+      "Y": 341.66663
+    },
+    "tamano": {
+      "X": 56.666626,
+      "Y": 770
+    },
+    "color": "DarkGray",
+    "capa": 49
+  },
+  {
+    "posicion": {
+      "X": 650.8333,
+      "Y": -10.833374
+    },
+    "tamano": {
+      "X": 1321.6666,
+      "Y": 65
+    },
+    "color": "DarkGray",
+    "capa": 49
+  },
+  {
+    "posicion": {
+      "X": 114.99997,
+      "Y": 460.83328
+    },
+    "tamano": {
+      "X": 200,
+      "Y": 51.666626
+    },
+    "color": "DarkGray",
+    "capa": 49
+  },
+  {
+    "posicion": {
+      "X": 126.666626,
+      "Y": 197.49994
+    },
+    "tamano": {
+      "X": 233.33331,
+      "Y": 58.333313
+    },
+    "color": "DarkGray",
+    "capa": 49
+  },
+  {
+    "posicion": {
+      "X": 420.83328,
+      "Y": 108.33328
+    },
+    "tamano": {
+      "X": 65,
+      "Y": 226.66663
+    },
+    "color": "DarkGray",
+    "capa": 49
+  },
+  {
+    "posicion": {
+      "X": 311.66663,
+      "Y": 332.49994
+    },
+    "tamano": {
+      "X": 223.33331,
+      "Y": 58.333313
+    },
+    "color": "DarkGray",
+    "capa": 49
+  },
+  {
+    "posicion": {
+      "X": 422.49997,
+      "Y": 567.49994
+    },
+    "tamano": {
+      "X": 75,
+      "Y": 281.66666
+    },
+    "color": "DarkGray",
+    "capa": 49
+  },
+  {
+    "posicion": {
+      "X": 862.49994,
+      "Y": 172.49994
+    },
+    "tamano": {
+      "X": 338.33337,
+      "Y": 61.666687
+    },
+    "color": "DarkGray",
+    "capa": 49
+  },
+  {
+    "posicion": {
+      "X": 934.99994,
+      "Y": 275.83328
+    },
+    "tamano": {
+      "X": 63.333374,
+      "Y": 191.66663
+    },
+    "color": "DarkGray",
+    "capa": 49
+  },
+  {
+    "posicion": {
+      "X": 1155.8333,
+      "Y": 282.49994
+    },
+    "tamano": {
+      "X": 241.66675,
+      "Y": 78.33331
+    },
+    "color": "DarkGray",
+    "capa": 49
+  },
+  {
+    "posicion": {
+      "X": 1080,
+      "Y": 599.99994
+    },
+    "tamano": {
+      "X": 86.666626,
+      "Y": 263.33334
+    },
+    "color": "DarkGray",
+    "capa": 49
+  },
+  {
+    "posicion": {
+      "X": 589.1666,
+      "Y": 320.83328
+    },
+    "tamano": {
+      "X": 75,
+      "Y": 71.666626
+    },
+    "color": "DarkGray",
+    "capa": 49
+  },
+  {
+    "posicion": {
+      "X": 774.99994,
+      "Y": 512.49994
+    },
+    "tamano": {
+      "X": 66.666626,
+      "Y": 68.33334
+    },
+    "color": "DarkGray",
+    "capa": 49
+  },
+  {
+    "posicion": {
+      "X": 774.99994,
+      "Y": 320.83328
+    },
+    "tamano": {
+      "X": 66.666626,
+      "Y": 68.333374
+    },
+    "color": "DarkGray",
+    "capa": 49
+  }
+],
+    // Puntos donde aparecen los jugadores al iniciar la partida
+    "spawnsJugador": [
+  {
+    "posicion": {
+      "X": 96.66666,
+      "Y": 99.99997
+    },
+    "equipo": 0,
+    "vidaMaxima": 100,
+    "regeneracionPorSegundo": 2
+  },
+  {
+    "posicion": {
+      "X": 1201.6666,
+      "Y": 89.99997
+    },
+    "equipo": 0,
+    "vidaMaxima": 100,
+    "regeneracionPorSegundo": 2
+  },
+  {
+    "posicion": {
+      "X": 1203.3333,
+      "Y": 613.33325
+    },
+    "equipo": 0,
+    "vidaMaxima": 100,
+    "regeneracionPorSegundo": 2
+  },
+  {
+    "posicion": {
+      "X": 95.80937,
+      "Y": 599.9521
+    },
+    "equipo": 0,
+    "vidaMaxima": 100,
+    "regeneracionPorSegundo": 2
+  }
+],
+    // Puntos donde aparecen los enemigos en modo oleadas; preset = Basico|Agresivo|Torreta
+    "spawnsEnemigo": [
+  {
+    "posicion": {
+      "X": 487.3524,
+      "Y": 324.6452
+    },
+    "preset": "Basico",
+    "vidaInicial": 0,
+    "tiempoEntreSpawns": 3,
+    "maxVivos": 3,
+    "radioPatrullaAleatoria": 200,
+    "caminoPatrulla": [
+      {
+        "X": 421.84488,
+        "Y": 263.5789
+      },
+      {
+        "X": 130.94724,
+        "Y": 270.2407
+      },
+      {
+        "X": 130.94724,
+        "Y": 393.48358
+      },
+      {
+        "X": 842.6472,
+        "Y": 403.47623
+      },
+      {
+        "X": 822.66187,
+        "Y": 253.58624
+      },
+      {
+        "X": 451.8229,
+        "Y": 265.7995
+      }
+    ]
+  }
+],
+    // Puntos donde aparecen las armas; arma = Pistola|Revolver|Subfusil1|Subfusil2|Escopeta|Francotirador|Aleatoria
+    "spawnsArma": [
+  {
+    "posicion": {
+      "X": 93.33331,
+      "Y": 283.33328
+    },
+    "arma": "Revolver",
+    "tiempoRespawn": 5
+  },
+  {
+    "posicion": {
+      "X": 93.33331,
+      "Y": 374.99997
+    },
+    "arma": "Revolver",
+    "tiempoRespawn": 5
+  },
+  {
+    "posicion": {
+      "X": 667.48016,
+      "Y": 432.14093
+    },
+    "arma": "Escopeta",
+    "tiempoRespawn": 20
+  },
+  {
+    "posicion": {
+      "X": 851.6666,
+      "Y": 258.33328
+    },
+    "arma": "Subfusil2",
+    "tiempoRespawn": 10
+  },
+  {
+    "posicion": {
+      "X": 991.6187,
+      "Y": 660.8094
+    },
+    "arma": "Subfusil1",
+    "tiempoRespawn": 10
+  },
+  {
+    "posicion": {
+      "X": 511.28403,
+      "Y": 660.09576
+    },
+    "arma": "Francotirador",
+    "tiempoRespawn": 50
+  },
+  {
+    "posicion": {
+      "X": 494.99997,
+      "Y": 64.99997
+    },
+    "arma": "Revolver",
+    "tiempoRespawn": 5
+  },
+  {
+    "posicion": {
+      "X": 496.66666,
+      "Y": 159.99997
+    },
+    "arma": "Subfusil2",
+    "tiempoRespawn": 10
+  },
+  {
+    "posicion": {
+      "X": 173.33331,
+      "Y": 336.6666
+    },
+    "arma": "Subfusil1",
+    "tiempoRespawn": 10
+  },
+  {
+    "posicion": {
+      "X": 999.15576,
+      "Y": 280.22427
+    },
+    "arma": "Revolver",
+    "tiempoRespawn": 5
+  }
+],
+    "configOleadas": {
+  "cantidadOleadas": 10,
+  "enemigosPorOleada": 5,
+  "multiplicadorVidaEnemigos": 1.1,
+  "multiplicadorVidaJugadores": 1
+},
+    "configDeathmatch": {
+  "puntuacionParaGanar": 10,
+  "multiplicadorVidaJugadores": 1
+}
+}

@@ -1,0 +1,563 @@
+{
+    // Nombre legible del mapa
+    "nombre": "circulo1",
+    // Ancho en pixeles
+    "ancho": 1280,
+    // Alto en pixeles
+    "alto": 720,
+    // Color de fondo (nombre Raylib: DarkGreen, Black, etc., u objeto {r,g,b,a})
+    "colorFondo": "DarkGreen",
+    // Si true, ademas de las paredes definidas se generan 4 paredes en los limites
+    "generarParedesBorde": false,
+    // Paredes rectangulares (posicion = centro, tamano = ancho/alto)
+    "paredes": [
+  {
+    "posicion": {
+      "X": 330.30298,
+      "Y": 223.18181
+    },
+    "tamano": {
+      "X": 313.63635,
+      "Y": 51.515167
+    },
+    "color": "DarkGray",
+    "capa": 49,
+    "escala": 1
+  },
+  {
+    "posicion": {
+      "X": 902.2726,
+      "Y": 225.4545
+    },
+    "tamano": {
+      "X": 306.06055,
+      "Y": 59.09088
+    },
+    "color": "DarkGray",
+    "capa": 49,
+    "escala": 1
+  },
+  {
+    "posicion": {
+      "X": 501.51508,
+      "Y": 103.48483
+    },
+    "tamano": {
+      "X": 62.121216,
+      "Y": 184.84845
+    },
+    "color": "DarkGray",
+    "capa": 49,
+    "escala": 1
+  },
+  {
+    "posicion": {
+      "X": 710.60596,
+      "Y": 109.54544
+    },
+    "tamano": {
+      "X": 74.24243,
+      "Y": 169.69696
+    },
+    "color": "DarkGray",
+    "capa": 49,
+    "escala": 1
+  },
+  {
+    "posicion": {
+      "X": 343.93936,
+      "Y": 412.5757
+    },
+    "tamano": {
+      "X": 298.4848,
+      "Y": 48.484802
+    },
+    "color": "DarkGray",
+    "capa": 49,
+    "escala": 1
+  },
+  {
+    "posicion": {
+      "X": 499.24237,
+      "Y": 497.4242
+    },
+    "tamano": {
+      "X": 48.484863,
+      "Y": 121.21216
+    },
+    "color": "DarkGray",
+    "capa": 49,
+    "escala": 1
+  },
+  {
+    "posicion": {
+      "X": 902.27264,
+      "Y": 422.4242
+    },
+    "tamano": {
+      "X": 315.1515,
+      "Y": 40.909058
+    },
+    "color": "DarkGray",
+    "capa": 49,
+    "escala": 1
+  },
+  {
+    "posicion": {
+      "X": 726.5151,
+      "Y": 501.96967
+    },
+    "tamano": {
+      "X": 60.60608,
+      "Y": 112.121216
+    },
+    "color": "DarkGray",
+    "capa": 49,
+    "escala": 1
+  },
+  {
+    "posicion": {
+      "X": 261.70038,
+      "Y": -81.70039
+    },
+    "tamano": {
+      "X": 529.3678,
+      "Y": 29.928925
+    },
+    "color": "DarkGray",
+    "capa": 49,
+    "escala": 1
+  },
+  {
+    "posicion": {
+      "X": 983.7356,
+      "Y": -77.95926
+    },
+    "tamano": {
+      "X": 645.34235,
+      "Y": 33.670044
+    },
+    "color": "DarkGray",
+    "capa": 49,
+    "escala": 1
+  },
+  {
+    "posicion": {
+      "X": 1291.4423,
+      "Y": 105.35536
+    },
+    "tamano": {
+      "X": 52.375732,
+      "Y": 340.44144
+    },
+    "color": "DarkGray",
+    "capa": 49,
+    "escala": 1
+  },
+  {
+    "posicion": {
+      "X": 1286.7659,
+      "Y": 573.93
+    },
+    "tamano": {
+      "X": 61.728516,
+      "Y": 327.3475
+    },
+    "color": "DarkGray",
+    "capa": 49,
+    "escala": 1
+  },
+  {
+    "posicion": {
+      "X": 963.1594,
+      "Y": 712.35126
+    },
+    "tamano": {
+      "X": 585.48444,
+      "Y": 50.505005
+    },
+    "color": "DarkGray",
+    "capa": 49,
+    "escala": 1
+  },
+  {
+    "posicion": {
+      "X": 283.2118,
+      "Y": 701.1279
+    },
+    "tamano": {
+      "X": 606.06067,
+      "Y": 57.987305
+    },
+    "color": "DarkGray",
+    "capa": 49,
+    "escala": 1
+  },
+  {
+    "posicion": {
+      "X": -10.465729,
+      "Y": 522.4897
+    },
+    "tamano": {
+      "X": 52.37561,
+      "Y": 295.548
+    },
+    "color": "DarkGray",
+    "capa": 49,
+    "escala": 1
+  },
+  {
+    "posicion": {
+      "X": -10.465744,
+      "Y": 89.45563
+    },
+    "tamano": {
+      "X": 48.63449,
+      "Y": 364.75873
+    },
+    "color": "DarkGray",
+    "capa": 49,
+    "escala": 1
+  },
+  {
+    "posicion": {
+      "X": -98.38193,
+      "Y": 243.77661
+    },
+    "tamano": {
+      "X": 216.98468,
+      "Y": 41.152283
+    },
+    "color": "DarkGray",
+    "capa": 49,
+    "escala": 1
+  },
+  {
+    "posicion": {
+      "X": -195.65094,
+      "Y": 327.01642
+    },
+    "tamano": {
+      "X": 33.67003,
+      "Y": 192.66742
+    },
+    "color": "DarkGray",
+    "capa": 49,
+    "escala": 1
+  },
+  {
+    "posicion": {
+      "X": -103.058334,
+      "Y": 400.90347
+    },
+    "tamano": {
+      "X": 207.63187,
+      "Y": 48.63452
+    },
+    "color": "DarkGray",
+    "capa": 49,
+    "escala": 1
+  },
+  {
+    "posicion": {
+      "X": 540.41345,
+      "Y": 789.97943
+    },
+    "tamano": {
+      "X": 61.728394,
+      "Y": 168.35022
+    },
+    "color": "DarkGray",
+    "capa": 49,
+    "escala": 1
+  },
+  {
+    "posicion": {
+      "X": 637.6825,
+      "Y": 854.5136
+    },
+    "tamano": {
+      "X": 196.40857,
+      "Y": 43.022827
+    },
+    "color": "DarkGray",
+    "capa": 49,
+    "escala": 1
+  },
+  {
+    "posicion": {
+      "X": 712.50476,
+      "Y": 784.36774
+    },
+    "tamano": {
+      "X": 39.281616,
+      "Y": 157.12683
+    },
+    "color": "DarkGray",
+    "capa": 49,
+    "escala": 1
+  },
+  {
+    "posicion": {
+      "X": 489.9085,
+      "Y": -164.0049
+    },
+    "tamano": {
+      "X": 50.505035,
+      "Y": 190.7969
+    },
+    "color": "DarkGray",
+    "capa": 49,
+    "escala": 1
+  },
+  {
+    "posicion": {
+      "X": 587.1775,
+      "Y": -239.76248
+    },
+    "tamano": {
+      "X": 245.043,
+      "Y": 57.987305
+    },
+    "color": "DarkGray",
+    "capa": 49,
+    "escala": 1
+  },
+  {
+    "posicion": {
+      "X": 702.21655,
+      "Y": -160.26378
+    },
+    "tamano": {
+      "X": 86.045654,
+      "Y": 183.31464
+    },
+    "color": "DarkGray",
+    "capa": 49,
+    "escala": 1
+  },
+  {
+    "posicion": {
+      "X": 1369.0706,
+      "Y": 254.06467
+    },
+    "tamano": {
+      "X": 196.40857,
+      "Y": 31.7995
+    },
+    "color": "DarkGray",
+    "capa": 49,
+    "escala": 1
+  },
+  {
+    "posicion": {
+      "X": 1442.9575,
+      "Y": 335.43393
+    },
+    "tamano": {
+      "X": 44.89331,
+      "Y": 175.83246
+    },
+    "color": "DarkGray",
+    "capa": 49,
+    "escala": 1
+  },
+  {
+    "posicion": {
+      "X": 1359.7177,
+      "Y": 440.18515
+    },
+    "tamano": {
+      "X": 211.37305,
+      "Y": 33.669983
+    },
+    "color": "DarkGray",
+    "capa": 49,
+    "escala": 1
+  }
+],
+    // Puntos donde aparecen los jugadores al iniciar la partida
+    "spawnsJugador": [
+  {
+    "posicion": {
+      "X": -105.86417,
+      "Y": 318.5989
+    },
+    "equipo": 0,
+    "vidaMaxima": 100,
+    "regeneracionPorSegundo": 2,
+    "escala": 1
+  },
+  {
+    "posicion": {
+      "X": 588.11273,
+      "Y": -150.91101
+    },
+    "equipo": 0,
+    "vidaMaxima": 100,
+    "regeneracionPorSegundo": 2,
+    "escala": 1
+  },
+  {
+    "posicion": {
+      "X": 636.74713,
+      "Y": 799.33215
+    },
+    "equipo": 0,
+    "vidaMaxima": 100,
+    "regeneracionPorSegundo": 2,
+    "escala": 1
+  },
+  {
+    "posicion": {
+      "X": 1366.2646,
+      "Y": 333.5634
+    },
+    "equipo": 0,
+    "vidaMaxima": 100,
+    "regeneracionPorSegundo": 2,
+    "escala": 1
+  }
+],
+    // Puntos donde aparecen los enemigos en modo oleadas; preset = Basico|Agresivo|Torreta
+    "spawnsEnemigo": [],
+    // Puntos donde aparecen las armas; arma = Pistola|Revolver|Subfusil1|Subfusil2|Escopeta|Francotirador|Aleatoria
+    "spawnsArma": [
+  {
+    "posicion": {
+      "X": 645.1468,
+      "Y": 308.8548
+    },
+    "arma": "Francotirador",
+    "tiempoRespawn": 30,
+    "escala": 1
+  },
+  {
+    "posicion": {
+      "X": 359.90433,
+      "Y": 129.6726
+    },
+    "arma": "Subfusil2",
+    "tiempoRespawn": 10,
+    "escala": 1
+  },
+  {
+    "posicion": {
+      "X": 849.9905,
+      "Y": 116.578674
+    },
+    "arma": "Subfusil1",
+    "tiempoRespawn": 10,
+    "escala": 1
+  },
+  {
+    "posicion": {
+      "X": 369.2571,
+      "Y": 483.20795
+    },
+    "arma": "Subfusil1",
+    "tiempoRespawn": 10,
+    "escala": 1
+  },
+  {
+    "posicion": {
+      "X": 835.026,
+      "Y": 513.1369
+    },
+    "arma": "Subfusil2",
+    "tiempoRespawn": 10,
+    "escala": 1
+  },
+  {
+    "posicion": {
+      "X": 40.039,
+      "Y": 423.35016
+    },
+    "arma": "Revolver",
+    "tiempoRespawn": 5,
+    "escala": 1
+  },
+  {
+    "posicion": {
+      "X": 34.427338,
+      "Y": 223.2005
+    },
+    "arma": "Pistola",
+    "tiempoRespawn": 5,
+    "escala": 1
+  },
+  {
+    "posicion": {
+      "X": 539.4779,
+      "Y": 647.8171
+    },
+    "arma": "Pistola",
+    "tiempoRespawn": 5,
+    "escala": 1
+  },
+  {
+    "posicion": {
+      "X": 728.4042,
+      "Y": 649.68756
+    },
+    "arma": "Revolver",
+    "tiempoRespawn": 5,
+    "escala": 1
+  },
+  {
+    "posicion": {
+      "X": 1227.8431,
+      "Y": 442.05573
+    },
+    "arma": "Revolver",
+    "tiempoRespawn": 5,
+    "escala": 1
+  },
+  {
+    "posicion": {
+      "X": 1233.4547,
+      "Y": 232.55328
+    },
+    "arma": "Pistola",
+    "tiempoRespawn": 5,
+    "escala": 1
+  },
+  {
+    "posicion": {
+      "X": 690.99304,
+      "Y": -36.807007
+    },
+    "arma": "Revolver",
+    "tiempoRespawn": 5,
+    "escala": 1
+  },
+  {
+    "posicion": {
+      "X": 455.30276,
+      "Y": -42.4187
+    },
+    "arma": "Pistola",
+    "tiempoRespawn": 5,
+    "escala": 1
+  },
+  {
+    "posicion": {
+      "X": 557.0202,
+      "Y": 309.01453
+    },
+    "arma": "Escopeta",
+    "tiempoRespawn": 30,
+    "escala": 1
+  }
+],
+    "configOleadas": {
+  "cantidadOleadas": 10,
+  "enemigosPorOleada": 5,
+  "multiplicadorVidaEnemigos": 1.1,
+  "multiplicadorVidaJugadores": 1
+},
+    "configDeathmatch": {
+  "puntuacionParaGanar": 10,
+  "multiplicadorVidaJugadores": 1
+}
+}

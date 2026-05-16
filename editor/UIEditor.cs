@@ -212,9 +212,18 @@ public static class UIEditor
             fuenteVisible: () => EditorMapa.objetoSeleccionado is SpawnEnemigoDatos,
             onEnter: t => { if (EditorMapa.objetoSeleccionado is SpawnEnemigoDatos se && int.TryParse(t, out int v) && v >= 0) se.maxVivos = v; });
 
-        mb.Panel("RadioRand:", xPanel, yPanel + 180, ancho: 90, alto: 22, colorTexto: Color.White, colorRectangulo: hueco,
+        // Escala generica: aplica a Pared, SpawnJugador, SpawnEnemigo, SpawnArma. Solo visible si hay objeto seleccionado.
+        mb.Panel("Escala:", xPanel, yPanel + 180, ancho: 60, alto: 22, colorTexto: Color.White, colorRectangulo: hueco,
+            fuenteVisible: () => EditorMapa.objetoSeleccionado != null);
+        mb.Campo(xPanel + 62, yPanel + 180, ancho: 165, alto: 22,
+            fuenteTexto: () => LeerEscala(EditorMapa.objetoSeleccionado),
+            fuenteVisible: () => EditorMapa.objetoSeleccionado != null,
+            onEnter: t => { if (float.TryParse(t, out float v) && v > 0f) EscribirEscala(EditorMapa.objetoSeleccionado, v); });
+
+        // SpawnEnemigo RadioRand (movido de y+180 a y+330 para liberar slot a la escala generica)
+        mb.Panel("RadioRand:", xPanel, yPanel + 330, ancho: 90, alto: 22, colorTexto: Color.White, colorRectangulo: hueco,
             fuenteVisible: () => EditorMapa.objetoSeleccionado is SpawnEnemigoDatos);
-        mb.Campo(xPanel + 92, yPanel + 180, ancho: 135, alto: 22,
+        mb.Campo(xPanel + 92, yPanel + 330, ancho: 135, alto: 22,
             fuenteTexto: () => EditorMapa.objetoSeleccionado is SpawnEnemigoDatos se ? se.radioPatrullaAleatoria.ToString("0") : "",
             fuenteVisible: () => EditorMapa.objetoSeleccionado is SpawnEnemigoDatos,
             onEnter: t => { if (EditorMapa.objetoSeleccionado is SpawnEnemigoDatos se && float.TryParse(t, out float v) && v >= 0f) se.radioPatrullaAleatoria = v; });
@@ -222,6 +231,31 @@ public static class UIEditor
         mb.Panel("", xPanel, yPanel + 210, ancho: 230, alto: 22, colorTexto: Color.LightGray, colorRectangulo: hueco,
             fuenteVisible: () => EditorMapa.objetoSeleccionado is SpawnEnemigoDatos,
             fuenteTexto: () => EditorMapa.objetoSeleccionado is SpawnEnemigoDatos se ? $"Waypoints: {se.caminoPatrulla.Count}  (usa la herramienta)" : "");
+
+        // SpawnEnemigo: Sprite (Desplegable) en y+240
+        mb.Panel("Sprite:", xPanel, yPanel + 240, ancho: 60, alto: 22, colorTexto: Color.White, colorRectangulo: hueco,
+            fuenteVisible: () => EditorMapa.objetoSeleccionado is SpawnEnemigoDatos);
+        mb.Desplegable(xPanel + 62, yPanel + 240, ancho: 165, alto: 22,
+            opciones: SpritesEnemigoDisponibles,
+            fuenteValor: () => EditorMapa.objetoSeleccionado is SpawnEnemigoDatos se ? se.spriteEnemigo.ToString() : "",
+            accionAlSeleccionar: v =>
+            {
+                if (EditorMapa.objetoSeleccionado is SpawnEnemigoDatos se && Enum.TryParse<IdTextura>(v, out IdTextura t))
+                    se.spriteEnemigo = t;
+            },
+            fuenteVisible: () => EditorMapa.objetoSeleccionado is SpawnEnemigoDatos);
+
+        // SpawnEnemigo: Color de tinte (Desplegable reusando NombresDeColores) en y+270
+        mb.Panel("Tinte:", xPanel, yPanel + 270, ancho: 60, alto: 22, colorTexto: Color.White, colorRectangulo: hueco,
+            fuenteVisible: () => EditorMapa.objetoSeleccionado is SpawnEnemigoDatos);
+        mb.Desplegable(xPanel + 62, yPanel + 270, ancho: 165, alto: 22,
+            opciones: NombresDeColores,
+            fuenteValor: () => EditorMapa.objetoSeleccionado is SpawnEnemigoDatos se ? NombreColor(se.tinteEnemigo) : "",
+            accionAlSeleccionar: v =>
+            {
+                if (EditorMapa.objetoSeleccionado is SpawnEnemigoDatos se) se.tinteEnemigo = ResolverColor(v, Color.Maroon);
+            },
+            fuenteVisible: () => EditorMapa.objetoSeleccionado is SpawnEnemigoDatos);
 
         // SpawnJugador extras: vida maxima y regeneracion por segundo
         mb.Panel("VidaMax:", xPanel, yPanel + 120, ancho: 90, alto: 22, colorTexto: Color.White, colorRectangulo: hueco,
@@ -374,6 +408,34 @@ public static class UIEditor
         "DarkBrown", "Maroon", "Orange", "Pink",
         "Purple", "SkyBlue", "Violet",
     };
+
+    /// <summary>Sprites disponibles para SpawnEnemigo.spriteEnemigo (estilo jugador)</summary>
+    private static readonly List<string> SpritesEnemigoDisponibles = new List<string>
+    {
+        "jugador1", "jugador2", "jugador3", "jugador4", "jugador5",
+        "jugador6", "jugador7", "jugador8", "jugador9", "jugador10",
+    };
+
+    /// <summary>Lee escala del objeto seleccionado para el Campo generico "Escala:"</summary>
+    private static string LeerEscala(object? o) => o switch
+    {
+        ParedDatos p        => p.escala.ToString("0.00"),
+        SpawnJugadorDatos s => s.escala.ToString("0.00"),
+        SpawnEnemigoDatos s => s.escala.ToString("0.00"),
+        SpawnArmaDatos    s => s.escala.ToString("0.00"),
+        _ => "",
+    };
+
+    private static void EscribirEscala(object? o, float v)
+    {
+        switch (o)
+        {
+            case ParedDatos p:         p.escala = v; break;
+            case SpawnJugadorDatos s:  s.escala = v; break;
+            case SpawnEnemigoDatos s:  s.escala = v; break;
+            case SpawnArmaDatos s:     s.escala = v; break;
+        }
+    }
 
     private static string NombreColor(Color c)
     {

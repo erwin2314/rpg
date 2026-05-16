@@ -23,6 +23,9 @@ public abstract class EntidadBase : ObjetoAbstracto
     /// <summary>Tamaño de la caja de colision (solo usado si forma == Rectangulo)</summary>
     public Vector2 tamanoColision = Vector2.Zero;
 
+    /// <summary>Multiplicador de tamaño aplicado por cada subclase a su radio/tamano al construirse (default 1.0)</summary>
+    public float escala = 1f;
+
     protected EntidadBase
     (
         Vector2 posicion,

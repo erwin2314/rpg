@@ -202,12 +202,15 @@ public static class FuncionesPartida
         Color color = Color.White;
         Jugador jugador = new Jugador(posInicial, id, color);
 
-        // Aplica vidaMaxima y regen del SpawnJugadorDatos (si hay), luego el multiplicador del modo
+        // Aplica vidaMaxima, regen y escala del SpawnJugadorDatos (si hay), luego el multiplicador del modo
         if (spawnJug != null)
         {
             jugador.vidaMaxima = Math.Max(1, spawnJug.vidaMaxima);
             jugador.vidaActual = jugador.vidaMaxima;
             jugador.regeneracionPorSegundo = spawnJug.regeneracionPorSegundo;
+            float e = MathF.Max(0.01f, spawnJug.escala);
+            jugador.escala = e;
+            jugador.radio *= e;
         }
         if (Mapa.mapaActivo != null)
         {

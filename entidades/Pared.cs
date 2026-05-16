@@ -9,16 +9,21 @@ public class Pared : EntidadBase
     public Color color = Color.DarkGray;
 
     public Pared(Vector2 posicion, Vector2 tamano)
-        : this(posicion, tamano, Color.DarkGray, 49) { }
+        : this(posicion, tamano, Color.DarkGray, 49, 1f) { }
 
     public Pared(Vector2 posicion, Vector2 tamano, Color color)
-        : this(posicion, tamano, color, 49) { }
+        : this(posicion, tamano, color, 49, 1f) { }
 
     public Pared(Vector2 posicion, Vector2 tamano, Color color, int capa)
+        : this(posicion, tamano, color, capa, 1f) { }
+
+    public Pared(Vector2 posicion, Vector2 tamano, Color color, int capa, float escala)
         : base(posicion, Vector2.Zero, 0f, 0f, 0f, 1, 1, capaDibujado: capa)
     {
         forma = FormaColision.Rectangulo;
-        tamanoColision = tamano;
+        float e = MathF.Max(0.01f, escala);
+        this.escala = e;
+        tamanoColision = tamano * e;
         solido = true;
         inmovil = true;
         this.color = color;

@@ -238,7 +238,10 @@ public static class FuncionesArmas
     {
         int id = proximoIdPickup++;
         if (spawnIndex.HasValue) pickupASpawn[id] = spawnIndex.Value;
-        new ArmaEnSuelo(id, a, pos);
+        float escala = (spawnIndex.HasValue && Mapa.mapaActivo != null && spawnIndex.Value < Mapa.mapaActivo.spawnsArma.Count)
+            ? Mapa.mapaActivo.spawnsArma[spawnIndex.Value].escala
+            : 1f;
+        new ArmaEnSuelo(id, a, pos, escala);
 
         Message m = Message.Create(MessageSendMode.Reliable, IdMensajesDeRed.nuevoPickup);
         m.AddInt(id);
@@ -366,7 +369,7 @@ public static class FuncionesArmas
                 Arma a = ResolverArma(sa.arma, rng);
                 int id = proximoIdPickup++;
                 pickupASpawn[id] = i;
-                creados.Add(new ArmaEnSuelo(id, a, sa.posicion));
+                creados.Add(new ArmaEnSuelo(id, a, sa.posicion, sa.escala));
             }
         }
         else

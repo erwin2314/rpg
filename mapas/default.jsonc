@@ -1,0 +1,225 @@
+{
+    // Nombre legible del mapa
+    "nombre": "sin nombre",
+    // Ancho en pixeles
+    "ancho": 1280,
+    // Alto en pixeles
+    "alto": 720,
+    // Color de fondo (nombre Raylib: DarkGreen, Black, etc., u objeto {r,g,b,a})
+    "colorFondo": "DarkGreen",
+    // Si true, ademas de las paredes definidas se generan 4 paredes en los limites
+    "generarParedesBorde": false,
+    // Paredes rectangulares (posicion = centro, tamano = ancho/alto)
+    "paredes": [
+  {
+    "posicion": {
+      "X": 665.8333,
+      "Y": -17.499977
+    },
+    "tamano": {
+      "X": 1261.6666,
+      "Y": 48.33333
+    },
+    "color": "DarkGray",
+    "capa": 49
+  },
+  {
+    "posicion": {
+      "X": 1275.8333,
+      "Y": 357.5
+    },
+    "tamano": {
+      "X": 51.666626,
+      "Y": 788.33325
+    },
+    "color": "DarkGray",
+    "capa": 49
+  },
+  {
+    "posicion": {
+      "X": 179.99998,
+      "Y": 200.83334
+    },
+    "tamano": {
+      "X": 339.99997,
+      "Y": 55
+    },
+    "color": "DarkGray",
+    "capa": 49
+  },
+  {
+    "posicion": {
+      "X": 300,
+      "Y": 404.1667
+    },
+    "tamano": {
+      "X": 83.33331,
+      "Y": 368.33334
+    },
+    "color": "Gray",
+    "capa": 49
+  },
+  {
+    "posicion": {
+      "X": 695.8334,
+      "Y": 295.83337
+    },
+    "tamano": {
+      "X": 105,
+      "Y": 585
+    },
+    "color": "DarkGray",
+    "capa": 49
+  },
+  {
+    "posicion": {
+      "X": 5,
+      "Y": 364.1667
+    },
+    "tamano": {
+      "X": 63.333313,
+      "Y": 761.6666
+    },
+    "color": "DarkGray",
+    "capa": 49
+  },
+  {
+    "posicion": {
+      "X": 637.5,
+      "Y": 728.3333
+    },
+    "tamano": {
+      "X": 1345,
+      "Y": 56.666626
+    },
+    "color": "DarkGray",
+    "capa": 49
+  }
+],
+    // Puntos donde aparecen los jugadores al iniciar la partida
+    "spawnsJugador": [
+  {
+    "posicion": {
+      "X": 91.66666,
+      "Y": 666.6666
+    },
+    "equipo": 0,
+    "vidaMaxima": 100,
+    "regeneracionPorSegundo": 1
+  },
+  {
+    "posicion": {
+      "X": 144.99997,
+      "Y": 663.3334
+    },
+    "equipo": 0,
+    "vidaMaxima": 100,
+    "regeneracionPorSegundo": 1
+  }
+],
+    // Puntos donde aparecen los enemigos en modo oleadas; preset = Basico|Agresivo|Torreta
+    "spawnsEnemigo": [
+  {
+    "posicion": {
+      "X": 139.99995,
+      "Y": 96.66665
+    },
+    "preset": "Torreta",
+    "vidaInicial": 0,
+    "tiempoEntreSpawns": 3,
+    "maxVivos": 1,
+    "radioPatrullaAleatoria": 200,
+    "caminoPatrulla": []
+  },
+  {
+    "posicion": {
+      "X": 221.45177,
+      "Y": 65.94082
+    },
+    "preset": "Basico",
+    "vidaInicial": 0,
+    "tiempoEntreSpawns": 3,
+    "maxVivos": 3,
+    "radioPatrullaAleatoria": 200,
+    "caminoPatrulla": [
+      {
+        "X": 251.32166,
+        "Y": 62.2352
+      },
+      {
+        "X": 556.7449,
+        "Y": 63.669067
+      },
+      {
+        "X": 561.0465,
+        "Y": 644.4035
+      },
+      {
+        "X": 434.8623,
+        "Y": 654.44086
+      },
+      {
+        "X": 436.2962,
+        "Y": 136.79858
+      },
+      {
+        "X": 254.18933,
+        "Y": 131.06293
+      }
+    ]
+  }
+],
+    // Puntos donde aparecen las armas; arma = Pistola|Revolver|Subfusil1|Subfusil2|Escopeta|Francotirador|Aleatoria
+    "spawnsArma": [
+  {
+    "posicion": {
+      "X": 88.333374,
+      "Y": 296.66653
+    },
+    "arma": "Escopeta",
+    "tiempoRespawn": 4
+  },
+  {
+    "posicion": {
+      "X": 168.33337,
+      "Y": 294.9999
+    },
+    "arma": "Subfusil2",
+    "tiempoRespawn": 3
+  },
+  {
+    "posicion": {
+      "X": 83.33337,
+      "Y": 349.9999
+    },
+    "arma": "Pistola",
+    "tiempoRespawn": 1
+  },
+  {
+    "posicion": {
+      "X": 166.66669,
+      "Y": 358.33322
+    },
+    "arma": "Subfusil1",
+    "tiempoRespawn": 2
+  },
+  {
+    "posicion": {
+      "X": 805,
+      "Y": 64.99991
+    },
+    "arma": "Aleatoria",
+    "tiempoRespawn": 5
+  }
+],
+    "configOleadas": {
+  "cantidadOleadas": 2,
+  "enemigosPorOleada": 5,
+  "multiplicadorVidaEnemigos": 1.1,
+  "multiplicadorVidaJugadores": 1
+},
+    "configDeathmatch": {
+  "puntuacionParaGanar": 10,
+  "multiplicadorVidaJugadores": 1
+}
+}

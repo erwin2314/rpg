@@ -147,7 +147,7 @@ public static class Mapa
         if (mapaActivo == null) return;
         foreach (ParedDatos pd in mapaActivo.paredes)
         {
-            new Pared(pd.posicion, pd.tamano, pd.color, pd.capa);
+            new Pared(pd.posicion, pd.tamano, pd.color, pd.capa, pd.escala);
         }
         if (mapaActivo.generarParedesBorde) CrearParedes();
     }

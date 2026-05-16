@@ -10,11 +10,14 @@ public class ArmaEnSuelo : EntidadBase
     public int idPickup;
     public Arma arma;
 
-    public ArmaEnSuelo(int idPickup, Arma arma, Vector2 posicion)
+    public ArmaEnSuelo(int idPickup, Arma arma, Vector2 posicion, float escala = 1f)
         : base(posicion, Vector2.Zero, 0f, 0f, 20f, 1, 1, capaDibujado: 48)
     {
         this.idPickup = idPickup;
         this.arma = arma;
+        float e = MathF.Max(0.01f, escala);
+        this.escala = e;
+        this.radio *= e;
         forma = FormaColision.Circulo;
         solido = false;
         GestorEntidades.InsertarEntidad(this);
