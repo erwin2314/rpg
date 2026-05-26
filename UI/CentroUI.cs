@@ -54,16 +54,23 @@ public static class CentroUI
         }
     }
 
+    /// <summary>Flag para invocar AplicarLayout en el primer frame (asegura layout correcto al arrancar)</summary>
+    private static bool _layoutInicial = true;
+
     /// <summary>
-    /// Llama AplicarFuenteTexto y AplicarVisibilidad en cada componente registrado <br/>
-    /// Los componentes con fuenteTexto/fuenteVisible no nulos se sincronizan con su fuente
+    /// Llama AplicarFuenteTexto y AplicarVisibilidad en cada componente registrado. <br/>
+    /// Si la ventana fue redimensionada (o es el primer frame), tambien invoca AplicarLayout
+    /// para que cada componente se reescale segun el nuevo tamano
     /// </summary>
     public static void AplicarFuentesDeTexto()
     {
+        bool recalcularLayout = Raylib_cs.Raylib.IsWindowResized() || _layoutInicial;
+        _layoutInicial = false;
         foreach (ObjetoAbstracto item in objetosAbstractos)
         {
             item.AplicarVisibilidad();
             item.AplicarFuenteTexto();
+            if (recalcularLayout) item.AplicarLayout();
         }
     }
 }

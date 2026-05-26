@@ -35,19 +35,30 @@ public class Enemigo : EntidadBase
     /// <summary>Indice del spawn en Mapa.mapaActivo.spawnsEnemigo (-1 si fue generado fuera del sistema de spawns)</summary>
     public int spawnOrigenIndex = -1;
 
+    /// <summary>Sprite con el que se dibuja (copiado desde SpawnEnemigoDatos.spriteEnemigo)</summary>
+    public string sprite = "jugador1.png";
+
+    /// <summary>Color de tinte aplicado al sprite (copiado desde SpawnEnemigoDatos.tinteEnemigo)</summary>
+    public Color tinte = Color.Maroon;
+
     public BarraDeProgreso barraVida;
 
     public Enemigo(Vector2 posicion, int vidaMax, ComportamientoIA comportamiento, SpawnEnemigoDatos? spawnDatos = null, int spawnIndex = -1)
         : base(posicion, Vector2.Zero, comportamiento.velocidad, 0f, 20f, vidaMax, vidaMax, capaDibujado: 50)
     {
         this.comportamiento = comportamiento;
-        this.armaActual = Mapa.presetsArma.TryGetValue(comportamiento.armaInicial, out var fa) ? fa() : Arma.Pistola1();
+        this.armaActual = Mapa.CargarArma(comportamiento.armaInicial);
         this.origenSpawn = posicion;
         this.spawnOrigenIndex = spawnIndex;
         if (spawnDatos != null)
         {
             this.caminoPatrulla = new List<Vector2>(spawnDatos.caminoPatrulla);
             this.radioPatrullaAleatoria = spawnDatos.radioPatrullaAleatoria;
+            this.sprite = spawnDatos.spriteEnemigo;
+            this.tinte = spawnDatos.tinteEnemigo;
+            float e = MathF.Max(0.01f, spawnDatos.escala);
+            this.escala = e;
+            this.radio *= e;
         }
         forma = FormaColision.Circulo;
         solido = true;
@@ -111,12 +122,12 @@ public class Enemigo : EntidadBase
 
     public override void Dibujar()
     {
-        Texture2D tex = GestorTexturas.ObtenerTextura(IdTextura.jugador1);
+        Texture2D tex = GestorTexturas.ObtenerTextura(sprite);
         Raylib.DrawTexturePro(
             tex,
             new Rectangle(0, 0, tex.Width, tex.Height),
             new Rectangle(posicion.X - radio, posicion.Y - radio, radio * 2, radio * 2),
-            Vector2.Zero, 0f, Color.Maroon);
+            Vector2.Zero, 0f, tinte);
     }
 
     public override void EnColision(EntidadBase otra)

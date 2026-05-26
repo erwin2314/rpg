@@ -1,0 +1,26 @@
+{
+    // Nombre legible (debe coincidir con el filename sin .jsonc)
+    "nombre": "Subfusil1",
+    // PNG en imagenes/ (con .png) — sprite del arma equipada y del pickup
+    "spriteArma": "subfusil1.png",
+    // PNG en imagenes/ (con .png) — sprite de cada bala disparada
+    "spriteBala": "balafusil1.png",
+    // Dano por impacto
+    "dano": 15,
+    // Cargador maximo
+    "municionMaxima": 30,
+    // Carga inicial (normalmente == municionMaxima)
+    "municionActual": 30,
+    // Segundos entre disparos
+    "cadenciaSegundos": 0.14,
+    // Pixeles por segundo
+    "velocidadBala": 1700,
+    // Comun | Inusual | Raro | Epico | Legendario
+    "rareza": "Inusual",
+    // 1 normal, 8 para escopeta
+    "proyectilesPorDisparo": 1,
+    // 0 = exacto
+    "dispersionGrados": 5,
+    // Segundos antes de despawn
+    "tiempoVidaBala": 0.5
+}

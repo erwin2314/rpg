@@ -1,0 +1,64 @@
+{
+    // Nombre legible del comportamiento (debe coincidir con el del archivo)
+    "nombre": "Agresivo",
+    // Arma con la que aparece (Pistola, Revolver, Subfusil1, Subfusil2, Escopeta, Francotirador)
+    "armaInicial": "Subfusil1",
+    // Velocidad maxima en px/s (0 = estatico, ej. torreta)
+    "velocidad": 280,
+    // Radio (px) para localizar jugadores (referencia para predicados en el arbol)
+    "rangoDeteccion": 800,
+    // Radio (px) efectivo de disparo (referencia para predicados en el arbol)
+    "rangoAtaque": 300,
+    // Multiplicador de cadencia de disparo (1 = normal, >1 = mas rapido)
+    "agresividad": 1.2,
+    // Id del nodo raiz del arbol de decision
+    "raizId": 0,
+    // Nodos del arbol. tipo=Condicion: predicado(JugadorEnRango/VidaMenosQue/CooldownListo/Siempre/Nunca)+umbral+siId+noId. tipo=Accion: accion(Idle/Perseguir/Atacar/Huir)
+    "nodos": [
+  {
+    "id": 0,
+    "tipo": "Condicion",
+    "predicado": "LineaDeVision",
+    "umbral": 300,
+    "siId": 1,
+    "noId": 2,
+    "accion": "Idle"
+  },
+  {
+    "id": 1,
+    "tipo": "Accion",
+    "predicado": "Siempre",
+    "umbral": 0,
+    "siId": -1,
+    "noId": -1,
+    "accion": "Atacar"
+  },
+  {
+    "id": 2,
+    "tipo": "Condicion",
+    "predicado": "LineaDeVision",
+    "umbral": 800,
+    "siId": 3,
+    "noId": 4,
+    "accion": "Idle"
+  },
+  {
+    "id": 3,
+    "tipo": "Accion",
+    "predicado": "Siempre",
+    "umbral": 0,
+    "siId": -1,
+    "noId": -1,
+    "accion": "Perseguir"
+  },
+  {
+    "id": 4,
+    "tipo": "Accion",
+    "predicado": "Siempre",
+    "umbral": 0,
+    "siId": -1,
+    "noId": -1,
+    "accion": "Idle"
+  }
+]
+}

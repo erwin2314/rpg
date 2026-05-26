@@ -1,6 +1,13 @@
 # rpg — Shooter 2D multijugador en C# / Raylib / Riptide
 
-Juego shooter top-down multijugador (cliente-servidor) en C# / .NET 9 con [Raylib-cs](https://github.com/ChrisDill/Raylib-cs) para los graficos y [Riptide](https://github.com/RiptideNetworking/Riptide) para la red. Soporta modos Deathmatch y Por Equipos, recogida de armas en el suelo, sincronizacion por broadcast, chat con comandos y configuracion persistente en JSONC.
+Juego shooter top-down multijugador en C# / .NET 9 con [Raylib-cs](https://github.com/ChrisDill/Raylib-cs) (graficos) y [Riptide](https://github.com/RiptideNetworking/Riptide) (red). Soporta:
+
+- **Modos Deathmatch y Oleadas (PvE)** con configuracion por mapa.
+- **Editor de mapas** integrado (paredes, spawns de jugador/enemigo/arma, capas).
+- **Editor de IA** con arboles de decision (Condicion/Accion).
+- **Modo local split-screen** hasta 4 jugadores en la misma PC (P1 teclado+mouse, P2-P4 gamepad).
+- **Modo online** cliente-servidor con sincronizacion automatica del mapa y los comportamientos.
+- **Recogida de armas, chat con comandos, configuracion persistente en JSONC.**
 
 > A pesar del nombre **rpg**, el proyecto es un shooter arena multijugador, no un RPG.
 
@@ -27,12 +34,20 @@ dotnet run
 
 Eso lanza la ventana de juego (1280x720). El menu principal te deja:
 
+- **Local** — abre submenu para elegir 2/3/4 jugadores en la misma PC (split-screen).
 - **Iniciar servidor** — abrir partida en este equipo (escucha en el puerto configurado).
 - **Unirse al servidor** — conectarse a la IP configurada.
+- **Editor de mapas** — crear/editar mapas (paredes, spawns, configuracion por modo).
+- **Editor de IA** — crear/editar arboles de decision para los enemigos del modo Oleadas.
 - **Configuracion** — cambiar nombre, IP, puertos y maximo de jugadores (se persiste en `configuracion/confRed.jsonc`).
-- **Iniciar Partida** — solo visible si eres servidor; abre el menu de modos.
+- **Iniciar Partida** — solo visible si eres servidor; abre el menu de modos (incluye selector de mapa).
 
-Una vez en partida: WASD para moverse, click izquierdo para disparar, E para recoger un arma del suelo.
+Controles en partida:
+
+- **P1** (siempre teclado+mouse): WASD para moverse, click izquierdo para disparar, E para recoger arma del suelo.
+- **P2-P4** (modo local): gamepad — stick izquierdo mover, stick derecho apuntar, RT/A disparar, B recoger.
+
+En el editor de IA: click en un nodo para seleccionar; `Delete` o boton "Borrar nodo" para borrar; "+ Condicion" / "+ Accion" auto-conecta al nodo seleccionado.
 
 Comandos del chat: pulsa Enter para escribir. Cualquier funcion marcada con `[EventoAPI(...)]` se invoca por su nombre exacto (case-sensitive). Prueba `api help` para listar todo.
 
@@ -41,10 +56,11 @@ Comandos del chat: pulsa Enter para escribir. Cualquier funcion marcada con `[Ev
 ## 2. Requisitos
 
 - **.NET 9 SDK** ([descarga](https://dotnet.microsoft.com/download/dotnet/9.0)).
-- **Linux / Windows** (cross-compilable entre ambos).
+- **Linux x64, Windows x64, macOS arm64 (Apple Silicon), macOS x64 (Intel)** — cross-compilable desde cualquier host.
 - Dependencias NuGet (las descarga `dotnet` automaticamente):
-  - `Raylib-cs` 7.0.2
-  - `RiptideNetworking.Riptide` 2.2.1
+  - `Raylib-cs` 7.0.2 (incluye nativos para los 4 RIDs anteriores).
+  - `RiptideNetworking.Riptide` 2.2.1 (pure-managed, sin nativos).
+- (Opcional) **Gamepads** — para que P2-P4 en modo local funcionen. Raylib soporta los habituales (Xbox, PlayStation, etc.).
 
 ---
 
@@ -56,30 +72,39 @@ Comandos del chat: pulsa Enter para escribir. Cualquier funcion marcada con `[Ev
 dotnet run
 ```
 
-### Release self-contained Linux (un solo binario)
+### Construir para todas las plataformas en un solo comando
 
 ```bash
-dotnet publish -c Release -r linux-x64 --self-contained true \
-  -p:PublishSingleFile=true \
-  -p:IncludeNativeLibrariesForSelfExtract=true
+dotnet msbuild -t:PublishAll
 ```
 
-Salida en `builds/linux/<version>/`:
+Itera los 4 RIDs (linux-x64, win-x64, osx-arm64, osx-x64) y deja cada build self-contained en su carpeta:
+
 ```
-imagenes/
-rpg
-rpg.pdb
+builds/linux/<version>/
+builds/windows/<version>/
+builds/mac-arm64/<version>/
+builds/mac-x64/<version>/
 ```
 
-### Release self-contained Windows
+Cada uno incluye runtime .NET 9, nativos de Raylib, ejecutable, `imagenes/`, `mapas/`, `comportamientos/`. Cross-compila desde cualquier host (Raylib-cs trae los nativos en el nuget).
+
+### Publish individual por plataforma
 
 ```bash
-dotnet publish -c Release -r win-x64 --self-contained true \
-  -p:PublishSingleFile=true \
-  -p:IncludeNativeLibrariesForSelfExtract=true
+dotnet publish -c Release -r linux-x64  --self-contained true
+dotnet publish -c Release -r win-x64    --self-contained true
+dotnet publish -c Release -r osx-arm64  --self-contained true   # Macs M1/M2/M3/M4
+dotnet publish -c Release -r osx-x64    --self-contained true   # Macs Intel
 ```
 
-Salida en `builds/windows/<version>/` con `rpg.exe` en lugar de `rpg`.
+### Caveat macOS
+
+Ejecutables sin firmar requieren `chmod +x rpg` y, la primera vez, **click-derecho → Abrir → confirmar** (Gatekeeper). Firma Apple Developer ($99/año) fuera de scope.
+
+### Mirror automatico bin → source
+
+Al arrancar, si el ejecutable detecta un `.csproj` walking-up (= estas en dev), **los `.jsonc` que se guardan desde los editores se copian tanto a `bin/Debug/.../{mapas,comportamientos}` como al source del proyecto**. Asi los edits sobreviven a un `dotnet clean` y los ve git. En publish (sin `.csproj`) el mirror queda desactivado — todo va al lado del ejecutable.
 
 ### Cambiar la version
 
@@ -89,23 +114,27 @@ Edita `<Version>X.Y.Z</Version>` en [rpg.csproj](rpg.csproj). Los siguientes bui
 
 ## 4. Arquitectura de alto nivel
 
-Todo el juego es **una sola ejecucion en un thread**: cada frame el bucle principal en [Program.cs](Program.cs) llama a los subsistemas en orden estricto:
+Todo el juego es **una sola ejecucion en un thread**: cada frame el bucle principal en [Program.cs](Program.cs) llama a los subsistemas en orden estricto. Tres ramas segun el estado:
 
 ```
 Raylib.WindowShouldClose()
         │
         ▼
-┌──────────────────────────────────────────────┐
-│ 1. CMD.ProcesarComandos()                    │ ← input de consola (TTY)
-│ 2. gestorRed.Actualizar()                    │ ← poll Riptide (servidor o cliente)
-│ 3. GestorEntidades.Actualizar()              │ ← Jugador, JugadorRemoto, Bala, Pared, ArmaEnSuelo
-│ 4. GestorEntidades.ProcesarColisiones()      │ ← pares de entidades → EnColision + separar
-│ 5. CentroUI.Actualizar()                     │ ← Botones, CajaDeTexto, BarraDeProgreso
-│ 6. API.Procesar()                            │ ← consume la cola de eventos
-│ 7. Observadores.Procesar()                   │ ← (condicion, accion) reactivos
-│ 8. InterfazUI.RecargarUI()                   │ ← recarga `fuenteTexto` declarativo
-│ 9. Render2d.DibujarObjetosAbstractos()       │ ← dibuja mundo (con camara) + pantalla
-└──────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────┐
+│ 1. CMD.ProcesarComandos()                            │ ← input de consola (TTY)
+│ 2a. (si NO editor) gestorRed.Actualizar()            │ ← poll Riptide (servidor o cliente)
+│ 2b.                GestorOleadas.Actualizar()        │ ← drip-spawn enemigos (Oleadas, solo servidor)
+│ 2c.                FuncionesArmas.Actualizar()       │ ← timers de respawn de pickups
+│ 2d.                GestorEntidades.Actualizar()      │ ← Jugador, JugadorRemoto, Enemigo, Bala, etc.
+│ 2e.                GestorEntidades.ProcesarColisiones│ ← pares → EnColision + separar
+│ 2f. (si EditorMapa)    EditorMapa.Actualizar()       │
+│ 2g. (si EditorIA)      EditorComportamientoIA.Actualizar
+│ 3. CentroUI.Actualizar()                             │ ← Botones, CajaDeTexto, Desplegable, BarraDeProgreso
+│ 4. API.Procesar()                                    │ ← consume la cola de eventos
+│ 5. Observadores.Procesar()                           │ ← (condicion, accion) reactivos
+│ 6. InterfazUI.RecargarUI()                           │ ← recarga `fuenteTexto` declarativo
+│ 7. Render2d.DibujarObjetosAbstractos()               │ ← dibuja mundo (multi-camera split-screen) + pantalla
+└──────────────────────────────────────────────────────┘
 ```
 
 Hay **dos espacios de dibujado**:
@@ -113,7 +142,7 @@ Hay **dos espacios de dibujado**:
 - **Mundo** (dentro de `BeginMode2D(camara)`): entidades, paredes, balas, y cualquier UI con `enMundo = true` (ej. barra de vida flotante del jugador).
 - **Pantalla** (fuera de `BeginMode2D`): menus, chat, HUD del arma.
 
-La camara sigue a `GestorEntidades.jugadorLocal` cuando hay partida en curso.
+En modo local con varios jugadores, el mundo se renderiza N veces (una por jugador) — cada uno con su propia `Camera2D` y dentro de un `BeginScissorMode` que recorta al cuadrante del jugador. Layout: 2 jugadores = split vertical; 3-4 = grid 2x2.
 
 ---
 
@@ -125,9 +154,9 @@ La camara sigue a `GestorEntidades.jugadorLocal` cuando hay partida en curso.
 
 `Render2d` mantiene dos listas: `objetosAbstractos` (UI de pantalla) y `objetosMundo` (UI/entidades en mundo). Las entidades se inscriben a ambas: `GestorEntidades` las actualiza, `Render2d` las dibuja.
 
-`Render2d.camara` es un `Camera2D` con `Offset` en el centro de la pantalla; el `Target` se actualiza para seguir al jugador local.
+**Multi-camera split-screen**: `Render2d.camaras[]` tiene una `Camera2D` por jugador local. Cada frame `ActualizarCamarasJugadores()` recalcula sus `Target` (= posicion del jugador) y `Offset` (= centro del viewport del cuadrante). El render loop itera cada jugador y dibuja el mundo dentro de `BeginScissorMode(viewport)` + `BeginMode2D(camara)`. Para 1 jugador (online o local-1P), 1 camara = pantalla completa, sin scissor visible. Helper `Render2d.CamaraDe(jugador)` devuelve la camara asignada a un jugador concreto.
 
-Para depurar colisiones: `Render2d.AlternarHitboxes()` (o `AlternarHitboxes` en el chat).
+Para depurar colisiones: `Render2d.AlternarHitboxes()` (o `AlternarHitboxes` en el chat). Para ver ids: `AlternarIds`.
 
 ### 5.2 Entidades y colisiones
 
@@ -193,10 +222,14 @@ Cada mensaje tiene un id en `IdMensajesDeRed`. Su handler se define en `handlers
 
 **Dos tickrates**:
 
-- **Rapido (cada frame)**: `posicionJugador` y `broadcastPosicion` llevan `(x, y, vidaActual)`. UDP unreliable; la perdida ocasional no importa.
-- **Lento (cada 5s)**: `snapshotJugadores` lleva el `DatosJugador` completo (nombre, color, vidaMaxima, puntuacion) de todos. TCP reliable.
+- **Rapido (cada frame)**: `posicionJugador`, `broadcastPosicion`, `broadcastPosicionEnemigo` llevan `(x, y, vidaActual)`. UDP unreliable; la perdida ocasional no importa.
+- **Lento (cada 5s)**: `snapshotJugadores` lleva el `DatosJugador` completo (nombre, color, vidaMaxima, puntuacion) de todos. Reliable.
 
 `DatosJugador` vive en `gestorRed.jugadoresConectados` (cache del cliente) y `gestorServidor.datosJugadores` (autoridad del servidor).
+
+**Sincronizacion chunked de mapa y comportamientos al iniciar partida**: ver Sec. 5.12.
+
+**Diagnostico de desconexion**: `gestorCliente.EnClienteDesconectado` loguea `e.Reason` (TimedOut / Kicked / ...) y, si habia partida activa, llama `FuncionesPartida.AplicarFinPartidaLocal(0xFFFF)` para limpiar el mundo y volver al menu principal (no deja al cliente "zombie" en partida sin red).
 
 ### 5.6 Eventos (API + `[EventoAPI]`)
 
@@ -277,7 +310,97 @@ El boton "Iniciar Partida" aparece/desaparece automaticamente sin codigo de tran
 
 **Archivos clave**: [gestores/gestorDeTexturas/GestorTexturas.cs](gestores/gestorDeTexturas/GestorTexturas.cs), [constantantes/IdTextura.cs](constantantes/IdTextura.cs).
 
-Las texturas viven en `imagenes/` (copiadas al output por [rpg.csproj](rpg.csproj#L20-L24)). Cada una tiene un id en el enum `IdTextura`. `GestorTexturas.CargarTexturas()` las carga al inicio; `ObtenerTextura(id)` las devuelve.
+Las texturas viven en `imagenes/` (copiadas al output por [rpg.csproj](rpg.csproj)). Cada una tiene un id en el enum `IdTextura`. `GestorTexturas.CargarTexturas()` las carga al inicio; `ObtenerTextura(id)` las devuelve.
+
+### 5.12 Mapas JSONC + editor
+
+**Archivos clave**: [mapa/Mapa.cs](mapa/Mapa.cs), [mapa/MapaDatos.cs](mapa/MapaDatos.cs), [editor/EditorMapa.cs](editor/EditorMapa.cs), [editor/UIEditor.cs](editor/UIEditor.cs).
+
+Cada `.jsonc` en `mapas/` describe un mapa: `MapaDatos` con dimensiones, color de fondo, lista de `paredes`, `spawnsJugador`, `spawnsEnemigo`, `spawnsArma`, y configuracion por modo (`configOleadas`, `configDeathmatch`).
+
+- **Pared**: posicion, tamano, color, `capa` (z-order), `escala`.
+- **SpawnJugador**: posicion, `vidaMaxima`, `regeneracionPorSegundo`, `escala`.
+- **SpawnEnemigo**: posicion, `preset` (Basico/Agresivo/Torreta/custom), `vidaInicial`, `tiempoEntreSpawns`, `maxVivos`, `spriteEnemigo`, `tinteEnemigo`, `escala`, `caminoPatrulla`.
+- **SpawnArma**: posicion, `arma` (Pistola/Revolver/Subfusil1/...Aleatoria), `tiempoRespawn`, `escala`.
+- **ConfigOleadas**: `enemigosPorOleada`, `cantidadOleadas`, `multiplicadorVidaEnemigos`, `multiplicadorVidaJugadores`.
+- **ConfigDeathmatch**: `puntuacionParaGanar`, `multiplicadorVidaJugadores`.
+
+El editor (boton "Editor de mapas" del menu principal) permite crear, cargar, editar y guardar mapas. El selector de mapa en el menu de modo (`Mapa.ListarNombresMapas()`) muestra todos los disponibles. Lo guardado se espeja al source (ver Sec. 5.15).
+
+### 5.13 IA — comportamientos como arbol de decision + editor
+
+**Archivos clave**: [ia/ComportamientoIA.cs](ia/ComportamientoIA.cs), [ia/NodoIA.cs](ia/NodoIA.cs), [ia/EditorComportamientoIA.cs](ia/EditorComportamientoIA.cs), [ia/UIEditorComportamientoIA.cs](ia/UIEditorComportamientoIA.cs), [ia/FuncionesIA.cs](ia/FuncionesIA.cs).
+
+Cada `.jsonc` en `comportamientos/` describe el comportamiento de un enemigo: `ComportamientoIA` con `nombre`, `armaInicial`, `velocidad`, `rangoDeteccion`, `rangoAtaque`, `agresividad`, `raizId` y una lista de `nodos`. Cada `NodoIA` es Condicion (`predicado` + `umbral` → `siId` / `noId`) o Accion (`accion`).
+
+- **Predicados** (`EvaluadorPredicados.disponibles`): `JugadorEnRango`, `LineaDeVision`, `Siempre`.
+- **Acciones** (`EjecutorAcciones.disponibles`): `Idle`, `Perseguir`, `Atacar`, `Huir`, `SeguirCamino`, `PatrullarAleatorio`.
+
+**Editor** (boton "Editor de IA"):
+
+- Auto-conectar: con una Condicion seleccionada, "+ Condicion" o "+ Accion" cuelga el nuevo nodo del primer slot libre (`siId`, luego `noId`). Si el padre es Accion o no hay slot, lo dice en `mensajeEstado`.
+- Limpieza de huerfanos automatica: al borrar un nodo intermedio, los hijos no alcanzables desde la raiz desaparecen. Al guardar, el `.jsonc` queda limpio.
+- Defaults canonicos: `ComportamientoIA.BootstrapDefaults()` crea `Basico.jsonc`, `Agresivo.jsonc`, `Torreta.jsonc` al arrancar si no existen.
+
+### 5.14 Modo Oleadas (PvE)
+
+**Archivos clave**: [partida/GestorOleadas.cs](partida/GestorOleadas.cs), [entidades/Enemigo.cs](entidades/Enemigo.cs), [entidades/EnemigoRemoto.cs](entidades/EnemigoRemoto.cs), [partida/Pathfinding.cs](partida/Pathfinding.cs).
+
+Solo en servidor. Por cada `SpawnEnemigoDatos` del mapa, `GestorOleadas` mantiene un timer (`tiempoEntreSpawns`) y un cap por-spawn (`maxVivos`). Drip-spawning: el spawn-point va rellenando segun mata el jugador, sin un cap global. La oleada avanza cuando se acumulan `configOleadas.enemigosPorOleada` kills; tras `configOleadas.cantidadOleadas` totales → `FuncionesPartida.TerminarPartidaPvE(victoria: true)`.
+
+- Las muertes del jugador NO suman puntuacion (solo respawn). El "kill counter" del modo es ENEMIES killed.
+- El servidor sincroniza cada enemigo al cliente con `spawnearEnemigo` (id + pos + vida + sprite + color + escala), `broadcastPosicionEnemigo` cada frame, `muerteEnemigo` al morir.
+- `Pathfinding.Construir()` arma una rejilla A* sobre el mapa al `IniciarPartidaOleadas()` para que los enemigos puedan navegar paredes.
+
+### 5.15 Sincronizacion chunked de mapas y comportamientos
+
+**Archivos clave**: [gestores/gestoresDeRed/gestorServidor.cs:EnviarArchivoEnBloques](gestores/gestoresDeRed/gestorServidor.cs), [gestores/gestoresDeRed/handlers/handlersMiscelaneos.cs:RecibirBloqueArchivoEnCliente](gestores/gestoresDeRed/handlers/handlersMiscelaneos.cs), [mapa/Mapa.cs:AplicarMapaDesdeJson](mapa/Mapa.cs).
+
+El cliente NO necesita tener el `.jsonc` del mapa ni de los comportamientos en disco. Al iniciar partida, el servidor:
+
+1. Lee el `.jsonc` del mapa y lo parte en chunks de 800 bytes (por debajo del cap por defecto de Riptide).
+2. Envia cada chunk como `bloqueArchivo(tipo=Mapa, nombre, indice, esUltimo, bytes)`, Reliable.
+3. Por cada comportamiento referenciado por los `spawnsEnemigo` del mapa, hace lo mismo (`tipo=Comportamiento`).
+4. Despues envia el mensaje pequeno `iniciarPartida(modo, puntuacionMaxima, nombreMapa)`.
+
+El cliente acumula los chunks en `buffersBloques` keyed por `"tipo:nombre"`, y al recibir `esUltimo` deserializa con `Mapa.AplicarMapaDesdeJson` o `RegistrarComportamientoDesdeJson` (en memoria, sin tocar disco). Como Riptide preserva el orden de mensajes Reliable, al llegar `iniciarPartida` el cliente ya tiene `mapaActivo` y `cacheComportamientos` poblados; `CrearMundoLocal` los aplica.
+
+Soporta mapas de cualquier tamano sin tocar `Riptide.Message.MaxPayloadSize`.
+
+### 5.16 Mirror automatico bin → source
+
+**Archivos clave**: [gestores/gestorDeArchivos/GestorArchivosJson.cs:MirrorAlSource](gestores/gestorDeArchivos/GestorArchivosJson.cs), [Program.cs:BuscarRaizProyecto](Program.cs).
+
+Al arrancar, `Program.Main` invoca `BuscarRaizProyecto(AppContext.BaseDirectory)` que sube hasta 8 niveles buscando un `.csproj`. Si lo encuentra (= dev mode), llama `GestorArchivosJson.ConfigurarMirrorASource(raiz)`.
+
+Despues, cualquier `Escribir(path, ...)` cuyo `path` resuelva dentro de `<directorio del ejecutable>/mapas/` o `/comportamientos/` se copia tambien a `<raizSource>/mapas/...` o `/comportamientos/...`. Asi los edits del runtime (mapas creados desde el editor, defaults de IA bootstrap, etc.) terminan en el source — los ve git, sobreviven a `dotnet clean`. En produccion (`dotnet publish`, sin `.csproj` walking-up) el mirror queda desactivado.
+
+### 5.17 Interpolacion / extrapolacion de entidades remotas
+
+**Archivos clave**: [UI/BufferInterpolacion.cs](UI/BufferInterpolacion.cs).
+
+Cada `JugadorRemoto` y `EnemigoRemoto` mantiene un buffer de muestras `(tiempo, posicion)` recibidas por red. Cada frame, `posicion = buffer.Calcular(posicion)` devuelve:
+
+- **Interpolacion** entre las dos muestras que rodean `tRender = ahora - lagInterpolacion` (default 100 ms).
+- **Extrapolacion** proyectando con la velocidad de las dos ultimas muestras si `tRender > ultima`, cap por `maxExtrapolacion` (default 250 ms).
+- **Fallback** a la primera muestra si el buffer esta vacio o tRender es muy temprano.
+
+Resultado: movimiento suave aunque la red llegue a 20-30 Hz.
+
+### 5.18 Input abstraction y modo local split-screen
+
+**Archivos clave**: [input/IInputJugador.cs](input/IInputJugador.cs), [configuracion/ConfiguracionLocal.cs](configuracion/ConfiguracionLocal.cs), [gestores/gestorDeEntidades/GestorEntidades.cs](gestores/gestorDeEntidades/GestorEntidades.cs), [partida/FuncionesPartida.cs:CrearMundoLocal](partida/FuncionesPartida.cs).
+
+`IInputJugador` abstrae movimiento, aim, disparo y recoger. Dos implementaciones:
+
+- `InputTecladoRaton`: WASD + mouse (aim convierte mouse-screen → mouse-world via `GetScreenToWorld2D(camara)`). Anti-disparo-accidental al pulsar boton "Deathmatch" (clic suelto al menos una vez).
+- `InputGamepad(indice)`: stick izquierdo mover, stick derecho apuntar, RT/A disparar, B recoger. Zona muerta 0.2.
+
+`GestorEntidades.jugadoresLocales` es una lista (no un solo `jugadorLocal`). En online o local-1P, tiene 1 elemento. En local-multi, tiene 2-4. Property `jugadorLocal` mantiene compat para sitios que solo se preocupan por "el primer local".
+
+`ConfiguracionLocal.cantidadJugadores` controla cuantos spawnea `CrearMundoLocal`. Cada jugador recibe su `IInputJugador` (P1 = teclado+mouse, P2-P4 = gamepad indice 0..2). El menu "Local" del menu principal abre un submenu para elegir 2/3/4 jugadores y arranca el servidor sin esperar clientes.
+
+`Bala.EnColision` chequea `GestorEntidades.jugadoresLocales.Contains(j)` en vez de `j == jugadorLocal` — asi cualquier jugador local recibe dano.
 
 ---
 
@@ -374,7 +497,52 @@ En el juego: `Saludar Charlie` o, desde codigo, `API.Encolar(MisFunciones.Saluda
 
 El csproj ya copia `imagenes/**` al output con `PreserveNewest`.
 
-### 6.6 Crear una entidad nueva
+### 6.6 Crear un mapa con el editor
+
+1. Menu principal → **Editor de mapas**.
+2. En el toolbar superior: campo "Nuevo:" → escribir nombre → **Crear**. Aparece un mapa en blanco.
+3. Click para añadir paredes y spawns; arrastra para moverlos; el panel derecho edita las propiedades del seleccionado (color, vidaMaxima, preset de IA, etc.).
+4. **Guardar**. El `.jsonc` se escribe en `bin/Debug/.../mapas/<nombre>.jsonc` y, si estas en dev, se espeja al source automaticamente (Sec. 5.16).
+5. Para usarlo: menu principal → **Iniciar Partida** → selector de mapa → tu mapa → elegir modo.
+
+### 6.7 Crear un comportamiento IA con el editor
+
+1. Menu principal → **Editor de IA**.
+2. Campo "Nuevo:" → escribir nombre → **Crear**. Aparece un comportamiento con una unica Accion Idle como raiz.
+3. Click en la raiz → cambiar tipo a `Condicion` con el dropdown del panel derecho. Ajustar `predicado` y `umbral`.
+4. Click **"+ Accion"** → cae como rama SI. Click otra vez en la Condicion → **"+ Accion"** → cae como rama NO.
+5. Para arboles mas grandes: cualquier Condicion seleccionada acepta nuevos hijos. La auto-conexion se rinde si ambos slots estan ocupados (mensaje claro en status).
+6. **Guardar**. El `.jsonc` se espeja al source.
+7. Asignarlo a un enemigo: editor de mapas → seleccionar un SpawnEnemigo → dropdown `preset` → tu comportamiento.
+
+### 6.8 Anadir un predicado nuevo a la IA
+
+```csharp
+// 1. ia/FuncionesIA.cs (o donde este EvaluadorPredicados)
+public static bool MiPredicado(EstadoIA estado, float umbral) { ... }
+
+// 2. Anadir entrada al diccionario que linka nombre → funcion:
+predicados["MiPredicado"] = MiPredicado;
+
+// 3. Anadir a la lista visible para el dropdown del editor:
+disponibles.Add("MiPredicado");
+```
+
+El editor lo muestra automaticamente en el dropdown "Predicado" de las Condiciones.
+
+### 6.9 Anadir una accion nueva a la IA
+
+Analogo a 6.8 pero en `EjecutorAcciones`. La accion recibe el estado de la IA y modifica `posicion`/`velocidad`/etc. del enemigo.
+
+### 6.10 Hacer un build para todas las plataformas
+
+```bash
+dotnet msbuild -t:PublishAll
+```
+
+Produce `builds/{linux,windows,mac-arm64,mac-x64}/<version>/` con cada ejecutable self-contained + assets. Comando independiente de OS host.
+
+### 6.11 Crear una entidad nueva
 
 ```csharp
 public class MiEntidad : EntidadBase
@@ -410,19 +578,24 @@ public class MiEntidad : EntidadBase
 | `api/`               | Funciones genericas expuestas a la API (`FuncionesEntidades.CambiarCampo`).          |
 | `armas/`             | Definicion y logica de armas: `Arma` (factories), `Rareza`, `FuncionesArmas`.        |
 | `cmd/`               | Dispatcher textual de chat/consola (`CMD`, `FuncionesCMD`).                          |
-| `configuracion/`     | Persistencia de configuracion (`ConfiguracionRed`, `ConfiguracionMiscelanea`).       |
-| `constantantes/`     | Enums constantes (`IdMensajesDeRed`, `IdTextura`).                                   |
-| `entidades/`         | Entidades concretas: `Jugador`, `JugadorRemoto`, `Bala`, `Pared`, `ArmaEnSuelo`.     |
+| `comportamientos/`   | `.jsonc` con arboles de decision para enemigos (defaults: Basico, Agresivo, Torreta). |
+| `configuracion/`     | Persistencia: `ConfiguracionRed`, `ConfiguracionMiscelanea`, `ConfiguracionLocal`.   |
+| `constantantes/`     | Enums constantes (`IdMensajesDeRed`, `TipoArchivoBloque`, `IdTextura`).              |
+| `editor/`            | Editor de mapas: `EditorMapa`, `RenderEditor`, `UIEditor` (toolbar + panel propiedades). |
+| `entidades/`         | Entidades concretas: `Jugador`, `JugadorRemoto`, `Bala`, `Pared`, `ArmaEnSuelo`, `Enemigo`, `EnemigoRemoto`. |
 | `eventos/`           | API central de eventos (`API`, atributo `[EventoAPI]`, `FuncionesSistema`).          |
 | `gestores/`          | Gestores globales: red (Riptide), entidades, texturas, archivos JSON.                |
+| `ia/`                | `ComportamientoIA`, `NodoIA`, `EditorComportamientoIA`, `UIEditorComportamientoIA`, `FuncionesIA` (predicados + acciones). |
 | `imagenes/`          | Sprites (PNG). Se copian al output via csproj.                                       |
-| `mapa/`              | `Mapa` — tamano, color de fondo, generacion de paredes perimetrales.                 |
+| `input/`             | `IInputJugador` + implementaciones `InputTecladoRaton` y `InputGamepad`.              |
+| `mapa/`              | `Mapa` — carga/guarda `.jsonc`, mantiene `mapaActivo`, helpers `AplicarMapaDesdeJson` para sync por red. |
+| `mapas/`             | `.jsonc` con mapas (paredes, spawns, configs por modo).                              |
 | `menus/`             | `Menu`, `MenuBuilder` (fluido), `Menus` (cambio de menu activo).                     |
 | `observadores/`      | `Observadores` — pares `(condicion, accion)` evaluados cada frame.                   |
-| `partida/`           | `FuncionesPartida` (iniciar/terminar partida, puntuacion), enum `ModoDeJuego`.       |
-| `render/`            | `Render2d` — dibujado en mundo (con camara) + pantalla, `mostrarHitboxes`.           |
+| `partida/`           | `FuncionesPartida` (iniciar/terminar partida, puntuacion), `GestorOleadas`, `Pathfinding`, enum `ModoDeJuego`. |
+| `render/`            | `Render2d` — split-screen multi-camera + scissor, hitboxes/ids debug.                |
 | `Serializador/`      | `Serializador`, converters para `Color`, delegates y `Texture2D`.                    |
-| `UI/`                | Componentes UI: `Panel`, `Boton`, `CajaDeTexto`, `BarraDeProgreso`, `ChatUI`, `HUDArma`, `CentroUI`, `InterfazUI`, factory `UI`. |
+| `UI/`                | Componentes UI: `Panel`, `Boton`, `CajaDeTexto`, `Desplegable`, `BarraDeProgreso`, `ChatUI`, `HUDArma`, `BufferInterpolacion`, `CentroUI`, `InterfazUI`, factory `UI`. |
 | `builds/`            | Output de `dotnet publish` (ignorado por git).                                       |
 
 ---
@@ -465,11 +638,35 @@ Esto permite los dos mundos: codigo type-safe **y** chat textual.
 
 ### Disparo accidental al seleccionar modo
 
-Al pulsar "Deathmatch", el `IsMouseButtonDown(Left)` aun esta `true` ese mismo frame y el `Jugador` ya creado dispararia. El flag `clicSoltadoUnaVez` en [entidades/jugador.cs](entidades/jugador.cs) bloquea el disparo hasta que el raton se haya soltado al menos una vez tras la creacion.
+Al pulsar "Deathmatch", el `IsMouseButtonDown(Left)` aun esta `true` ese mismo frame y el `Jugador` ya creado dispararia. El flag `clicSoltadoUnaVez` dentro de `InputTecladoRaton` bloquea el disparo hasta que el raton se haya soltado al menos una vez tras la creacion. Para `InputGamepad`, el flag `gatilloSoltadoUnaVez` hace lo mismo con el RT/A.
 
 ### Hitboxes para depurar
 
-`Render2d.AlternarHitboxes()` (alias en chat: `AlternarHitboxes`) dibuja el contorno de cada colisionador. Util cuando algo "pasa por una pared" y no sabes si es la forma o la separacion.
+`Render2d.AlternarHitboxes()` (alias en chat: `AlternarHitboxes`) dibuja el contorno de cada colisionador. Util cuando algo "pasa por una pared" y no sabes si es la forma o la separacion. Su hermano `AlternarIds` superpone el id de cada entidad.
+
+### Por que decision tree en vez de FSM para la IA
+
+El FSM antiguo era una maquina de estados rigida (Idle/Persiguiendo/Atacando) con transiciones cableadas en codigo. El decision tree es **editable visualmente, composable, y mas natural** para describir "si veo al jugador y esta en rango, ataco; sino persigo; sino patrullo". Cada subarbol es reutilizable. El `.jsonc` de cada comportamiento es directamente lo que se evalua cada frame — el editor lo construye sin tocar codigo C#.
+
+### Por que chunks de 800 bytes en la sync de mapas
+
+Riptide tiene un `Message.MaxPayloadSize` por defecto ~1247 bytes. Mapas reales pasan facilmente de 10 KB. Subir `MaxPayloadSize` funciona en LAN pero confia en fragmentacion IP — fragil. Partir el `.jsonc` en chunks de 800 bytes (con margen para los headers) y enviar cada uno como mensaje Reliable independiente funciona para cualquier tamano sin tocar la configuracion. Como Riptide preserva el orden de los Reliable, los chunks se aplican en orden y antes del mensaje `iniciarPartida`.
+
+### Por que mirror bin → source (no chdir al source)
+
+Otra opcion era hacer `Environment.CurrentDirectory = raizSource` al arrancar. Mas invasivo: afecta TODOS los paths relativos del proceso (incluidos `imagenes/`, `configuracion/`, etc.). En particular `configuracion/confRed.jsonc` contiene NombreUsuario/IP/puertos — datos por-usuario que NO deben ir a git. El mirror selectivo solo de `mapas/` y `comportamientos/` mantiene esa frontera limpia: lo que sale al source es el contenido de partida (compartible), no la config local.
+
+### Por que el modo local reusa la infra de servidor sin clientes
+
+Una alternativa era hacer un branch separado "single-process partida sin Riptide". Eso duplica la logica de spawn/oleadas/red-broadcast. En lugar, modo local arranca `gestorRed.IniciarServidor()` con cero clientes esperados — `server.SendToAll` con la lista vacia es no-op, y todos los gates `gestorRed.EsServidor` siguen funcionando como en online. Coste: un puerto UDP queda escuchando (irrelevante en LAN/host trusted).
+
+### Por que split-screen y no shared camera
+
+Eleccion explicita del usuario. Permite que cada jugador explore independientemente sin restringir al grupo a la misma zona del mapa. Costo: render del mundo N veces por frame y necesidad de viewports/scissor. Para mapas chicos podria revisarse si conviene una opcion shared.
+
+### Por que `jugadorLocal` (singular) sigue existiendo como property
+
+Hay decenas de call sites que solo se preocupan por "el primer/unico jugador local" (HUD, Bala anti-autodano, NotificarMuerte, etc.). Hacer una lista plural con una property compat (`jugadorLocal => jugadoresLocales[0]`) minimiza el blast radius del refactor — solo donde hace falta iterar todos los locales se cambia a `jugadoresLocales`. Setting la property limpia la lista y pone el unico.
 
 ---
 

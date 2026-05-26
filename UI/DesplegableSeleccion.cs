@@ -57,7 +57,35 @@ public class DesplegableSeleccion : ObjetoAbstracto
         this.opciones = opciones;
         this.fuenteValor = fuenteValor;
         this.accionAlSeleccionar = accionAlSeleccionar;
+
+        // Captura los valores logicos (en el diseno 1280×720) y aplica el escalado inicial
+        origPosX = posicionX;
+        origPosY = posicionY;
+        origAncho = ancho;
+        origAlto = alto;
+        origTamanoTexto = tamanoTexto;
+        origAltoPorOpcion = altoPorOpcion;
+        AplicarLayout();
+
         InsertarACentroUI();
+    }
+
+    /// <summary>Valores en el diseño logico 1280×720, capturados al construir; sirven para reescalar sin perder precision</summary>
+    private int origPosX, origPosY, origAncho, origAlto, origTamanoTexto, origAltoPorOpcion;
+
+    /// <summary>Si false, el desplegable queda en pixeles absolutos sin escalar con la ventana</summary>
+    public bool escalar = true;
+
+    public override void AplicarLayout()
+    {
+        if (!escalar) return;
+        float rx = Layout.RatioX, ry = Layout.RatioY, ru = Layout.RatioUniforme;
+        posicionX = (int)(origPosX * rx);
+        posicionY = (int)(origPosY * ry);
+        ancho     = (int)(origAncho * rx);
+        alto      = (int)(origAlto  * ry);
+        tamanoTexto = (int)(origTamanoTexto * ru);
+        altoPorOpcion = (int)(origAltoPorOpcion * ry);
     }
 
     public DesplegableSeleccion() : base(110) { }

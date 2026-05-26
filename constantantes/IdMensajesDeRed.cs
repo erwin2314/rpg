@@ -51,5 +51,17 @@ public enum IdMensajesDeRed:ushort
     /// <summary>Servidor: un enemigo murio; eliminar la entidad local</summary>
     muerteEnemigo = 23,
     /// <summary>Servidor: anuncia el numero de la oleada que empieza</summary>
-    inicioOleada = 24
+    inicioOleada = 24,
+    /// <summary>Servidor envia un chunk de un archivo (mapa o comportamiento) al cliente. Reliable, en orden</summary>
+    bloqueArchivo = 25,
+}
+
+/// <summary>
+/// Tipo de archivo que viaja en un mensaje bloqueArchivo (1 byte por chunk)
+/// </summary>
+public enum TipoArchivoBloque : byte
+{
+    Mapa = 0,
+    Comportamiento = 1,
+    Arma = 2,
 }

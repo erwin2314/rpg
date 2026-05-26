@@ -96,6 +96,33 @@ public static class gestorServidor
     }
 
     /// <summary>
+    /// Envia el contenido de un archivo (mapa o comportamiento) a todos los clientes en chunks Reliable. <br/>
+    /// Cada chunk va en su propio mensaje bloqueArchivo, por debajo del cap por defecto de Riptide. <br/>
+    /// El cliente reensambla en orden (Reliable preserva orden) y al recibir esUltimo aplica el archivo
+    /// </summary>
+    public static void EnviarArchivoEnBloques(TipoArchivoBloque tipo, string nombre, string contenido)
+    {
+        byte[] bytes = System.Text.Encoding.UTF8.GetBytes(contenido ?? "");
+        const int chunkSize = 800;
+        int totalChunks = Math.Max(1, (bytes.Length + chunkSize - 1) / chunkSize);
+        for (int i = 0; i < totalChunks; i++)
+        {
+            int offset = i * chunkSize;
+            int len = Math.Min(chunkSize, bytes.Length - offset);
+            byte[] chunk = new byte[len];
+            if (len > 0) Array.Copy(bytes, offset, chunk, 0, len);
+
+            Message m = Message.Create(MessageSendMode.Reliable, IdMensajesDeRed.bloqueArchivo);
+            m.AddByte((byte)tipo);
+            m.AddString(nombre);
+            m.AddInt(i);
+            m.AddBool(i == totalChunks - 1);
+            m.AddBytes(chunk);
+            EnviarMensajeATodosLosClientes(m);
+        }
+    }
+
+    /// <summary>
     /// Envia un mensaje a todos los clientes conectados excepto el indicado por id (usado para reenviar broadcasts evitando eco al emisor)
     /// </summary>
     public static void EnviarMensajeATodosLosClientes(Message mensaje, ushort idClienteAExcluir)

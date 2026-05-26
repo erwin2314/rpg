@@ -82,7 +82,7 @@ public static class FuncionesArmas
         m.AddInt(arma.dano);
         m.AddFloat(arma.velocidadBala);
         m.AddFloat(arma.tiempoVidaBala);
-        m.AddInt((int)arma.spriteBala);
+        m.AddString(arma.spriteBala);
         m.AddInt(-1); // idEnemigoDueno: -1 = bala de jugador
         m.AddInt(dirs.Count);
         foreach (Vector2 d in dirs) { m.AddFloat(d.X); m.AddFloat(d.Y); }
@@ -104,7 +104,7 @@ public static class FuncionesArmas
         m.AddInt(arma.dano);
         m.AddFloat(arma.velocidadBala);
         m.AddFloat(arma.tiempoVidaBala);
-        m.AddInt((int)arma.spriteBala);
+        m.AddString(arma.spriteBala);
         m.AddInt(idEnemigoDueno);
         m.AddInt(dirs.Count);
         foreach (Vector2 d in dirs) { m.AddFloat(d.X); m.AddFloat(d.Y); }
@@ -189,8 +189,7 @@ public static class FuncionesArmas
     private static Arma ResolverArma(string nombre, Random rng)
     {
         if (nombre == "Aleatoria") return Arma.Aleatoria(rng);
-        if (Mapa.presetsArma.TryGetValue(nombre, out Func<Arma>? factoria)) return factoria();
-        return Arma.Aleatoria(rng);
+        return Mapa.CargarArma(nombre);   // si no existe, CargarArma cae a Aleatoria internamente
     }
 
     /// <summary>
@@ -238,13 +237,16 @@ public static class FuncionesArmas
     {
         int id = proximoIdPickup++;
         if (spawnIndex.HasValue) pickupASpawn[id] = spawnIndex.Value;
-        new ArmaEnSuelo(id, a, pos);
+        float escala = (spawnIndex.HasValue && Mapa.mapaActivo != null && spawnIndex.Value < Mapa.mapaActivo.spawnsArma.Count)
+            ? Mapa.mapaActivo.spawnsArma[spawnIndex.Value].escala
+            : 1f;
+        new ArmaEnSuelo(id, a, pos, escala);
 
         Message m = Message.Create(MessageSendMode.Reliable, IdMensajesDeRed.nuevoPickup);
         m.AddInt(id);
         m.AddFloat(pos.X);
         m.AddFloat(pos.Y);
-        m.AddInt((int)a.spriteArma);
+        m.AddString(a.nombre);   // cliente carga el arma completa (con stats) via Mapa.CargarArma
         gestorServidor.EnviarMensajeATodosLosClientes(m);
     }
 
@@ -366,7 +368,7 @@ public static class FuncionesArmas
                 Arma a = ResolverArma(sa.arma, rng);
                 int id = proximoIdPickup++;
                 pickupASpawn[id] = i;
-                creados.Add(new ArmaEnSuelo(id, a, sa.posicion));
+                creados.Add(new ArmaEnSuelo(id, a, sa.posicion, sa.escala));
             }
         }
         else
@@ -390,7 +392,7 @@ public static class FuncionesArmas
             m.AddInt(p.idPickup);
             m.AddFloat(p.posicion.X);
             m.AddFloat(p.posicion.Y);
-            m.AddInt((int)p.arma.spriteArma);
+            m.AddString(p.arma.nombre);   // cliente carga el arma completa via Mapa.CargarArma
         }
         gestorServidor.EnviarMensajeATodosLosClientes(m);
     }

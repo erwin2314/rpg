@@ -1,4 +1,5 @@
 using System.Numerics;
+using System.Text.Json;
 using Raylib_cs;
 
 /// <summary>
@@ -32,19 +33,14 @@ public static class Mapa
     /// <summary>Carpeta donde viven los .jsonc de cada ComportamientoIA</summary>
     public static string carpetaComportamientos = "comportamientos";
 
+    /// <summary>Carpeta donde viven los .jsonc de cada Arma (defaults se crean via Arma.BootstrapDefaults)</summary>
+    public static string carpetaArmas = "armas";
+
     /// <summary>Cache de ComportamientoIA cargados de disco (clave = nombre sin extension)</summary>
     private static Dictionary<string, ComportamientoIA> cacheComportamientos = new Dictionary<string, ComportamientoIA>();
 
-    /// <summary>Resolucion de string -> Arma para los spawns de armas. "Aleatoria" se trata aparte (no esta en el diccionario)</summary>
-    public static readonly Dictionary<string, Func<Arma>> presetsArma = new()
-    {
-        { "Pistola", Arma.Pistola1 },
-        { "Revolver", Arma.Revolver1 },
-        { "Subfusil1", Arma.Subfusil1 },
-        { "Subfusil2", Arma.Subfusil2 },
-        { "Escopeta", Arma.Escopeta1 },
-        { "Francotirador", Arma.Francotirador },
-    };
+    /// <summary>Cache de Arma cargadas de disco (clave = nombre sin extension)</summary>
+    private static Dictionary<string, Arma> cacheArmas = new Dictionary<string, Arma>();
 
     /// <summary>
     /// Carga un ComportamientoIA por nombre desde comportamientos/&lt;nombre&gt;.jsonc <br/>
@@ -68,6 +64,57 @@ public static class Mapa
 
     /// <summary>Invalida el cache; usar tras editar/guardar un comportamiento desde el editor</summary>
     public static void InvalidarCacheComportamientos() => cacheComportamientos.Clear();
+
+    /// <summary>
+    /// Carga un Arma por nombre desde armas/&lt;nombre&gt;.jsonc; cachea. Si no existe, fallback a Aleatoria. <br/>
+    /// Devuelve una copia para que cada Jugador/Enemigo tenga su propia municion (municionActual mutable)
+    /// </summary>
+    public static Arma CargarArma(string nombre)
+    {
+        if (cacheArmas.TryGetValue(nombre, out Arma? cacheada)) return ClonarArma(cacheada);
+        string path = Path.Combine(carpetaArmas, nombre + ".jsonc");
+        if (GestorArchivosJson.ExisteArchivo(path))
+        {
+            Arma? a = GestorArchivosJson.Leer<Arma>(path);
+            if (a != null) { cacheArmas[nombre] = a; return ClonarArma(a); }
+        }
+        return Arma.Aleatoria(new Random());
+    }
+
+    /// <summary>Lista los nombres de armas disponibles (sin .jsonc) en armas/</summary>
+    public static List<string> ListarNombresArmas()
+    {
+        if (!Directory.Exists(carpetaArmas)) return new List<string>();
+        List<string> nombres = new List<string>();
+        foreach (string archivo in Directory.GetFiles(carpetaArmas, "*.jsonc"))
+        {
+            string n = Path.GetFileNameWithoutExtension(archivo);
+            if (!string.IsNullOrEmpty(n)) nombres.Add(n);
+        }
+        return nombres;
+    }
+
+    /// <summary>Invalida el cache; usar tras editar/guardar un arma desde fuera</summary>
+    public static void InvalidarCacheArmas() => cacheArmas.Clear();
+
+    /// <summary>Deserializa y cachea un Arma recibida por red (sin tocar disco)</summary>
+    public static void RegistrarArmaDesdeJson(string nombre, string json)
+    {
+        if (string.IsNullOrEmpty(json)) return;
+        Arma? a = JsonSerializer.Deserialize<Arma>(json, GestorArchivosJson.Opciones);
+        if (a != null) cacheArmas[nombre] = a;
+    }
+
+    /// <summary>Copia un Arma — cada Jugador/Enemigo necesita su propio cargador (municionActual mutable)</summary>
+    private static Arma ClonarArma(Arma o) => new Arma
+    {
+        nombre = o.nombre, rareza = o.rareza, dano = o.dano,
+        cadenciaSegundos = o.cadenciaSegundos, velocidadBala = o.velocidadBala,
+        municionMaxima = o.municionMaxima, municionActual = o.municionMaxima,
+        proyectilesPorDisparo = o.proyectilesPorDisparo, dispersionGrados = o.dispersionGrados,
+        tiempoVidaBala = o.tiempoVidaBala,
+        spriteArma = o.spriteArma, spriteBala = o.spriteBala,
+    };
 
     /// <summary>Lista los nombres de mapas disponibles (sin extension .jsonc) en la carpeta</summary>
     public static List<string> ListarNombresMapas()
@@ -116,6 +163,33 @@ public static class Mapa
     }
 
     /// <summary>
+    /// Deserializa el JSON de un mapa recibido por red y lo asigna a mapaActivo (sin tocar disco) <br/>
+    /// Usado por el cliente al recibir iniciarPartida para usar el mapa del servidor aunque no exista localmente
+    /// </summary>
+    public static void AplicarMapaDesdeJson(string nombre, string json)
+    {
+        if (string.IsNullOrEmpty(json)) return;
+        MapaDatos? datos = JsonSerializer.Deserialize<MapaDatos>(json, GestorArchivosJson.Opciones);
+        if (datos == null) return;
+        mapaActivo = datos;
+        ancho = datos.ancho;
+        alto = datos.alto;
+        colorFondo = datos.colorFondo;
+        mapaPorDefecto = Path.Combine(carpetaMapas, nombre + ".jsonc");
+    }
+
+    /// <summary>
+    /// Deserializa un comportamiento recibido por red y lo registra en cacheComportamientos (sin tocar disco) <br/>
+    /// Usado por el cliente al recibir iniciarPartida para que los enemigos usen el mismo arbol que el servidor
+    /// </summary>
+    public static void RegistrarComportamientoDesdeJson(string nombre, string json)
+    {
+        if (string.IsNullOrEmpty(json)) return;
+        ComportamientoIA? datos = JsonSerializer.Deserialize<ComportamientoIA>(json, GestorArchivosJson.Opciones);
+        if (datos != null) cacheComportamientos[nombre] = datos;
+    }
+
+    /// <summary>
     /// Persiste el mapa indicado a disco con comentarios por seccion <br/>
     /// Si datos es null, usa mapaActivo
     /// </summary>
@@ -147,7 +221,7 @@ public static class Mapa
         if (mapaActivo == null) return;
         foreach (ParedDatos pd in mapaActivo.paredes)
         {
-            new Pared(pd.posicion, pd.tamano, pd.color, pd.capa);
+            new Pared(pd.posicion, pd.tamano, pd.color, pd.capa, pd.escala);
         }
         if (mapaActivo.generarParedesBorde) CrearParedes();
     }

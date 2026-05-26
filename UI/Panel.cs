@@ -49,7 +49,7 @@ public class Panel : ObjetoAbstracto
     /// <summary>
     /// Identificador de la textura usada como fondo del panel
     /// </summary>
-    public IdTextura idTextura;
+    public string idTextura = "";
 
     /// <summary>
     /// Imagen de fondo opcional del panel <br/>
@@ -61,6 +61,12 @@ public class Panel : ObjetoAbstracto
     /// Rectangulo interno usado para el dibujado
     /// </summary>
     private Rectangle rectangulo;
+
+    /// <summary>Valores en el diseño logico 1280×720, capturados al construir; sirven para reescalar sin perder precision</summary>
+    private int origPosX, origPosY, origAncho, origAlto, origTamañoTexto;
+
+    /// <summary>Si false, el panel queda en pixeles absolutos sin escalar con la ventana (opt-out)</summary>
+    public bool escalar = true;
     
     /// <summary>
     /// Crea un nuevo panel y lo registra automaticamente en CentroUI <br/>
@@ -86,7 +92,7 @@ public class Panel : ObjetoAbstracto
         Color colorDelTexto,
         Color colorDelRectangulo,
         string textoAMostrar = "",
-        IdTextura idTextura = IdTextura.vacio,
+        string idTextura = "",
         int tamañoDelTexto = 16,
         int capaDibujado = 101,
         bool enMundo = false
@@ -109,7 +115,7 @@ public class Panel : ObjetoAbstracto
 
         this.idTextura = idTextura;
 
-        if(this.idTextura == IdTextura.vacio)
+        if(this.idTextura == "")
         {
             this.imagen = null;
         }
@@ -120,6 +126,16 @@ public class Panel : ObjetoAbstracto
 
 
         this.rectangulo = new Rectangle(posicionX,posicionY,ancho,alto);
+
+        // Captura los valores "logicos" (en el diseño 1280×720) y aplica el layout inicial
+        // para que el componente nazca escalado al tamaño actual de la ventana
+        origPosX = posicionX;
+        origPosY = posicionY;
+        origAncho = ancho;
+        origAlto = alto;
+        origTamañoTexto = tamañoDelTexto;
+        AplicarLayout();
+
         if (enMundo) InsertarACentroUIEnMundo();
         else InsertarACentroUI();
     }
@@ -129,6 +145,17 @@ public class Panel : ObjetoAbstracto
     /// Se debe llamar Inicializar() despues de asignar los campos
     /// </summary>
     public Panel():base(101){}
+
+    public override void AplicarLayout()
+    {
+        if (!escalar || enMundo) return;
+        float rx = Layout.RatioX, ry = Layout.RatioY, ru = Layout.RatioUniforme;
+        posicionX = (int)(origPosX * rx);
+        posicionY = (int)(origPosY * ry);
+        ancho     = (int)(origAncho * rx);
+        alto      = (int)(origAlto  * ry);
+        tamañoDelTexto = (int)(origTamañoTexto * ru);
+    }
 
     /// <summary>
     /// No realiza ninguna accion, el panel no tiene logica de actualizacion
@@ -173,7 +200,7 @@ public class Panel : ObjetoAbstracto
     /// </summary>
     public override void Inicializar()
     {
-        if(this.idTextura == IdTextura.vacio)
+        if(this.idTextura == "")
         {
             this.imagen = null;
         }

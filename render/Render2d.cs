@@ -22,6 +22,20 @@ public static class Render2d
     };
 
     /// <summary>
+    /// Camara asignada a un jugador local (devuelve la global por defecto cuando solo hay 1 viewport). <br/>
+    /// En split-screen, devuelve la camara del cuadrante del jugador
+    /// </summary>
+    public static Camera2D CamaraDe(Jugador jugador)
+    {
+        int i = GestorEntidades.jugadoresLocales.IndexOf(jugador);
+        if (i < 0 || i >= camaras.Length) return camara;
+        return camaras[i];
+    }
+
+    /// <summary>Camaras por jugador local — una por cada slot de split-screen</summary>
+    public static Camera2D[] camaras = new Camera2D[0];
+
+    /// <summary>
     /// Cuando es true, dibuja los contornos de las hitboxes de cada entidad (debug)
     /// </summary>
     public static bool mostrarHitboxes = false;
@@ -133,37 +147,58 @@ public static class Render2d
     /// </summary>
     public static void DibujarObjetosAbstractos()
     {
-        if (!EditorMapa.activo && !EditorComportamientoIA.activo)
+        // Editores usan la camara global y el flujo simple
+        bool enEditor = EditorMapa.activo || EditorComportamientoIA.activo;
+        if (!enEditor)
         {
-            if (GestorEntidades.jugadorLocal != null)
-            {
-                camara.Target = GestorEntidades.jugadorLocal.posicion;
-            }
-            camara.Zoom = 1.5f;
+            ActualizarCamarasJugadores();
         }
 
         Raylib.BeginDrawing();
 
-
-        if (Mapa.partidaIniciada || EditorMapa.activo || EditorComportamientoIA.activo)
+        if (Mapa.partidaIniciada || enEditor)
         {
             Color cf = EditorMapa.activo ? EditorMapa.mapaEnEdicion.colorFondo
                      : EditorComportamientoIA.activo ? Color.Black
                      : Mapa.colorFondo;
             Raylib.ClearBackground(cf);
-            //Mundo (Con camara)
-            Raylib.BeginMode2D(camara);
-            foreach (ObjetoAbstracto item in objetosMundo)
-            {
-                if(item.visible) item.Dibujar();
-            }
-            if (EditorMapa.activo) EditorMapa.Dibujar();
-            DibujarHitboxes();
-            DibujarIds();
-            Raylib.EndMode2D();
 
-            // El editor de IA dibuja su arbol en coordenadas de pantalla
-            if (EditorComportamientoIA.activo) EditorComportamientoIA.Dibujar();
+            if (enEditor)
+            {
+                Raylib.BeginMode2D(camara);
+                foreach (ObjetoAbstracto item in objetosMundo)
+                {
+                    if (item.visible) item.Dibujar();
+                }
+                if (EditorMapa.activo) EditorMapa.Dibujar();
+                DibujarHitboxes();
+                DibujarIds();
+                Raylib.EndMode2D();
+                if (EditorComportamientoIA.activo) EditorComportamientoIA.Dibujar();
+            }
+            else
+            {
+                // Partida en curso: 1 o varios viewports segun cuantos jugadores locales hay
+                int total = Math.Max(1, camaras.Length);
+                for (int i = 0; i < total; i++)
+                {
+                    Rectangle vp = CalcularViewport(i, total);
+                    Camera2D cam = camaras.Length > i ? camaras[i] : camara;
+                    Raylib.BeginScissorMode((int)vp.X, (int)vp.Y, (int)vp.Width, (int)vp.Height);
+                    Raylib.BeginMode2D(cam);
+                    foreach (ObjetoAbstracto item in objetosMundo)
+                    {
+                        if (item.visible) item.Dibujar();
+                    }
+                    DibujarHitboxes();
+                    DibujarIds();
+                    Raylib.EndMode2D();
+                    Raylib.EndScissorMode();
+                }
+
+                // Bordes negros entre cuadrantes para que se note el split
+                DibujarBordesSplitScreen(total);
+            }
         }
         else Raylib.ClearBackground(Color.Black);
 
@@ -174,6 +209,70 @@ public static class Render2d
         }
 
         Raylib.EndDrawing();
+    }
+
+    /// <summary>
+    /// Reasigna el array camaras segun la cantidad actual de jugadores locales y
+    /// actualiza Target (= posicion del jugador) y Offset (= centro del viewport)
+    /// </summary>
+    private static void ActualizarCamarasJugadores()
+    {
+        int n = GestorEntidades.jugadoresLocales.Count;
+        if (n == 0)
+        {
+            camaras = new Camera2D[0];
+            return;
+        }
+        if (camaras.Length != n)
+        {
+            Camera2D[] nuevo = new Camera2D[n];
+            for (int i = 0; i < n; i++)
+            {
+                nuevo[i] = new Camera2D { Rotation = 0f, Zoom = 1.5f };
+            }
+            camaras = nuevo;
+        }
+        for (int i = 0; i < n; i++)
+        {
+            Rectangle vp = CalcularViewport(i, n);
+            camaras[i].Target = GestorEntidades.jugadoresLocales[i].posicion;
+            camaras[i].Offset = new Vector2(vp.X + vp.Width / 2f, vp.Y + vp.Height / 2f);
+            camaras[i].Zoom = 1.5f;
+        }
+        // Mantener compatibilidad con codigo que aun usa Render2d.camara directamente (ej. editores)
+        camara = camaras[0];
+    }
+
+    /// <summary>
+    /// Devuelve el rect del cuadrante asignado al slot `indice` cuando hay `total` jugadores locales: <br/>
+    /// 1 jugador: pantalla completa. <br/>
+    /// 2 jugadores: split vertical (mitad izq / mitad der). <br/>
+    /// 3-4 jugadores: grid 2x2 (cuadrantes superior izq/der, inferior izq/der)
+    /// </summary>
+    public static Rectangle CalcularViewport(int indice, int total)
+    {
+        int W = Raylib.GetScreenWidth(), H = Raylib.GetScreenHeight();
+        if (total <= 1) return new Rectangle(0, 0, W, H);
+        if (total == 2) return new Rectangle(indice * W / 2f, 0, W / 2f, H);
+        int col = indice % 2, row = indice / 2;
+        return new Rectangle(col * W / 2f, row * H / 2f, W / 2f, H / 2f);
+    }
+
+    private static void DibujarBordesSplitScreen(int total)
+    {
+        if (total <= 1) return;
+        int W = Raylib.GetScreenWidth(), H = Raylib.GetScreenHeight();
+        Color c = Color.Black;
+        int grosor = 2;
+        if (total == 2)
+        {
+            Raylib.DrawRectangle(W / 2 - grosor / 2, 0, grosor, H, c);
+        }
+        else
+        {
+            Raylib.DrawRectangle(W / 2 - grosor / 2, 0, grosor, H, c);
+            Raylib.DrawRectangle(0, H / 2 - grosor / 2, W, grosor, c);
+        }
     }
 
     /// <summary>

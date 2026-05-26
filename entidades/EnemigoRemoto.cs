@@ -11,13 +11,24 @@ public class EnemigoRemoto : EntidadBase
     public int idEnemigoServidor;
     public BarraDeProgreso barraVida;
 
+    /// <summary>Sprite con el que se dibuja (recibido en spawnearEnemigo)</summary>
+    public string sprite = "jugador1.png";
+
+    /// <summary>Color de tinte aplicado al sprite (recibido en spawnearEnemigo)</summary>
+    public Color tinte = Color.Maroon;
+
     /// <summary>Buffer de posiciones recibidas por red; cada frame la posicion se interpola/extrapola desde aqui</summary>
     public BufferInterpolacion buffer = new BufferInterpolacion();
 
-    public EnemigoRemoto(int idEnemigoServidor, Vector2 posicion, int vidaMax)
+    public EnemigoRemoto(int idEnemigoServidor, Vector2 posicion, int vidaMax, string sprite, Color tinte, float escala)
         : base(posicion, Vector2.Zero, 0f, 0f, 20f, vidaMax, vidaMax, capaDibujado: 50)
     {
         this.idEnemigoServidor = idEnemigoServidor;
+        this.sprite = sprite;
+        this.tinte = tinte;
+        float e = MathF.Max(0.01f, escala);
+        this.escala = e;
+        this.radio *= e;
         forma = FormaColision.Circulo;
         solido = false;
         GestorEntidades.InsertarEntidad(this);
@@ -47,12 +58,12 @@ public class EnemigoRemoto : EntidadBase
 
     public override void Dibujar()
     {
-        Texture2D tex = GestorTexturas.ObtenerTextura(IdTextura.jugador1);
+        Texture2D tex = GestorTexturas.ObtenerTextura(sprite);
         Raylib.DrawTexturePro(
             tex,
             new Rectangle(0, 0, tex.Width, tex.Height),
             new Rectangle(posicion.X - radio, posicion.Y - radio, radio * 2, radio * 2),
-            Vector2.Zero, 0f, Color.Maroon);
+            Vector2.Zero, 0f, tinte);
     }
 
     public override void EnColision(EntidadBase otra)

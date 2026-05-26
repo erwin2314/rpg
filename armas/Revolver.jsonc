@@ -1,0 +1,26 @@
+{
+    // Nombre legible (debe coincidir con el filename sin .jsonc)
+    "nombre": "Revolver",
+    // PNG en imagenes/ (con .png) — sprite del arma equipada y del pickup
+    "spriteArma": "revolver1.png",
+    // PNG en imagenes/ (con .png) — sprite de cada bala disparada
+    "spriteBala": "balafusil1.png",
+    // Dano por impacto
+    "dano": 35,
+    // Cargador maximo
+    "municionMaxima": 6,
+    // Carga inicial (normalmente == municionMaxima)
+    "municionActual": 6,
+    // Segundos entre disparos
+    "cadenciaSegundos": 0.5,
+    // Pixeles por segundo
+    "velocidadBala": 1600,
+    // Comun | Inusual | Raro | Epico | Legendario
+    "rareza": "Inusual",
+    // 1 normal, 8 para escopeta
+    "proyectilesPorDisparo": 1,
+    // 0 = exacto
+    "dispersionGrados": 1,
+    // Segundos antes de despawn
+    "tiempoVidaBala": 0.6
+}

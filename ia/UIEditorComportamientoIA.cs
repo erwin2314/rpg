@@ -30,7 +30,7 @@ public static class UIEditorComportamientoIA
         // Botones del toolbar usan rectangulo solido (sin textura placeholder) para legibilidad sobre el fondo oscuro
         Color cBtnTexto = Color.Black;
         Color cBtnFondo = Color.RayWhite;
-        IdTextura tex = IdTextura.vacio;
+        string tex = "";
 
         mb.Boton("+ Condicion", x, y, onClick: () => API.Encolar(EditorComportamientoIA.AnadirCondicion), ancho: anchoBtn, alto: altoBtn, colorTexto: cBtnTexto, colorRectangulo: cBtnFondo, idTextura: tex); x += anchoBtn + 4;
         mb.Boton("+ Accion",    x, y, onClick: () => API.Encolar(EditorComportamientoIA.AnadirAccion),    ancho: anchoBtn, alto: altoBtn, colorTexto: cBtnTexto, colorRectangulo: cBtnFondo, idTextura: tex); x += anchoBtn + 4;
@@ -81,9 +81,10 @@ public static class UIEditorComportamientoIA
 
         mb.Panel("Arma:", xP, yP + 52, ancho: 80, alto: 22, colorTexto: Color.White, colorRectangulo: invisible);
         mb.Desplegable(xP + 82, yP + 52, ancho: 150, alto: 22,
-            opciones: new List<string> { "Pistola", "Revolver", "Subfusil1", "Subfusil2", "Escopeta", "Francotirador" },
+            opciones: Mapa.ListarNombresArmas(),
             fuenteValor: () => EditorComportamientoIA.comportamientoEnEdicion.armaInicial,
-            accionAlSeleccionar: v => EditorComportamientoIA.comportamientoEnEdicion.armaInicial = v);
+            accionAlSeleccionar: v => EditorComportamientoIA.comportamientoEnEdicion.armaInicial = v,
+            fuenteOpciones: () => Mapa.ListarNombresArmas());
 
         mb.Panel("Velocidad:", xP, yP + 78, ancho: 80, alto: 22, colorTexto: Color.White, colorRectangulo: invisible);
         mb.Campo(xP + 82, yP + 78, ancho: 150, alto: 22,

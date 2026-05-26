@@ -1,0 +1,26 @@
+{
+    // Nombre legible (debe coincidir con el filename sin .jsonc)
+    "nombre": "Francotirador",
+    // PNG en imagenes/ (con .png) — sprite del arma equipada y del pickup
+    "spriteArma": "francotirador1.png",
+    // PNG en imagenes/ (con .png) — sprite de cada bala disparada
+    "spriteBala": "balafrancotirador1.png",
+    // Dano por impacto
+    "dano": 120,
+    // Cargador maximo
+    "municionMaxima": 5,
+    // Carga inicial (normalmente == municionMaxima)
+    "municionActual": 5,
+    // Segundos entre disparos
+    "cadenciaSegundos": 1.25,
+    // Pixeles por segundo
+    "velocidadBala": 3000,
+    // Comun | Inusual | Raro | Epico | Legendario
+    "rareza": "Raro",
+    // 1 normal, 8 para escopeta
+    "proyectilesPorDisparo": 1,
+    // 0 = exacto
+    "dispersionGrados": 0,
+    // Segundos antes de despawn
+    "tiempoVidaBala": 1
+}
