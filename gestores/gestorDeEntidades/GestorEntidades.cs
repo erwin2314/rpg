@@ -9,10 +9,23 @@ public static class GestorEntidades
     private static List<EntidadBase> entidades = new();
 
     /// <summary>
-    /// Referencia al jugador controlado por este cliente (null si todavia no hay partida) <br/>
-    /// Usado por la camara, el HUD y los handlers para distinguirlo de los JugadorRemoto
+    /// Jugadores controlados por este proceso (1 en online, hasta 4 en modo local split-screen)
     /// </summary>
-    public static Jugador? jugadorLocal;
+    public static List<Jugador> jugadoresLocales = new List<Jugador>();
+
+    /// <summary>
+    /// Atajo de compatibilidad — el primer jugador local, o null si la lista esta vacia. <br/>
+    /// Sitios que solo se preocupan por "el jugador local" lo siguen usando como antes
+    /// </summary>
+    public static Jugador? jugadorLocal
+    {
+        get => jugadoresLocales.Count > 0 ? jugadoresLocales[0] : null;
+        set
+        {
+            jugadoresLocales.Clear();
+            if (value != null) jugadoresLocales.Add(value);
+        }
+    }
 
     /// <summary>
     /// Devuelve la lista interna de entidades registradas (no copiar; iterar con cuidado si se modifica)
@@ -47,7 +60,7 @@ public static class GestorEntidades
             e.Limpiar();
             EliminarEntidad(e);
         }
-        jugadorLocal = null;
+        jugadoresLocales.Clear();
     }
 
     /// <summary>

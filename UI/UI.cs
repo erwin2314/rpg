@@ -9,14 +9,14 @@ public static class UI
 {
     /// <summary>
     /// Crea un boton (default: texto negro, rectangulo blanco usado como tinte de la textura placeholder) <br/>
-    /// Pasar `idTextura: IdTextura.vacio` para tener un rectangulo solido sin patron de textura
+    /// Pasar `idTextura: ""` para tener un rectangulo solido sin patron de textura
     /// </summary>
     public static Boton Boton(string texto = "", int x = 0, int y = 0,
         Action? onClick = null, int ancho = 200, int alto = 50,
         Func<string>? fuenteTexto = null,
         Func<bool>? fuenteVisible = null,
         Color? colorTexto = null, Color? colorRectangulo = null,
-        IdTextura idTextura = IdTextura.placeholder,
+        string idTextura = "placeholder.png",
         bool enMundo = false)
     {
         Color ct = colorTexto ?? Color.Black;

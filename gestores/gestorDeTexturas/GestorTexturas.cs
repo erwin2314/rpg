@@ -1,79 +1,61 @@
 using System.Collections.Generic;
 using Raylib_cs;
+
 /// <summary>
-/// Clase estatica que se encarga de gestionar (almacenar/cargar/descargar) todas las texturas <br/>
-/// Todas las texturas tienen un indice asociado y se guardan en un diccionario <IdTextura, Texture2D>
+/// Gestor dinamico de texturas: escanea imagenes/*.png al arrancar y las guarda en un
+/// diccionario keyed por el nombre del archivo CON extension (ej. "jugador1.png"). <br/>
+/// No depende de un enum ni de una lista hardcoded — para agregar una textura nueva, dropear
+/// el PNG en imagenes/ y referenciarlo por su nombre. Texturas no encontradas caen al placeholder
 /// </summary>
 public static class GestorTexturas
 {
-    /// <summary>
-    /// Es donde se cargan y almacenan todas las texturas <br/>
-    /// Cada indice debe estar asociado unicamente a una textura
-    /// </summary>
-    public static Dictionary<IdTextura, Texture2D> diccionarioTexturas = new Dictionary<IdTextura, Texture2D>();
+    /// <summary>Diccionario nombre-de-archivo (con .png) → Texture2D cargada</summary>
+    public static Dictionary<string, Texture2D> diccionarioTexturas = new Dictionary<string, Texture2D>();
+
+    /// <summary>Textura de fallback cuando se pide una que no existe (placeholder.png)</summary>
+    private static Texture2D placeholder;
 
     /// <summary>
-    /// Este metodo se utiliza para añadir texturas al diccionario <br/>
-    /// Si una Id ya existe en el diccionario, cambia la textura asociada a esa id y descarga de memoria la anterior
-    /// </summary>
-    /// <param name="idTextura">Id de la textura a añadir</param>
-    /// <param name="textura">Textura a añadir</param>
-    public static void AñadirTexturas(IdTextura idTextura, Texture2D textura)
-    {
-        if(diccionarioTexturas.ContainsKey(idTextura))
-        {
-            Raylib.UnloadTexture(diccionarioTexturas[idTextura]);
-            diccionarioTexturas[idTextura] = textura;
-        }
-        else
-        {
-            diccionarioTexturas.Add(idTextura, textura);
-        }
-        
-    }
-    /// <summary>
-    /// Carga cada elemento del enum IdTextura como Id en el diccionario e intenta cargar su textura asociada <br/>
-    /// El nombre de la textura que se quiere cargar y su Id deben ser iguales para que se encuentre en los archivos <br/>
-    /// Si un Id no encuentra su textura se va a cargar la imagen de placeholder.png <br/>
-    /// Si el Id es (vacio = -1) se va a cargar tambien el placeholder y cada objeto se tiene que asegurar de poner un null en su imagen
+    /// Escanea imagenes/*.png y carga cada archivo. La clave es el nombre del archivo (con .png).
+    /// placeholder.png es obligatorio — se usa como fallback de texturas no encontradas
     /// </summary>
     public static void CargarTexturas()
     {
-        foreach (IdTextura item in Enum.GetValues<IdTextura>())
+        diccionarioTexturas.Clear();
+        string carpeta = "imagenes";
+        if (!Directory.Exists(carpeta)) return;
+
+        foreach (string archivo in Directory.GetFiles(carpeta, "*.png"))
         {
+            string clave = Path.GetFileName(archivo);
+            diccionarioTexturas[clave] = Raylib.LoadTexture(archivo);
+        }
 
-            Texture2D textura = Raylib.LoadTexture($"imagenes/{item}.png");
-
-            if(textura.Id == 0)
-            {
-                Raylib.UnloadTexture(textura);
-                AñadirTexturas(item, Raylib.LoadTexture($"imagenes/placeholder.png"));
-            }
-            else
-            {
-                AñadirTexturas(item, textura);
-            }
-
+        if (!diccionarioTexturas.TryGetValue("placeholder.png", out placeholder))
+        {
+            Console.WriteLine("WARNING: imagenes/placeholder.png no encontrado — texturas faltantes mostraran textura invalida");
         }
     }
+
     /// <summary>
-    /// Busca en el diccionario el Id proporcionado y regresa su textura relacionada
+    /// Devuelve la textura asociada al nombre. Si el nombre esta vacio o no existe, devuelve placeholder. <br/>
+    /// Compatibilidad: si el nombre no termina en .png y no se encuentra, prueba con .png añadido
+    /// (para .jsonc viejos donde se guardaba el sprite como nombre del enum sin extension)
     /// </summary>
-    /// <param name="idTextura">Id de la textura que se quiere obtener</param>
-    /// <returns>Textura relacionada con el id proporcionado</returns>
-    public static Texture2D ObtenerTextura(IdTextura idTextura)
+    public static Texture2D ObtenerTextura(string nombre)
     {
-        return diccionarioTexturas[idTextura];
+        if (string.IsNullOrEmpty(nombre)) return placeholder;
+        if (diccionarioTexturas.TryGetValue(nombre, out Texture2D t)) return t;
+        if (!nombre.EndsWith(".png") && diccionarioTexturas.TryGetValue(nombre + ".png", out t)) return t;
+        return placeholder;
     }
-    /// <summary>
-    /// Busca en el diccionario el Id proporcionado y regresa su textura relacionada <br/>
-    /// Castea el int pasado a IdTextura
-    /// </summary>
-    /// <param name="idTextura">Id de la textura que se quiere obtener</param>
-    /// <returns>Textura relacionada con el id proporcionado</returns>
-    public static Texture2D ObtenerTextura(int intIdTextura)
+
+    /// <summary>Lista los nombres de texturas disponibles (con .png) ordenados — para dropdowns de editor</summary>
+    public static List<string> ListarNombres()
     {
-        return diccionarioTexturas[(IdTextura)intIdTextura];
+        List<string> nombres = new List<string>(diccionarioTexturas.Keys);
+        nombres.Sort();
+        return nombres;
     }
 
     /// <summary>
@@ -82,12 +64,10 @@ public static class GestorTexturas
     /// </summary>
     public static void DescargarTexturas()
     {
-        foreach(KeyValuePair<IdTextura,Texture2D> item in diccionarioTexturas)
+        foreach (KeyValuePair<string, Texture2D> item in diccionarioTexturas)
         {
             Raylib.UnloadTexture(item.Value);
         }
         diccionarioTexturas.Clear();
     }
-
-    
 }

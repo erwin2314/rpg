@@ -420,7 +420,44 @@
   }
 ],
     // Puntos donde aparecen los enemigos en modo oleadas; preset = Basico|Agresivo|Torreta
-    "spawnsEnemigo": [],
+    "spawnsEnemigo": [
+  {
+    "posicion": {
+      "X": 611.6666,
+      "Y": 358.33334
+    },
+    "preset": "Cobarde",
+    "vidaInicial": 0,
+    "tiempoEntreSpawns": 3,
+    "maxVivos": 3,
+    "radioPatrullaAleatoria": 200,
+    "caminoPatrulla": [
+      {
+        "X": 593.3334,
+        "Y": -20.00003
+      },
+      {
+        "X": 106.66675,
+        "Y": -18.333374
+      },
+      {
+        "X": 111.66675,
+        "Y": 591.6666
+      },
+      {
+        "X": 1161.6667,
+        "Y": 620
+      },
+      {
+        "X": 1150.0001,
+        "Y": -18.333374
+      }
+    ],
+    "escala": 1,
+    "spriteEnemigo": "jugador1",
+    "tinteEnemigo": "Maroon"
+  }
+],
     // Puntos donde aparecen las armas; arma = Pistola|Revolver|Subfusil1|Subfusil2|Escopeta|Francotirador|Aleatoria
     "spawnsArma": [
   {

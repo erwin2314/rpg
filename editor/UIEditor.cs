@@ -148,18 +148,17 @@ public static class UIEditor
             fuenteVisible: () => EditorMapa.objetoSeleccionado is SpawnEnemigoDatos,
             fuenteOpciones: () => Mapa.ListarNombresComportamientos());
 
-        // Arma -> tipo (Desplegable, incluye "Aleatoria")
-        List<string> opcionesArma = new List<string> { "Aleatoria" };
-        opcionesArma.AddRange(Mapa.presetsArma.Keys);
+        // Arma -> tipo (Desplegable dinamico: "Aleatoria" + lo que haya en armas/*.jsonc)
+        List<string> OpcionesArma() { var l = new List<string> { "Aleatoria" }; l.AddRange(Mapa.ListarNombresArmas()); return l; }
         mb.Desplegable(xPanel + 62, yPanel + 90, ancho: 165, alto: 22,
-            opciones: opcionesArma,
+            opciones: OpcionesArma(),
             fuenteValor: () => EditorMapa.objetoSeleccionado is SpawnArmaDatos sa ? sa.arma : "",
             accionAlSeleccionar: v =>
             {
-                if (EditorMapa.objetoSeleccionado is SpawnArmaDatos sa && (v == "Aleatoria" || Mapa.presetsArma.ContainsKey(v)))
-                    sa.arma = v;
+                if (EditorMapa.objetoSeleccionado is SpawnArmaDatos sa) sa.arma = v;
             },
-            fuenteVisible: () => EditorMapa.objetoSeleccionado is SpawnArmaDatos);
+            fuenteVisible: () => EditorMapa.objetoSeleccionado is SpawnArmaDatos,
+            fuenteOpciones: () => OpcionesArma());
 
         // Color (solo paredes) — etiqueta + Desplegable
         mb.Panel("Color:", xPanel, yPanel + 120, ancho: 60, alto: 22,
@@ -236,14 +235,14 @@ public static class UIEditor
         mb.Panel("Sprite:", xPanel, yPanel + 240, ancho: 60, alto: 22, colorTexto: Color.White, colorRectangulo: hueco,
             fuenteVisible: () => EditorMapa.objetoSeleccionado is SpawnEnemigoDatos);
         mb.Desplegable(xPanel + 62, yPanel + 240, ancho: 165, alto: 22,
-            opciones: SpritesEnemigoDisponibles,
-            fuenteValor: () => EditorMapa.objetoSeleccionado is SpawnEnemigoDatos se ? se.spriteEnemigo.ToString() : "",
+            opciones: GestorTexturas.ListarNombres(),
+            fuenteValor: () => EditorMapa.objetoSeleccionado is SpawnEnemigoDatos se ? se.spriteEnemigo : "",
             accionAlSeleccionar: v =>
             {
-                if (EditorMapa.objetoSeleccionado is SpawnEnemigoDatos se && Enum.TryParse<IdTextura>(v, out IdTextura t))
-                    se.spriteEnemigo = t;
+                if (EditorMapa.objetoSeleccionado is SpawnEnemigoDatos se) se.spriteEnemigo = v;
             },
-            fuenteVisible: () => EditorMapa.objetoSeleccionado is SpawnEnemigoDatos);
+            fuenteVisible: () => EditorMapa.objetoSeleccionado is SpawnEnemigoDatos,
+            fuenteOpciones: () => GestorTexturas.ListarNombres());
 
         // SpawnEnemigo: Color de tinte (Desplegable reusando NombresDeColores) en y+270
         mb.Panel("Tinte:", xPanel, yPanel + 270, ancho: 60, alto: 22, colorTexto: Color.White, colorRectangulo: hueco,
@@ -407,13 +406,6 @@ public static class UIEditor
         "Brown", "Beige", "DarkGreen", "DarkBlue",
         "DarkBrown", "Maroon", "Orange", "Pink",
         "Purple", "SkyBlue", "Violet",
-    };
-
-    /// <summary>Sprites disponibles para SpawnEnemigo.spriteEnemigo (estilo jugador)</summary>
-    private static readonly List<string> SpritesEnemigoDisponibles = new List<string>
-    {
-        "jugador1", "jugador2", "jugador3", "jugador4", "jugador5",
-        "jugador6", "jugador7", "jugador8", "jugador9", "jugador10",
     };
 
     /// <summary>Lee escala del objeto seleccionado para el Campo generico "Escala:"</summary>

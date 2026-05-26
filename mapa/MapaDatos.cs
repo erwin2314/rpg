@@ -68,7 +68,7 @@ public class SpawnEnemigoDatos
     public float radioPatrullaAleatoria = 200f;      // radio para la accion PatrullarAleatorio (alrededor de origen)
     public List<Vector2> caminoPatrulla = new();     // waypoints absolutos para SeguirCamino (vacio = no aplica)
     public float escala = 1f;                        // multiplicador de tamano aplicado al radio del enemigo
-    public IdTextura spriteEnemigo = IdTextura.jugador1;  // sprite con el que se dibuja
+    public string spriteEnemigo = "jugador1.png";  // sprite con el que se dibuja
     public Color tinteEnemigo = Color.Maroon;        // tinte aplicado al sprite
 }
 

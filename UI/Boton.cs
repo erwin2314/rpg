@@ -55,7 +55,7 @@ public class Boton : ObjetoAbstracto
     /// <summary>
     /// Identificador de la textura usada como fondo del boton
     /// </summary>
-    public IdTextura idTextura;
+    public string idTextura = "";
 
     /// <summary>
     /// Accion (delegate) que se ejecuta al hacer clic en el boton <br/>
@@ -94,7 +94,7 @@ public class Boton : ObjetoAbstracto
         Color colorDelRectangulo,
         string textoAMostrar = "",
         Action? accionAlHacerClic = null,
-        IdTextura idTextura = IdTextura.vacio,
+        string idTextura = "",
         int tamañoDelTexto = 16,
         int capaDibujado = 101,
         bool enMundo = false
@@ -118,7 +118,7 @@ public class Boton : ObjetoAbstracto
 
         this.idTextura = idTextura;
 
-        if(this.idTextura == IdTextura.vacio)
+        if(this.idTextura == "")
         {
             this.imagen = null;
         }
@@ -128,8 +128,34 @@ public class Boton : ObjetoAbstracto
         }
 
         this.rectangulo = new Rectangle(posicionX,posicionY,ancho,alto);
+
+        // Captura valores logicos (en el diseno 1280×720) y aplica el escalado inicial
+        origPosX = posicionX;
+        origPosY = posicionY;
+        origAncho = ancho;
+        origAlto = alto;
+        origTamañoTexto = tamañoDelTexto;
+        AplicarLayout();
+
         if (enMundo) InsertarACentroUIEnMundo();
         else InsertarACentroUI();
+    }
+
+    /// <summary>Valores en el diseño logico 1280×720, capturados al construir; sirven para reescalar sin perder precision</summary>
+    private int origPosX, origPosY, origAncho, origAlto, origTamañoTexto;
+
+    /// <summary>Si false, el boton queda en pixeles absolutos sin escalar con la ventana</summary>
+    public bool escalar = true;
+
+    public override void AplicarLayout()
+    {
+        if (!escalar || enMundo) return;
+        float rx = Layout.RatioX, ry = Layout.RatioY, ru = Layout.RatioUniforme;
+        posicionX = (int)(origPosX * rx);
+        posicionY = (int)(origPosY * ry);
+        ancho     = (int)(origAncho * rx);
+        alto      = (int)(origAlto  * ry);
+        tamañoDelTexto = (int)(origTamañoTexto * ru);
     }
 
     /// <summary>
@@ -207,7 +233,7 @@ public class Boton : ObjetoAbstracto
     /// </summary>
     public override void Inicializar()
     {
-        if(this.idTextura == IdTextura.vacio)
+        if(this.idTextura == "")
         {
             this.imagen = null;
         }

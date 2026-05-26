@@ -80,10 +80,50 @@ public static class HandlersMiscelaneos
     /// <summary>
     /// CLIENTE: el servidor inicia la partida. Crea paredes + jugador local segun puntuacionMaxima recibida
     /// </summary>
+    /// <summary>Buffer por archivo en curso de recepcion via bloqueArchivo (clave = "tipoByte:nombre")</summary>
+    private static Dictionary<string, List<byte>> buffersBloques = new Dictionary<string, List<byte>>();
+
+    /// <summary>
+    /// CLIENTE: recibe un chunk de un archivo (mapa o comportamiento). Acumula en buffersBloques;
+    /// al llegar esUltimo deserializa y aplica via Mapa.AplicarMapaDesdeJson / RegistrarComportamientoDesdeJson
+    /// </summary>
+    [MessageHandler((ushort)IdMensajesDeRed.bloqueArchivo)]
+    private static void RecibirBloqueArchivoEnCliente(Message m)
+    {
+        TipoArchivoBloque tipo = (TipoArchivoBloque)m.GetByte();
+        string nombre = m.GetString();
+        int indice = m.GetInt();
+        bool esUltimo = m.GetBool();
+        byte[] datos = m.GetBytes();
+
+        string key = $"{(byte)tipo}:{nombre}";
+        if (indice == 0 || !buffersBloques.ContainsKey(key))
+        {
+            buffersBloques[key] = new List<byte>();
+        }
+        buffersBloques[key].AddRange(datos);
+
+        if (!esUltimo) return;
+
+        string contenido = System.Text.Encoding.UTF8.GetString(buffersBloques[key].ToArray());
+        buffersBloques.Remove(key);
+
+        if (tipo == TipoArchivoBloque.Mapa) Mapa.AplicarMapaDesdeJson(nombre, contenido);
+        else if (tipo == TipoArchivoBloque.Comportamiento) Mapa.RegistrarComportamientoDesdeJson(nombre, contenido);
+        else if (tipo == TipoArchivoBloque.Arma) Mapa.RegistrarArmaDesdeJson(nombre, contenido);
+    }
+
     [MessageHandler((ushort)IdMensajesDeRed.iniciarPartida)]
     private static void IniciarPartidaEnCliente(Message mensaje)
     {
+        FuncionesPartida.modoActual = (ModoDeJuego)mensaje.GetInt();
         FuncionesPartida.puntuacionMaxima = mensaje.GetInt();
+        string nombreMapa = mensaje.GetString();
+
+        // El mapa y comportamientos ya estan aplicados por handlers previos de bloqueArchivo
+        // (Reliable preserva orden). Actualizamos mapaPorDefecto para coherencia de UI/debug.
+        Mapa.mapaPorDefecto = Path.Combine(Mapa.carpetaMapas, nombreMapa + ".jsonc");
+
         FuncionesPartida.CrearMundoLocal(esServidor: false);
     }
 
@@ -218,7 +258,7 @@ public static class HandlersMiscelaneos
         int dano = mensaje.GetInt();
         float vel = mensaje.GetFloat();
         float tv = mensaje.GetFloat();
-        int sprite = mensaje.GetInt();
+        string sprite = mensaje.GetString();
         int idEnemigoDueno = mensaje.GetInt();
         int n = mensaje.GetInt();
         float[] dxs = new float[n], dys = new float[n];
@@ -228,7 +268,7 @@ public static class HandlersMiscelaneos
         Message b = Message.Create(MessageSendMode.Reliable, IdMensajesDeRed.broadcastDisparo);
         b.AddUShort(fromClientId);
         b.AddFloat(posX); b.AddFloat(posY);
-        b.AddInt(dano); b.AddFloat(vel); b.AddFloat(tv); b.AddInt(sprite);
+        b.AddInt(dano); b.AddFloat(vel); b.AddFloat(tv); b.AddString(sprite);
         b.AddInt(idEnemigoDueno);
         b.AddInt(n);
         for (int i = 0; i < n; i++) { b.AddFloat(dxs[i]); b.AddFloat(dys[i]); }
@@ -237,7 +277,7 @@ public static class HandlersMiscelaneos
         // 2. Crear las balas tambien localmente en el servidor
         for (int i = 0; i < n; i++)
         {
-            new Bala(new Vector2(posX, posY), new Vector2(dxs[i], dys[i]), vel, dano, (IdTextura)sprite, fromClientId, tv, idEnemigoDueno);
+            new Bala(new Vector2(posX, posY), new Vector2(dxs[i], dys[i]), vel, dano, sprite, fromClientId, tv, idEnemigoDueno);
         }
     }
 
@@ -253,7 +293,7 @@ public static class HandlersMiscelaneos
         int dano = mensaje.GetInt();
         float vel = mensaje.GetFloat();
         float tv = mensaje.GetFloat();
-        int sprite = mensaje.GetInt();
+        string sprite = mensaje.GetString();
         int idEnemigoDueno = mensaje.GetInt();
         int n = mensaje.GetInt();
 
@@ -268,7 +308,7 @@ public static class HandlersMiscelaneos
         {
             float dx = mensaje.GetFloat();
             float dy = mensaje.GetFloat();
-            new Bala(new Vector2(posX, posY), new Vector2(dx, dy), vel, dano, (IdTextura)sprite, idDueno, tv, idEnemigoDueno);
+            new Bala(new Vector2(posX, posY), new Vector2(dx, dy), vel, dano, sprite, idDueno, tv, idEnemigoDueno);
         }
     }
 
@@ -282,7 +322,7 @@ public static class HandlersMiscelaneos
         float x = mensaje.GetFloat();
         float y = mensaje.GetFloat();
         int vidaMax = mensaje.GetInt();
-        int sprite = mensaje.GetInt();
+        string sprite = mensaje.GetString();
         byte r = mensaje.GetByte();
         byte g = mensaje.GetByte();
         byte b = mensaje.GetByte();
@@ -291,7 +331,7 @@ public static class HandlersMiscelaneos
         if (!gestorCliente.enemigosRemotos.ContainsKey(idEnemigoServidor))
         {
             EnemigoRemoto er = new EnemigoRemoto(idEnemigoServidor, new Vector2(x, y), vidaMax,
-                (IdTextura)sprite, new Color(r, g, b, a), escala);
+                sprite, new Color(r, g, b, a), escala);
             gestorCliente.enemigosRemotos[idEnemigoServidor] = er;
         }
     }
@@ -358,8 +398,8 @@ public static class HandlersMiscelaneos
             int idPickup = mensaje.GetInt();
             float x = mensaje.GetFloat();
             float y = mensaje.GetFloat();
-            int sprite = mensaje.GetInt();
-            Arma a = Arma.DesdeSprite((IdTextura)sprite);
+            string nombreArma = mensaje.GetString();
+            Arma a = Mapa.CargarArma(nombreArma);
             new ArmaEnSuelo(idPickup, a, new Vector2(x, y));
         }
     }
@@ -401,8 +441,8 @@ public static class HandlersMiscelaneos
         int idPickup = mensaje.GetInt();
         float x = mensaje.GetFloat();
         float y = mensaje.GetFloat();
-        int sprite = mensaje.GetInt();
-        new ArmaEnSuelo(idPickup, Arma.DesdeSprite((IdTextura)sprite), new Vector2(x, y));
+        string nombreArma = mensaje.GetString();
+        new ArmaEnSuelo(idPickup, Mapa.CargarArma(nombreArma), new Vector2(x, y));
     }
 
     /// <summary>
@@ -413,6 +453,7 @@ public static class HandlersMiscelaneos
     {
         if (!gestorRed.EsServidor) return;
         ushort idAsesino = mensaje.GetUShort();
+        if (FuncionesPartida.modoActual == ModoDeJuego.Oleadas) return;
         FuncionesPartida.AplicarPuntuacion(idAsesino);
     }
 

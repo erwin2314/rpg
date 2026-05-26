@@ -15,6 +15,25 @@
     <PublishDir>builds/windows/$(Version)/</PublishDir>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(RuntimeIdentifier)' == 'osx-arm64'">
+    <PublishDir>builds/mac-arm64/$(Version)/</PublishDir>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(RuntimeIdentifier)' == 'osx-x64'">
+    <PublishDir>builds/mac-x64/$(Version)/</PublishDir>
+  </PropertyGroup>
+
+  <!-- Publica para los 4 RIDs (linux, windows, mac arm64, mac x64) con: dotnet msbuild -t:PublishAll -->
+  <Target Name="PublishAll">
+    <ItemGroup>
+      <RidsToPublish Include="linux-x64;win-x64;osx-arm64;osx-x64" />
+    </ItemGroup>
+    <MSBuild
+      Projects="$(MSBuildProjectFile)"
+      Properties="RuntimeIdentifier=%(RidsToPublish.Identity);SelfContained=true;Configuration=Release"
+      Targets="Publish" />
+  </Target>
+
   <ItemGroup>
     <PackageReference Include="Raylib-cs" Version="7.0.2" />
     <PackageReference Include="RiptideNetworking.Riptide" Version="2.2.1" />
@@ -30,6 +49,10 @@
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
     <Content Include="comportamientos\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="armas\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>

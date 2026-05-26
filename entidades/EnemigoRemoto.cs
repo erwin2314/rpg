@@ -12,7 +12,7 @@ public class EnemigoRemoto : EntidadBase
     public BarraDeProgreso barraVida;
 
     /// <summary>Sprite con el que se dibuja (recibido en spawnearEnemigo)</summary>
-    public IdTextura sprite = IdTextura.jugador1;
+    public string sprite = "jugador1.png";
 
     /// <summary>Color de tinte aplicado al sprite (recibido en spawnearEnemigo)</summary>
     public Color tinte = Color.Maroon;
@@ -20,7 +20,7 @@ public class EnemigoRemoto : EntidadBase
     /// <summary>Buffer de posiciones recibidas por red; cada frame la posicion se interpola/extrapola desde aqui</summary>
     public BufferInterpolacion buffer = new BufferInterpolacion();
 
-    public EnemigoRemoto(int idEnemigoServidor, Vector2 posicion, int vidaMax, IdTextura sprite, Color tinte, float escala)
+    public EnemigoRemoto(int idEnemigoServidor, Vector2 posicion, int vidaMax, string sprite, Color tinte, float escala)
         : base(posicion, Vector2.Zero, 0f, 0f, 20f, vidaMax, vidaMax, capaDibujado: 50)
     {
         this.idEnemigoServidor = idEnemigoServidor;

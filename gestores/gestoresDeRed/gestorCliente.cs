@@ -90,7 +90,8 @@ public static class gestorCliente
     {
         gestorRed.EnLinea = false;
         gestorRed.EsServidor = false;
-        API.Encolar(FuncionesCMD.Mostrar, "cliente desconectado del servidor");
+        API.Encolar(FuncionesCMD.Mostrar, $"cliente desconectado del servidor — razon: {e.Reason}");
+        if (Mapa.partidaIniciada) FuncionesPartida.AplicarFinPartidaLocal(0xFFFF);
     }
 
     /// <summary>

@@ -36,7 +36,7 @@ public class Enemigo : EntidadBase
     public int spawnOrigenIndex = -1;
 
     /// <summary>Sprite con el que se dibuja (copiado desde SpawnEnemigoDatos.spriteEnemigo)</summary>
-    public IdTextura sprite = IdTextura.jugador1;
+    public string sprite = "jugador1.png";
 
     /// <summary>Color de tinte aplicado al sprite (copiado desde SpawnEnemigoDatos.tinteEnemigo)</summary>
     public Color tinte = Color.Maroon;
@@ -47,7 +47,7 @@ public class Enemigo : EntidadBase
         : base(posicion, Vector2.Zero, comportamiento.velocidad, 0f, 20f, vidaMax, vidaMax, capaDibujado: 50)
     {
         this.comportamiento = comportamiento;
-        this.armaActual = Mapa.presetsArma.TryGetValue(comportamiento.armaInicial, out var fa) ? fa() : Arma.Pistola1();
+        this.armaActual = Mapa.CargarArma(comportamiento.armaInicial);
         this.origenSpawn = posicion;
         this.spawnOrigenIndex = spawnIndex;
         if (spawnDatos != null)

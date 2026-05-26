@@ -16,10 +16,10 @@ public class Bala : EntidadBase
     /// </summary>
     public int idEnemigoDueno = -1;
     public int dano;
-    public IdTextura sprite;
+    public string sprite;
     private float tiempoVida;
 
-    public Bala(Vector2 posicion, Vector2 direccion, float velocidad, int dano, IdTextura sprite, ushort idDueno, float tiempoVidaBala, int idEnemigoDueno = -1)
+    public Bala(Vector2 posicion, Vector2 direccion, float velocidad, int dano, string sprite, ushort idDueno, float tiempoVidaBala, int idEnemigoDueno = -1)
         : base(posicion, direccion * velocidad, velocidad, 0f, 6f, 1, 1, capaDibujado: 60)
     {
         this.idDueno = idDueno;
@@ -101,8 +101,8 @@ public class Bala : EntidadBase
             return;
         }
 
-        // Aplica daño si la otra entidad es el Jugador local de ESTE cliente
-        if (otra is Jugador j && j == GestorEntidades.jugadorLocal)
+        // Aplica daño si la otra entidad es UN Jugador local de ESTE proceso (modo local soporta varios)
+        if (otra is Jugador j && GestorEntidades.jugadoresLocales.Contains(j))
         {
             if (j.vidaActual <= 0)
             {
@@ -114,7 +114,7 @@ public class Bala : EntidadBase
             GestorEntidades.EliminarEntidad(this);
             if (sobreviveAntesDelGolpe && j.vidaActual <= 0)
             {
-                FuncionesPartida.NotificarMuerte(idDueno);
+                FuncionesPartida.NotificarMuerte(j, idDueno);
             }
             return;
         }

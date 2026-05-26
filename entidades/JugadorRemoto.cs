@@ -41,7 +41,7 @@ public class JugadorRemoto : EntidadBase
             colorDelTexto: Color.White,
             colorDelRectangulo: new Color((byte)0, (byte)0, (byte)0, (byte)0),
             textoAMostrar: "",
-            idTextura: IdTextura.vacio,
+            idTextura: "",
             tamañoDelTexto: 12,
             capaDibujado: 52,
             enMundo: true);
@@ -75,7 +75,7 @@ public class JugadorRemoto : EntidadBase
         gestorRed.jugadoresConectados.TryGetValue(idRiptide, out DatosJugador? d);
         Color tinte = d?.color ?? Color.White;
 
-        Texture2D tex = GestorTexturas.ObtenerTextura(IdTextura.jugador1);
+        Texture2D tex = GestorTexturas.ObtenerTextura("jugador1.png");
         Raylib.DrawTexturePro(
             tex,
             new Rectangle(0, 0, tex.Width, tex.Height),

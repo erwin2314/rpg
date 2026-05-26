@@ -11,14 +11,17 @@ public class Jugador : EntidadBase
     /// <summary>Color con el que se dibuja el jugador</summary>
     public Color color;
 
-    /// <summary>Arma equipada actualmente (puede ser null si no tiene)</summary>
-    public Arma? armaActual = Arma.Pistola1();
+    /// <summary>Arma equipada actualmente (puede ser null si no tiene). Se setea al spawnear via Mapa.CargarArma</summary>
+    public Arma? armaActual = Mapa.CargarArma("Pistola");
 
     /// <summary>Tiempo restante hasta poder disparar de nuevo</summary>
     private float cooldownDisparo = 0f;
 
-    /// <summary>Evita que el primer clic (el que selecciono el modo) dispare al crear el jugador</summary>
-    private bool clicSoltadoUnaVez = false;
+    /// <summary>
+    /// Fuente de input para este jugador (teclado+mouse, gamepad, etc.). Null = no se controla
+    /// por el usuario (placeholder o jugador remoto desactivado)
+    /// </summary>
+    public IInputJugador? input;
 
     /// <summary>RNG local para calcular dispersion del disparo</summary>
     private Random rng = new Random();
@@ -61,7 +64,7 @@ public class Jugador : EntidadBase
             colorDelTexto: Color.White,
             colorDelRectangulo: new Color((byte)0, (byte)0, (byte)0, (byte)0),
             textoAMostrar: "",
-            idTextura: IdTextura.vacio,
+            idTextura: "",
             tamañoDelTexto: 12,
             capaDibujado: 52,
             enMundo: true);
@@ -71,14 +74,13 @@ public class Jugador : EntidadBase
 
     public override void Actualizar()
     {
-        Vector2 dir = Vector2.Zero;
-        if (Raylib.IsKeyDown(KeyboardKey.W)) dir.Y -= 1;
-        if (Raylib.IsKeyDown(KeyboardKey.S)) dir.Y += 1;
-        if (Raylib.IsKeyDown(KeyboardKey.A)) dir.X -= 1;
-        if (Raylib.IsKeyDown(KeyboardKey.D)) dir.X += 1;
-        if (dir.LengthSquared() > 0) dir = Vector2.Normalize(dir);
-
-        posicion += dir * velocidadMaxima * Raylib.GetFrameTime();
+        // Movimiento — delegado al input (teclado WASD, stick izq, etc.)
+        if (input != null)
+        {
+            Vector2 dir = input.LeerMovimiento();
+            if (dir.LengthSquared() > 0) dir = Vector2.Normalize(dir);
+            posicion += dir * velocidadMaxima * Raylib.GetFrameTime();
+        }
 
         // Regeneracion HP/s (acumulada fraccionalmente; suma 1 cuando llega a entero)
         if (regeneracionPorSegundo > 0f && vidaActual > 0 && vidaActual < vidaMaxima)
@@ -91,26 +93,20 @@ public class Jugador : EntidadBase
             }
         }
 
-        // Input de disparo (solo el jugador local)
-        if (this == GestorEntidades.jugadorLocal)
+        // Disparo y recoger arma — solo si hay input asignado (no para placeholders)
+        if (input != null)
         {
             cooldownDisparo -= Raylib.GetFrameTime();
 
-            // No disparar hasta que el clic se haya soltado al menos una vez (evita disparo accidental al pulsar "Deathmatch")
-            if (!Raylib.IsMouseButtonDown(MouseButton.Left)) clicSoltadoUnaVez = true;
-
             if (armaActual != null && armaActual.municionActual > 0 && cooldownDisparo <= 0
-                && clicSoltadoUnaVez
-                && Raylib.IsMouseButtonDown(MouseButton.Left))
+                && input.LeerDisparoMantenido())
             {
-                Vector2 mouseMundo = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), Render2d.camara);
-                Vector2 dirDisparo = mouseMundo - posicion;
+                Camera2D camaraDeEsteJugador = Render2d.CamaraDe(this);
+                Vector2 dirDisparo = input.LeerDireccionAim(posicion, camaraDeEsteJugador);
                 if (dirDisparo.LengthSquared() > 0.0001f)
                 {
-                    dirDisparo = Vector2.Normalize(dirDisparo);
                     armaActual.municionActual--;
                     cooldownDisparo = armaActual.cadenciaSegundos;
-                    // Origen de la bala fuera del propio cuerpo para no auto-colisionar
                     Vector2 origen = posicion + dirDisparo * (radio + 10);
                     List<Vector2> dirs = FuncionesArmas.CalcularDireccionesDisparo(dirDisparo, armaActual, rng);
                     FuncionesArmas.DispararLocal(idRiptide, origen, dirs, armaActual);
@@ -118,8 +114,7 @@ public class Jugador : EntidadBase
                 }
             }
 
-            // Recoger arma del suelo con E
-            if (Raylib.IsKeyPressed(KeyboardKey.E))
+            if (input.LeerRecogerPresionado())
             {
                 FuncionesArmas.IntentarRecogerArmaCercana(this);
             }
@@ -168,7 +163,7 @@ public class Jugador : EntidadBase
 
     public override void Dibujar()
     {
-        Texture2D tex = GestorTexturas.ObtenerTextura(IdTextura.jugador1);
+        Texture2D tex = GestorTexturas.ObtenerTextura("jugador1.png");
         Raylib.DrawTexturePro(
             tex,
             new Rectangle(0, 0, tex.Width, tex.Height),

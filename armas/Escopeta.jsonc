@@ -1,0 +1,26 @@
+{
+    // Nombre legible (debe coincidir con el filename sin .jsonc)
+    "nombre": "Escopeta",
+    // PNG en imagenes/ (con .png) — sprite del arma equipada y del pickup
+    "spriteArma": "escopeta1.png",
+    // PNG en imagenes/ (con .png) — sprite de cada bala disparada
+    "spriteBala": "perdigon1.png",
+    // Dano por impacto
+    "dano": 15,
+    // Cargador maximo
+    "municionMaxima": 8,
+    // Carga inicial (normalmente == municionMaxima)
+    "municionActual": 8,
+    // Segundos entre disparos
+    "cadenciaSegundos": 1.1,
+    // Pixeles por segundo
+    "velocidadBala": 1300,
+    // Comun | Inusual | Raro | Epico | Legendario
+    "rareza": "Legendario",
+    // 1 normal, 8 para escopeta
+    "proyectilesPorDisparo": 8,
+    // 0 = exacto
+    "dispersionGrados": 18,
+    // Segundos antes de despawn
+    "tiempoVidaBala": 0.3
+}

@@ -101,7 +101,7 @@ public static class GestorOleadas
         m.AddFloat(e.posicion.X);
         m.AddFloat(e.posicion.Y);
         m.AddInt(e.vidaMaxima);
-        m.AddInt((int)e.sprite);
+        m.AddString(e.sprite);
         m.AddByte(e.tinte.R);
         m.AddByte(e.tinte.G);
         m.AddByte(e.tinte.B);

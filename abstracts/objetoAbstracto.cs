@@ -82,6 +82,14 @@ public abstract class ObjetoAbstracto : ISerializable
         if (!activo) return;
         if (fuenteVisible != null) visible = fuenteVisible();
     }
+
+    /// <summary>
+    /// Recalcula posicion y tamano del componente segun el tamano actual de la ventana. <br/>
+    /// Default vacio. Componentes con scaling (Panel y subclases, CampoDeTexto, etc.) sobreescriben
+    /// para multiplicar sus valores logicos por Layout.RatioX/Y. <br/>
+    /// CentroUI lo llama solo cuando Raylib.IsWindowResized() o en el primer frame
+    /// </summary>
+    public virtual void AplicarLayout() { }
     
     /// <summary>
     /// Inserta el objeto directamente a la lista de objetos del render

@@ -71,6 +71,7 @@ public static class EditorComportamientoIA
     [EventoAPI("EditorIA")]
     public static void Guardar()
     {
+        LimpiarHuerfanos();
         GestorArchivosJson.Escribir(pathActual, comportamientoEnEdicion, ComportamientoIA.comentariosJsonc);
         Mapa.InvalidarCacheComportamientos();
         mensajeEstado = $"Guardado: {Path.GetFullPath(pathActual)}";
@@ -160,30 +161,113 @@ public static class EditorComportamientoIA
     [EventoAPI("EditorIA")]
     public static void AnadirCondicion()
     {
-        int nuevoId = NuevoId();
-        NodoIA n = new NodoIA { id = nuevoId, tipo = TipoNodo.Condicion, predicado = "JugadorEnRango", umbral = 200f, siId = -1, noId = -1 };
-        comportamientoEnEdicion.nodos.Add(n);
-        nodoSeleccionado = n;
-        mensajeEstado = $"Anadida Condicion id={nuevoId}";
+        NodoIA n = new NodoIA
+        {
+            id = NuevoId(),
+            tipo = TipoNodo.Condicion,
+            predicado = "JugadorEnRango",
+            umbral = 200f,
+            siId = -1,
+            noId = -1,
+        };
+        AgregarYConectar(n, "Condicion");
     }
 
     [EventoAPI("EditorIA")]
     public static void AnadirAccion()
     {
-        int nuevoId = NuevoId();
-        NodoIA n = new NodoIA { id = nuevoId, tipo = TipoNodo.Accion, accion = "Idle" };
-        comportamientoEnEdicion.nodos.Add(n);
-        nodoSeleccionado = n;
-        mensajeEstado = $"Anadida Accion id={nuevoId}";
+        NodoIA n = new NodoIA { id = NuevoId(), tipo = TipoNodo.Accion, accion = "Idle" };
+        AgregarYConectar(n, "Accion");
+    }
+
+    /// <summary>
+    /// Agrega `n` a la lista y lo conecta al nodoSeleccionado (debe ser Condicion con slot libre).
+    /// Si no hay seleccion, padre es Accion o ambos slots estan llenos, NO agrega y reporta en mensajeEstado.
+    /// </summary>
+    private static void AgregarYConectar(NodoIA n, string etiquetaTipo)
+    {
+        // Defensa: arbol vacio (no deberia pasar) -> el nuevo nodo es la raiz
+        if (comportamientoEnEdicion.nodos.Count == 0)
+        {
+            comportamientoEnEdicion.nodos.Add(n);
+            comportamientoEnEdicion.raizId = n.id;
+            nodoSeleccionado = n;
+            mensajeEstado = $"Anadida {etiquetaTipo} id={n.id} como raiz (arbol estaba vacio)";
+            return;
+        }
+
+        if (nodoSeleccionado == null)
+        {
+            mensajeEstado = "Selecciona un nodo padre primero (click en un nodo del arbol)";
+            return;
+        }
+
+        if (nodoSeleccionado.tipo == TipoNodo.Accion)
+        {
+            mensajeEstado = "Las Acciones son hojas — selecciona una Condicion como padre";
+            return;
+        }
+
+        if (nodoSeleccionado.siId == -1)
+        {
+            comportamientoEnEdicion.nodos.Add(n);
+            nodoSeleccionado.siId = n.id;
+            mensajeEstado = $"Anadida {etiquetaTipo} id={n.id} como rama SI de id={nodoSeleccionado.id}";
+            nodoSeleccionado = n;
+            return;
+        }
+        if (nodoSeleccionado.noId == -1)
+        {
+            comportamientoEnEdicion.nodos.Add(n);
+            nodoSeleccionado.noId = n.id;
+            mensajeEstado = $"Anadida {etiquetaTipo} id={n.id} como rama NO de id={nodoSeleccionado.id}";
+            nodoSeleccionado = n;
+            return;
+        }
+
+        mensajeEstado = $"Padre id={nodoSeleccionado.id} ya tiene rama SI y NO. Borra una rama o selecciona otro padre.";
     }
 
     [EventoAPI("EditorIA")]
     public static void BorrarNodoSeleccionado()
     {
         if (nodoSeleccionado == null) return;
+        int idBorrado = nodoSeleccionado.id;
+
+        // Quitar referencias al nodo borrado desde sus padres (cualquier siId/noId que apunte a el)
+        foreach (NodoIA n in comportamientoEnEdicion.nodos)
+        {
+            if (n.siId == idBorrado) n.siId = -1;
+            if (n.noId == idBorrado) n.noId = -1;
+        }
+
         comportamientoEnEdicion.nodos.Remove(nodoSeleccionado);
-        mensajeEstado = $"Borrado nodo id={nodoSeleccionado.id}";
         nodoSeleccionado = null;
+        LimpiarHuerfanos();
+        mensajeEstado = $"Borrado nodo id={idBorrado}";
+    }
+
+    /// <summary>
+    /// Borra de comportamientoEnEdicion.nodos cualquier nodo no alcanzable desde raizId via siId/noId.
+    /// Llamado automaticamente tras Borrar y al inicio de Guardar
+    /// </summary>
+    private static void LimpiarHuerfanos()
+    {
+        HashSet<int> alcanzables = new HashSet<int>();
+        Marcar(comportamientoEnEdicion.raizId, alcanzables);
+        comportamientoEnEdicion.nodos.RemoveAll(n => !alcanzables.Contains(n.id));
+    }
+
+    private static void Marcar(int id, HashSet<int> alcanzables)
+    {
+        if (id < 0 || !alcanzables.Add(id)) return; // -1 o ya visitado
+        NodoIA? n = BuscarNodo(id);
+        if (n == null) return;
+        if (n.tipo == TipoNodo.Condicion)
+        {
+            Marcar(n.siId, alcanzables);
+            Marcar(n.noId, alcanzables);
+        }
     }
 
     [EventoAPI("EditorIA")]

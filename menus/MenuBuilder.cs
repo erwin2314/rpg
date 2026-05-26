@@ -22,7 +22,7 @@ public class MenuBuilder
         Func<string>? fuenteTexto = null,
         Func<bool>? fuenteVisible = null,
         Color? colorTexto = null, Color? colorRectangulo = null,
-        IdTextura idTextura = IdTextura.placeholder,
+        string idTextura = "placeholder.png",
         bool enMundo = false)
     {
         elementos.Add(UI.Boton(texto, x, y, onClick, ancho, alto, fuenteTexto, fuenteVisible, colorTexto, colorRectangulo, idTextura, enMundo));
@@ -34,7 +34,7 @@ public class MenuBuilder
         Func<string>? fuenteTexto = null,
         Func<bool>? fuenteVisible = null,
         Color? colorTexto = null, Color? colorRectangulo = null,
-        IdTextura idTextura = IdTextura.placeholder,
+        string idTextura = "placeholder.png",
         bool enMundo = false)
     {
         refOut = UI.Boton(texto, x, y, onClick, ancho, alto, fuenteTexto, fuenteVisible, colorTexto, colorRectangulo, idTextura, enMundo);

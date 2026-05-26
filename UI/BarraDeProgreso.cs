@@ -129,8 +129,34 @@ public class BarraDeProgreso : ObjetoAbstracto
         this.ancho = ancho;
         this.alto = alto;
         this.autoIncremental =autoIncremental;
+
+        // Captura los valores logicos (en el diseno 1280×720) y aplica el escalado inicial
+        origPosX = posicionX;
+        origPosY = posicionY;
+        origAncho = ancho;
+        origAlto = alto;
+        origTamanoTexto = tamanoTexto;
+        AplicarLayout();
+
         if (enMundo) InsertarACentroUIEnMundo();
         else InsertarACentroUI();
+    }
+
+    /// <summary>Valores en el diseño logico 1280×720, capturados al construir; sirven para reescalar sin perder precision</summary>
+    private int origPosX, origPosY, origAncho, origAlto, origTamanoTexto;
+
+    /// <summary>Si false, la barra queda en pixeles absolutos sin escalar con la ventana</summary>
+    public bool escalar = true;
+
+    public override void AplicarLayout()
+    {
+        if (!escalar || enMundo) return;
+        float rx = Layout.RatioX, ry = Layout.RatioY, ru = Layout.RatioUniforme;
+        posicionX = (int)(origPosX * rx);
+        posicionY = (int)(origPosY * ry);
+        ancho     = (int)(origAncho * rx);
+        alto      = (int)(origAlto  * ry);
+        tamanoTexto = (int)(origTamanoTexto * ru);
     }
 
     /// <summary>

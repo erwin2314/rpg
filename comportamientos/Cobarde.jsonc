@@ -1,0 +1,46 @@
+{
+    // Nombre legible del comportamiento (debe coincidir con el del archivo)
+    "nombre": "Cobarde",
+    // Arma con la que aparece (Pistola, Revolver, Subfusil1, Subfusil2, Escopeta, Francotirador)
+    "armaInicial": "Pistola",
+    // Velocidad maxima en px/s (0 = estatico, ej. torreta)
+    "velocidad": 200,
+    // Radio (px) para localizar jugadores (referencia para predicados en el arbol)
+    "rangoDeteccion": 400,
+    // Radio (px) efectivo de disparo (referencia para predicados en el arbol)
+    "rangoAtaque": 250,
+    // Multiplicador de cadencia de disparo (1 = normal, >1 = mas rapido)
+    "agresividad": 1,
+    // Id del nodo raiz del arbol de decision
+    "raizId": 0,
+    // Nodos del arbol. tipo=Condicion: predicado(JugadorEnRango/VidaMenosQue/CooldownListo/Siempre/Nunca)+umbral+siId+noId. tipo=Accion: accion(Idle/Perseguir/Atacar/Huir)
+    "nodos": [
+  {
+    "id": 0,
+    "tipo": "Condicion",
+    "predicado": "LineaDeVision",
+    "umbral": 200,
+    "siId": 1,
+    "noId": 2,
+    "accion": "Idle"
+  },
+  {
+    "id": 1,
+    "tipo": "Accion",
+    "predicado": "Siempre",
+    "umbral": 0,
+    "siId": -1,
+    "noId": -1,
+    "accion": "Huir"
+  },
+  {
+    "id": 2,
+    "tipo": "Accion",
+    "predicado": "Siempre",
+    "umbral": 0,
+    "siId": -1,
+    "noId": -1,
+    "accion": "SeguirCamino"
+  }
+]
+}
