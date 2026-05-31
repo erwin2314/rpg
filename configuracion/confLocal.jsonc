@@ -1,0 +1,8 @@
+{
+    // nombre del segundo jugador local (visible en la etiqueta sobre su sprite)
+    "nombreP2": "P2",
+    // nombre del tercer jugador local
+    "nombreP3": "P3",
+    // nombre del cuarto jugador local
+    "nombreP4": "P4"
+}

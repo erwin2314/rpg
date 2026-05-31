@@ -44,20 +44,24 @@ public class EnemigoRemoto : EntidadBase
 
     public override void Inicializar() { }
 
-    public override void Actualizar()
+    public override void Actualizar(float dt)
     {
-        // Suavizado de posicion: interpola/extrapola desde las muestras recibidas por red
-        posicion = buffer.Calcular(posicion);
-
-        int anchoBarra = 50;
-        barraVida.posicionX = (int)(posicion.X - anchoBarra / 2);
-        barraVida.posicionY = (int)(posicion.Y - radio - 12);
+        // Solo valores no-posicionales. posicion y barra posicional se actualizan en Dibujar
+        // a render rate (no a tick rate) para evitar tirones cuando sim < render
         barraVida.total = vidaMaxima;
         barraVida.progreso = vidaActual;
     }
 
     public override void Dibujar()
     {
+        // Suavizado de posicion a render rate: el buffer trabaja con Raylib.GetTime() (reloj real)
+        posicion = buffer.Calcular(posicion);
+
+        // Barra sigue al sprite cada frame (capa 51 dibuja despues que esta capa 50)
+        int anchoBarra = 50;
+        barraVida.posicionX = (int)(posicion.X - anchoBarra / 2);
+        barraVida.posicionY = (int)(posicion.Y - radio - 12);
+
         Texture2D tex = GestorTexturas.ObtenerTextura(sprite);
         Raylib.DrawTexturePro(
             tex,

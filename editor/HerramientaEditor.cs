@@ -9,6 +9,9 @@ public enum HerramientaEditor
     SpawnJugador,
     SpawnEnemigo,
     SpawnArma,
+    SpawnPowerUp,
+    SpawnTrigger,
+    SeleccionarSpawn,
     Waypoint,
     Borrar,
 }

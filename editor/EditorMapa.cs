@@ -21,6 +21,15 @@ public static class EditorMapa
     /// <summary>Objeto del mapa seleccionado en la herramienta Seleccionar (ParedDatos | SpawnJugadorDatos | SpawnEnemigoDatos | SpawnArmaDatos | null)</summary>
     public static object? objetoSeleccionado;
 
+    /// <summary>Trigger cuyo argumento se esta editando con la herramienta SeleccionarSpawn (null si no hay picker activo)</summary>
+    public static TriggerDatos? triggerArgumentoSiendoEditado;
+
+    /// <summary>Indice del argumento del trigger que esta esperando un valor del picker</summary>
+    public static int indiceArgumentoSiendoEditado = -1;
+
+    /// <summary>Tipo de spawn que el picker debe filtrar ("Enemigo", "Arma", "PowerUp", "Jugador" o "")</summary>
+    public static string tipoSpawnFiltrado = "";
+
     /// <summary>Punto del mundo donde se inicio el arrastre actual (para PintarPared)</summary>
     public static Vector2? arrastreInicio;
 
@@ -34,7 +43,10 @@ public static class EditorMapa
     public static string mensajeEstado = "";
 
     /// <summary>Alto en pixeles de la toolbar superior; clics dentro de esa franja no se consumen como mundo</summary>
-    public const int altoToolbar = 130;
+    public const int altoToolbar = 60;
+
+    /// <summary>Ancho en pixeles del sidebar izquierdo del editor (debajo de la toolbar)</summary>
+    public const int anchoSidebar = 240;
 
     /// <summary>
     /// Entra al modo editor: oculta el menu actual, muestra la toolbar del editor, intenta cargar el mapa por defecto <br/>
@@ -192,6 +204,33 @@ public static class EditorMapa
     [EventoAPI("Editor")] public static void ElegirSpawnJugador()  { herramientaActual = HerramientaEditor.SpawnJugador; objetoSeleccionado = null; }
     [EventoAPI("Editor")] public static void ElegirSpawnEnemigo()  { herramientaActual = HerramientaEditor.SpawnEnemigo; objetoSeleccionado = null; }
     [EventoAPI("Editor")] public static void ElegirSpawnArma()     { herramientaActual = HerramientaEditor.SpawnArma; objetoSeleccionado = null; }
+    [EventoAPI("Editor")] public static void ElegirSpawnPowerUp()  { herramientaActual = HerramientaEditor.SpawnPowerUp; objetoSeleccionado = null; }
+    [EventoAPI("Editor")] public static void ElegirSpawnTrigger()  { herramientaActual = HerramientaEditor.SpawnTrigger; objetoSeleccionado = null; }
+
+    /// <summary>
+    /// Entra al modo "Pick" para seleccionar un spawn existente del mapa para el argumento `indice` del trigger `t`. <br/>
+    /// El tipo de spawn buscado se infiere del nombre del parametro: indiceSpawnEnemigo → "Enemigo", etc.
+    /// </summary>
+    public static void IniciarSeleccionSpawn(TriggerDatos t, int indice)
+    {
+        triggerArgumentoSiendoEditado = t;
+        indiceArgumentoSiendoEditado = indice;
+        tipoSpawnFiltrado = "";
+        Delegate? fn = API.ObtenerFuncion(t.nombreFuncion);
+        if (fn != null)
+        {
+            System.Reflection.ParameterInfo[] ps = fn.Method.GetParameters();
+            if (indice >= 0 && indice < ps.Length)
+            {
+                string n = ps[indice].Name ?? "";
+                if (n.StartsWith("indiceSpawn", StringComparison.OrdinalIgnoreCase))
+                    tipoSpawnFiltrado = n.Substring("indiceSpawn".Length);
+                else if (n.StartsWith("indicePared", StringComparison.OrdinalIgnoreCase))
+                    tipoSpawnFiltrado = "Pared";
+            }
+        }
+        herramientaActual = HerramientaEditor.SeleccionarSpawn;
+    }
     [EventoAPI("Editor")] public static void ElegirWaypoint()      { herramientaActual = HerramientaEditor.Waypoint; /* mantiene seleccion para anadir waypoints al SpawnEnemigo seleccionado */ }
     [EventoAPI("Editor")] public static void ElegirBorrar()        { herramientaActual = HerramientaEditor.Borrar; objetoSeleccionado = null; }
 
@@ -205,15 +244,16 @@ public static class EditorMapa
 
         Vector2 mouseScreen = Raylib.GetMousePosition();
         bool mouseEnToolbar = mouseScreen.Y < altoToolbar;
+        bool mouseEnSidebar = mouseScreen.X < anchoSidebar && mouseScreen.Y >= altoToolbar;
         bool mouseEnPanelPropiedades =
             mouseScreen.X >= 1280 - 245 &&
             mouseScreen.Y >= altoToolbar + 5 &&
             mouseScreen.Y <= altoToolbar + 385;
         bool desplegableActivo = DesplegableSeleccion.contadorDesplegados > 0;
 
-        // Los clics sobre el toolbar o el panel de propiedades los maneja CentroUI (los componentes detectan su propia colision)
+        // Los clics sobre toolbar/sidebar/panel propiedades los maneja CentroUI (los componentes detectan su propia colision)
         // Mientras un desplegable este abierto, NUNCA consumir input del mundo (la lista puede extenderse fuera del panel)
-        if (mouseEnToolbar || mouseEnPanelPropiedades || desplegableActivo) return;
+        if (mouseEnToolbar || mouseEnSidebar || mouseEnPanelPropiedades || desplegableActivo) return;
 
         Vector2 mouseMundo = Raylib.GetScreenToWorld2D(mouseScreen, Render2d.camara);
 
@@ -224,6 +264,9 @@ public static class EditorMapa
             case HerramientaEditor.SpawnJugador: TickSpawnJugador(mouseMundo); break;
             case HerramientaEditor.SpawnEnemigo: TickSpawnEnemigo(mouseMundo); break;
             case HerramientaEditor.SpawnArma:    TickSpawnArma(mouseMundo); break;
+            case HerramientaEditor.SpawnPowerUp: TickSpawnPowerUp(mouseMundo); break;
+            case HerramientaEditor.SpawnTrigger: TickSpawnTrigger(mouseMundo); break;
+            case HerramientaEditor.SeleccionarSpawn: TickSeleccionarSpawn(mouseMundo); break;
             case HerramientaEditor.Waypoint:     TickWaypoint(mouseMundo); break;
             case HerramientaEditor.Borrar:       TickBorrar(mouseMundo); break;
         }
@@ -343,6 +386,88 @@ public static class EditorMapa
         }
     }
 
+    private static void TickSpawnPowerUp(Vector2 mouseMundo)
+    {
+        if (Raylib.IsMouseButtonPressed(MouseButton.Left))
+        {
+            mapaEnEdicion.spawnsPowerUp.Add(new SpawnPowerUpDatos { posicion = mouseMundo });
+        }
+    }
+
+    private static void TickSpawnTrigger(Vector2 mouseMundo)
+    {
+        if (Raylib.IsMouseButtonPressed(MouseButton.Left))
+        {
+            mapaEnEdicion.triggers.Add(new TriggerDatos { posicion = mouseMundo });
+        }
+    }
+
+    /// <summary>
+    /// Modo "Pick" para seleccionar un spawn del mapa que sirva como argumento de un trigger. <br/>
+    /// Click izq: busca el spawn mas cercano del tipo filtrado y guarda su indice en el argumento. <br/>
+    /// Click der: cancela y vuelve a Seleccionar sin tocar el argumento
+    /// </summary>
+    private static void TickSeleccionarSpawn(Vector2 mouseMundo)
+    {
+        if (Raylib.IsMouseButtonPressed(MouseButton.Right))
+        {
+            VolverDePicker();
+            return;
+        }
+        if (!Raylib.IsMouseButtonPressed(MouseButton.Left)) return;
+        if (triggerArgumentoSiendoEditado == null) { VolverDePicker(); return; }
+
+        int idx = BuscarIndiceSpawnCercano(mouseMundo, tipoSpawnFiltrado);
+        if (idx < 0) return;
+        while (triggerArgumentoSiendoEditado.argumentos.Count <= indiceArgumentoSiendoEditado)
+            triggerArgumentoSiendoEditado.argumentos.Add("");
+        triggerArgumentoSiendoEditado.argumentos[indiceArgumentoSiendoEditado] = idx.ToString();
+        VolverDePicker();
+    }
+
+    private static void VolverDePicker()
+    {
+        objetoSeleccionado = triggerArgumentoSiendoEditado;
+        triggerArgumentoSiendoEditado = null;
+        indiceArgumentoSiendoEditado = -1;
+        tipoSpawnFiltrado = "";
+        herramientaActual = HerramientaEditor.Seleccionar;
+    }
+
+    private static int BuscarIndiceSpawnCercano(Vector2 punto, string tipo)
+    {
+        const float radioPick = 30f;
+        switch (tipo)
+        {
+            case "Enemigo":  return MasCercano(mapaEnEdicion.spawnsEnemigo, punto, radioPick, s => s.posicion);
+            case "Arma":     return MasCercano(mapaEnEdicion.spawnsArma, punto, radioPick, s => s.posicion);
+            case "PowerUp":  return MasCercano(mapaEnEdicion.spawnsPowerUp, punto, radioPick, s => s.posicion);
+            case "Jugador":  return MasCercano(mapaEnEdicion.spawnsJugador, punto, radioPick, s => s.posicion);
+            case "Pared":
+                for (int i = 0; i < mapaEnEdicion.paredes.Count; i++)
+                {
+                    ParedDatos p = mapaEnEdicion.paredes[i];
+                    float mx = p.posicion.X - p.tamano.X / 2f, MX = p.posicion.X + p.tamano.X / 2f;
+                    float my = p.posicion.Y - p.tamano.Y / 2f, MY = p.posicion.Y + p.tamano.Y / 2f;
+                    if (punto.X >= mx && punto.X <= MX && punto.Y >= my && punto.Y <= MY) return i;
+                }
+                return -1;
+        }
+        return -1;
+    }
+
+    private static int MasCercano<T>(List<T> lista, Vector2 punto, float radio, Func<T, Vector2> getter)
+    {
+        int mejor = -1;
+        float mejorDist2 = radio * radio;
+        for (int i = 0; i < lista.Count; i++)
+        {
+            float d2 = Vector2.DistanceSquared(getter(lista[i]), punto);
+            if (d2 <= mejorDist2) { mejor = i; mejorDist2 = d2; }
+        }
+        return mejor;
+    }
+
     private static void TickBorrar(Vector2 mouseMundo)
     {
         if (Raylib.IsMouseButtonPressed(MouseButton.Left))
@@ -373,6 +498,22 @@ public static class EditorMapa
             if (Vector2.Distance(punto, s.posicion) <= radioSpawn) return s;
         foreach (SpawnArmaDatos s in mapaEnEdicion.spawnsArma)
             if (Vector2.Distance(punto, s.posicion) <= radioSpawn) return s;
+        foreach (SpawnPowerUpDatos s in mapaEnEdicion.spawnsPowerUp)
+            if (Vector2.Distance(punto, s.posicion) <= radioSpawn) return s;
+        foreach (TriggerDatos t in mapaEnEdicion.triggers)
+        {
+            // Rectangular para JugadorEnZona; punto-spawn-radius para Observador (sin zona)
+            if (t.tipo == TipoTrigger.JugadorEnZona)
+            {
+                float mx = t.posicion.X - t.tamano.X / 2f, MX = t.posicion.X + t.tamano.X / 2f;
+                float my = t.posicion.Y - t.tamano.Y / 2f, MY = t.posicion.Y + t.tamano.Y / 2f;
+                if (punto.X >= mx && punto.X <= MX && punto.Y >= my && punto.Y <= MY) return t;
+            }
+            else
+            {
+                if (Vector2.Distance(punto, t.posicion) <= radioSpawn) return t;
+            }
+        }
         return null;
     }
 
@@ -384,6 +525,8 @@ public static class EditorMapa
             case SpawnJugadorDatos sj: sj.posicion += delta; break;
             case SpawnEnemigoDatos se: se.posicion += delta; break;
             case SpawnArmaDatos sa:    sa.posicion += delta; break;
+            case SpawnPowerUpDatos sp: sp.posicion += delta; break;
+            case TriggerDatos tr:      tr.posicion += delta; break;
         }
     }
 
@@ -395,6 +538,8 @@ public static class EditorMapa
             case SpawnJugadorDatos sj: mapaEnEdicion.spawnsJugador.Remove(sj); break;
             case SpawnEnemigoDatos se: mapaEnEdicion.spawnsEnemigo.Remove(se); break;
             case SpawnArmaDatos sa:    mapaEnEdicion.spawnsArma.Remove(sa); break;
+            case SpawnPowerUpDatos sp: mapaEnEdicion.spawnsPowerUp.Remove(sp); break;
+            case TriggerDatos tr:      mapaEnEdicion.triggers.Remove(tr); break;
         }
     }
 
@@ -416,6 +561,12 @@ public static class EditorMapa
         if (objetoSeleccionado != null)
         {
             RenderEditor.DibujarSeleccion(objetoSeleccionado);
+        }
+
+        // Modo Pick: resalta los spawns del tipo filtrado en amarillo
+        if (herramientaActual == HerramientaEditor.SeleccionarSpawn && !string.IsNullOrEmpty(tipoSpawnFiltrado))
+        {
+            RenderEditor.DibujarHighlightSpawns(mapaEnEdicion, tipoSpawnFiltrado);
         }
     }
 }

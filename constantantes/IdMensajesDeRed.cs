@@ -54,6 +54,10 @@ public enum IdMensajesDeRed:ushort
     inicioOleada = 24,
     /// <summary>Servidor envia un chunk de un archivo (mapa o comportamiento) al cliente. Reliable, en orden</summary>
     bloqueArchivo = 25,
+    /// <summary>Servidor: snapshot agrupado de pos+vida de todos los Jugador y Enemigo del servidor (tick rate de red)</summary>
+    snapshotPosiciones = 26,
+    /// <summary>Servidor: la pared en este indice del mapa fue eliminada — eliminar entidad local</summary>
+    paredEliminada = 27,
 }
 
 /// <summary>

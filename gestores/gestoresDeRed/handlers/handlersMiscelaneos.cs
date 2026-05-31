@@ -128,7 +128,9 @@ public static class HandlersMiscelaneos
     }
 
     /// <summary>
-    /// SERVIDOR: recibe la posicion+vida de un cliente, la retransmite a los demas y la aplica localmente para verlo
+    /// SERVIDOR: recibe la posicion+vida de un cliente (que el cliente envia a tickRateRed) y la aplica
+    /// localmente como JugadorRemoto. La retransmision a los demas clientes la hace el snapshot agrupado
+    /// del servidor (gestorRed.TickEnvioSnapshots), no este handler
     /// </summary>
     [MessageHandler((ushort)IdMensajesDeRed.posicionJugador)]
     private static void PosicionJugadorEnServidor(ushort fromClientId, Message mensaje)
@@ -137,15 +139,6 @@ public static class HandlersMiscelaneos
         float x = mensaje.GetFloat();
         float y = mensaje.GetFloat();
         int vida = mensaje.GetInt();
-
-        Message b = Message.Create(MessageSendMode.Unreliable, IdMensajesDeRed.broadcastPosicion);
-        b.AddUShort(fromClientId);
-        b.AddFloat(x);
-        b.AddFloat(y);
-        b.AddInt(vida);
-        gestorServidor.EnviarMensajeATodosLosClientes(b);
-
-        // El servidor tambien debe ver al cliente: crear/actualizar JugadorRemoto local
         AplicarPosicionRemota(fromClientId, x, y, vida);
     }
 
@@ -202,6 +195,45 @@ public static class HandlersMiscelaneos
             CentroUI.EliminarUnObjetoDeObjetosAbstractos(jr.etiquetaNombre);
             GestorEntidades.EliminarEntidad(jr);
             gestorCliente.jugadoresRemotos.Remove(id);
+        }
+    }
+
+    /// <summary>
+    /// CLIENTE: recibe el snapshot agrupado del servidor con pos+vida de Jugadores y Enemigos (tickRateRed). <br/>
+    /// Crea/actualiza JugadorRemoto via AplicarPosicionRemota; solo actualiza EnemigoRemoto si ya existe
+    /// (la creacion llega antes via `spawnearEnemigo` que trae sprite/tinte/escala). <br/>
+    /// Reemplaza los antiguos broadcastPosicion y broadcastPosicionEnemigo per-frame
+    /// </summary>
+    [MessageHandler((ushort)IdMensajesDeRed.snapshotPosiciones)]
+    private static void SnapshotPosicionesEnCliente(Message m)
+    {
+        float ahora = (float)Raylib.GetTime();
+        int n = m.GetInt();
+        for (int i = 0; i < n; i++)
+        {
+            byte tipo = m.GetByte();
+            if (tipo == 0)
+            {
+                ushort id = m.GetUShort();
+                float x = m.GetFloat();
+                float y = m.GetFloat();
+                int vida = m.GetInt();
+                if (id == gestorCliente.cliente.Id) continue;
+                AplicarPosicionRemota(id, x, y, vida);
+            }
+            else if (tipo == 1)
+            {
+                int idEnemigo = m.GetInt();
+                float x = m.GetFloat();
+                float y = m.GetFloat();
+                int vida = m.GetInt();
+                if (gestorCliente.enemigosRemotos.TryGetValue(idEnemigo, out EnemigoRemoto? er))
+                {
+                    er.buffer.Registrar(new Vector2(x, y), ahora);
+                    er.vidaActual = vida;
+                }
+                // Si no existe: esperar a `spawnearEnemigo` que trae sprite/tinte/escala
+            }
         }
     }
 
@@ -465,5 +497,23 @@ public static class HandlersMiscelaneos
     {
         ushort idGanador = mensaje.GetUShort();
         FuncionesPartida.AplicarFinPartidaLocal(idGanador);
+    }
+
+    /// <summary>
+    /// CLIENTE: el servidor avisa que la pared indicePared (slot en Mapa.mapaActivo.paredes) fue
+    /// eliminada. Buscar la entidad Pared en esa posicion y eliminarla
+    /// </summary>
+    [MessageHandler((ushort)IdMensajesDeRed.paredEliminada)]
+    private static void ParedEliminadaEnCliente(Message mensaje)
+    {
+        int idx = mensaje.GetInt();
+        if (Mapa.mapaActivo == null) return;
+        if (idx < 0 || idx >= Mapa.mapaActivo.paredes.Count) return;
+        System.Numerics.Vector2 pos = Mapa.mapaActivo.paredes[idx].posicion;
+        List<Pared> aBorrar = new List<Pared>();
+        foreach (EntidadBase e in GestorEntidades.ObtenerEntidades())
+            if (e is Pared p && System.Numerics.Vector2.DistanceSquared(p.posicion, pos) < 1f)
+                aBorrar.Add(p);
+        foreach (Pared p in aBorrar) GestorEntidades.EliminarEntidad(p);
     }
 }

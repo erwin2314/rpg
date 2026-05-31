@@ -21,7 +21,8 @@
       "Y": 48.33333
     },
     "color": "DarkGray",
-    "capa": 49
+    "capa": 49,
+    "escala": 1
   },
   {
     "posicion": {
@@ -33,7 +34,8 @@
       "Y": 788.33325
     },
     "color": "DarkGray",
-    "capa": 49
+    "capa": 49,
+    "escala": 1
   },
   {
     "posicion": {
@@ -45,7 +47,8 @@
       "Y": 55
     },
     "color": "DarkGray",
-    "capa": 49
+    "capa": 49,
+    "escala": 1
   },
   {
     "posicion": {
@@ -57,7 +60,8 @@
       "Y": 368.33334
     },
     "color": "Gray",
-    "capa": 49
+    "capa": 49,
+    "escala": 1
   },
   {
     "posicion": {
@@ -69,7 +73,8 @@
       "Y": 585
     },
     "color": "DarkGray",
-    "capa": 49
+    "capa": 49,
+    "escala": 1
   },
   {
     "posicion": {
@@ -81,7 +86,8 @@
       "Y": 761.6666
     },
     "color": "DarkGray",
-    "capa": 49
+    "capa": 49,
+    "escala": 1
   },
   {
     "posicion": {
@@ -93,7 +99,21 @@
       "Y": 56.666626
     },
     "color": "DarkGray",
-    "capa": 49
+    "capa": 49,
+    "escala": 1
+  },
+  {
+    "posicion": {
+      "X": 300.8333,
+      "Y": 644.1667
+    },
+    "tamano": {
+      "X": 88.33331,
+      "Y": 121.666626
+    },
+    "color": "DarkGray",
+    "capa": 49,
+    "escala": 1
   }
 ],
     // Puntos donde aparecen los jugadores al iniciar la partida
@@ -104,17 +124,10 @@
       "Y": 666.6666
     },
     "equipo": 0,
-    "vidaMaxima": 100,
-    "regeneracionPorSegundo": 1
-  },
-  {
-    "posicion": {
-      "X": 144.99997,
-      "Y": 663.3334
-    },
-    "equipo": 0,
-    "vidaMaxima": 100,
-    "regeneracionPorSegundo": 1
+    "vidaMaxima": 150,
+    "regeneracionPorSegundo": 5,
+    "escala": 1,
+    "activo": true
   }
 ],
     // Puntos donde aparecen los enemigos en modo oleadas; preset = Basico|Agresivo|Torreta
@@ -129,7 +142,11 @@
     "tiempoEntreSpawns": 3,
     "maxVivos": 1,
     "radioPatrullaAleatoria": 200,
-    "caminoPatrulla": []
+    "caminoPatrulla": [],
+    "escala": 1,
+    "spriteEnemigo": "jugador1.png",
+    "tinteEnemigo": "Maroon",
+    "activo": true
   },
   {
     "posicion": {
@@ -166,7 +183,11 @@
         "X": 254.18933,
         "Y": 131.06293
       }
-    ]
+    ],
+    "escala": 1,
+    "spriteEnemigo": "jugador1.png",
+    "tinteEnemigo": "Maroon",
+    "activo": true
   }
 ],
     // Puntos donde aparecen las armas; arma = Pistola|Revolver|Subfusil1|Subfusil2|Escopeta|Francotirador|Aleatoria
@@ -177,7 +198,9 @@
       "Y": 296.66653
     },
     "arma": "Escopeta",
-    "tiempoRespawn": 4
+    "tiempoRespawn": 4,
+    "escala": 1,
+    "activo": true
   },
   {
     "posicion": {
@@ -185,7 +208,9 @@
       "Y": 294.9999
     },
     "arma": "Subfusil2",
-    "tiempoRespawn": 3
+    "tiempoRespawn": 3,
+    "escala": 1,
+    "activo": true
   },
   {
     "posicion": {
@@ -193,7 +218,9 @@
       "Y": 349.9999
     },
     "arma": "Pistola",
-    "tiempoRespawn": 1
+    "tiempoRespawn": 1,
+    "escala": 1,
+    "activo": true
   },
   {
     "posicion": {
@@ -201,7 +228,9 @@
       "Y": 358.33322
     },
     "arma": "Subfusil1",
-    "tiempoRespawn": 2
+    "tiempoRespawn": 2,
+    "escala": 1,
+    "activo": true
   },
   {
     "posicion": {
@@ -209,7 +238,46 @@
       "Y": 64.99991
     },
     "arma": "Aleatoria",
-    "tiempoRespawn": 5
+    "tiempoRespawn": 5,
+    "escala": 1,
+    "activo": true
+  }
+],
+    "spawnsPowerUp": [
+  {
+    "posicion": {
+      "X": 148.33334,
+      "Y": 490.00003
+    },
+    "id": "PowerUp",
+    "tipo": "BonoVidaMaxima",
+    "magnitud": 50,
+    "duracion": 10,
+    "sprite": "placeholder.png",
+    "escala": 1,
+    "tiempoRespawn": 5,
+    "activo": true
+  }
+],
+    "triggers": [
+  {
+    "id": "Trigger",
+    "tipo": "JugadorEnZona",
+    "posicion": {
+      "X": 128.33334,
+      "Y": 320.00003
+    },
+    "tamano": {
+      "X": 120,
+      "Y": 80
+    },
+    "campoObservado": "",
+    "valorEsperado": "",
+    "nombreFuncion": "EliminarPared",
+    "argumentos": [
+      "7"
+    ],
+    "unaVez": true
   }
 ],
     "configOleadas": {

@@ -22,6 +22,15 @@ public interface IInputJugador
 
     /// <summary>True solo en el frame en que se PRESIONA recoger arma (edge-triggered)</summary>
     bool LeerRecogerPresionado();
+
+    /// <summary>
+    /// Lectura por frame de render. Latchea eventos edge-triggered (IsKeyPressed,
+    /// IsGamepadButtonPressed) para que no se pierdan en frames de render sin tick de simulacion. <br/>
+    /// Tambien actualiza los flags level-triggered que dependen de "se solto al menos una vez"
+    /// para evitar perder un toggle entre ticks. <br/>
+    /// Las funciones Leer* consumen lo que Pollear latcheo
+    /// </summary>
+    void Pollear();
 }
 
 /// <summary>
@@ -32,32 +41,45 @@ public class InputTecladoRaton : IInputJugador
 {
     private bool clicSoltadoUnaVez = false;
 
+    /// <summary>Latch del press de E entre Pollear (frame de render) y LeerRecogerPresionado (tick de simulacion)</summary>
+    private bool recogerEdge = false;
+
     public Vector2 LeerMovimiento()
     {
         Vector2 d = Vector2.Zero;
-        if (Raylib.IsKeyDown(KeyboardKey.W)) d.Y -= 1;
-        if (Raylib.IsKeyDown(KeyboardKey.S)) d.Y += 1;
-        if (Raylib.IsKeyDown(KeyboardKey.A)) d.X -= 1;
-        if (Raylib.IsKeyDown(KeyboardKey.D)) d.X += 1;
+        if (Raylib.IsKeyDown(ConfiguracionControles.KeyArriba)) d.Y -= 1;
+        if (Raylib.IsKeyDown(ConfiguracionControles.KeyAbajo)) d.Y += 1;
+        if (Raylib.IsKeyDown(ConfiguracionControles.KeyIzquierda)) d.X -= 1;
+        if (Raylib.IsKeyDown(ConfiguracionControles.KeyDerecha)) d.X += 1;
         return d;
     }
 
     public Vector2 LeerDireccionAim(Vector2 posicionJugadorMundo, Camera2D camara)
     {
         Vector2 mouseMundo = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), camara);
-        Vector2 dir = mouseMundo - posicionJugadorMundo;
-        if (dir.LengthSquared() <= 0.0001f) return Vector2.Zero;
-        return Vector2.Normalize(dir);
+        return Matematicas.NormalizarSeguro(mouseMundo - posicionJugadorMundo);
     }
 
     public bool LeerDisparoMantenido()
     {
-        // Evita disparo accidental al pulsar boton "Deathmatch" del menu
-        if (!Raylib.IsMouseButtonDown(MouseButton.Left)) clicSoltadoUnaVez = true;
-        return clicSoltadoUnaVez && Raylib.IsMouseButtonDown(MouseButton.Left);
+        // clicSoltadoUnaVez lo actualiza Pollear cada frame de render (no aqui, que solo corre en ticks)
+        return clicSoltadoUnaVez && Raylib.IsMouseButtonDown(ConfiguracionControles.MouseDisparo);
     }
 
-    public bool LeerRecogerPresionado() => Raylib.IsKeyPressed(KeyboardKey.E);
+    public bool LeerRecogerPresionado()
+    {
+        bool tmp = recogerEdge;
+        recogerEdge = false;
+        return tmp;
+    }
+
+    public void Pollear()
+    {
+        // Evita disparo accidental al pulsar boton "Deathmatch" del menu: el click debe soltarse al menos una vez
+        if (!Raylib.IsMouseButtonDown(ConfiguracionControles.MouseDisparo)) clicSoltadoUnaVez = true;
+        // Latch del press de tecla recoger para no perderlo si cae en un frame de render sin tick de simulacion
+        if (Raylib.IsKeyPressed(ConfiguracionControles.KeyRecoger)) recogerEdge = true;
+    }
 }
 
 /// <summary>
@@ -67,10 +89,13 @@ public class InputTecladoRaton : IInputJugador
 public class InputGamepad : IInputJugador
 {
     public int indiceGamepad;
-    private bool gatilloSoltadoUnaVez = false;
+    // El gamepad se crea en CrearMundoLocal cuando arranca partida; los menus actuales no aceptan
+    // gamepad asi que asumimos que el gatillo esta suelto al construirse. Pollear sigue refrescando
+    // el flag a true cuando RT/A se sueltan (por simetria con clicSoltadoUnaVez del teclado)
+    private bool gatilloSoltadoUnaVez = true;
 
-    /// <summary>Magnitud minima del stick para considerarlo como input (dead zone)</summary>
-    public float zonaMuerta = 0.2f;
+    /// <summary>Latch del press de "recoger" entre Pollear (frame de render) y LeerRecogerPresionado (tick de simulacion)</summary>
+    private bool recogerEdge = false;
 
     public InputGamepad(int indiceGamepad)
     {
@@ -83,7 +108,7 @@ public class InputGamepad : IInputJugador
         float x = Raylib.GetGamepadAxisMovement(indiceGamepad, GamepadAxis.LeftX);
         float y = Raylib.GetGamepadAxisMovement(indiceGamepad, GamepadAxis.LeftY);
         Vector2 v = new Vector2(x, y);
-        if (v.Length() < zonaMuerta) return Vector2.Zero;
+        if (v.Length() < ConfiguracionControles.gamepadZonaMuerta) return Vector2.Zero;
         return v;
     }
 
@@ -93,8 +118,8 @@ public class InputGamepad : IInputJugador
         float x = Raylib.GetGamepadAxisMovement(indiceGamepad, GamepadAxis.RightX);
         float y = Raylib.GetGamepadAxisMovement(indiceGamepad, GamepadAxis.RightY);
         Vector2 v = new Vector2(x, y);
-        if (v.Length() < zonaMuerta) return Vector2.Zero;
-        return Vector2.Normalize(v);
+        if (v.Length() < ConfiguracionControles.gamepadZonaMuerta) return Vector2.Zero;
+        return Matematicas.NormalizarSeguro(v);
     }
 
     public bool LeerDisparoMantenido()
@@ -102,15 +127,28 @@ public class InputGamepad : IInputJugador
         if (!Raylib.IsGamepadAvailable(indiceGamepad)) return false;
         // Trigger analogico: -1 (suelto) a +1 (apretado a fondo en Raylib)
         float rt = Raylib.GetGamepadAxisMovement(indiceGamepad, GamepadAxis.RightTrigger);
-        bool botonA = Raylib.IsGamepadButtonDown(indiceGamepad, GamepadButton.RightFaceDown);
-        bool presionado = rt > 0.5f || botonA;
-        if (!presionado) gatilloSoltadoUnaVez = true;
+        bool botonExtra = Raylib.IsGamepadButtonDown(indiceGamepad, ConfiguracionControles.GamepadDisparoExtra);
+        bool presionado = rt > ConfiguracionControles.gamepadUmbralGatillo || botonExtra;
+        // gatilloSoltadoUnaVez lo actualiza Pollear cada frame de render (no aqui, que solo corre en ticks)
         return gatilloSoltadoUnaVez && presionado;
     }
 
     public bool LeerRecogerPresionado()
     {
-        if (!Raylib.IsGamepadAvailable(indiceGamepad)) return false;
-        return Raylib.IsGamepadButtonPressed(indiceGamepad, GamepadButton.RightFaceRight);
+        bool tmp = recogerEdge;
+        recogerEdge = false;
+        return tmp;
+    }
+
+    public void Pollear()
+    {
+        if (!Raylib.IsGamepadAvailable(indiceGamepad)) return;
+        // Mismo criterio que LeerDisparoMantenido: el gatillo debe soltarse al menos una vez antes de disparar
+        float rt = Raylib.GetGamepadAxisMovement(indiceGamepad, GamepadAxis.RightTrigger);
+        bool botonExtra = Raylib.IsGamepadButtonDown(indiceGamepad, ConfiguracionControles.GamepadDisparoExtra);
+        bool presionado = rt > ConfiguracionControles.gamepadUmbralGatillo || botonExtra;
+        if (!presionado) gatilloSoltadoUnaVez = true;
+        // Latch del press de "recoger" para no perderlo si cae en un frame de render sin tick
+        if (Raylib.IsGamepadButtonPressed(indiceGamepad, ConfiguracionControles.GamepadRecoger)) recogerEdge = true;
     }
 }

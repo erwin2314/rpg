@@ -1,0 +1,6 @@
+{
+    // permite abrir el chat directamente desde la ventana grafica
+    "chatAccesibleDesdeRaylib": false,
+    // framerate objetivo (= tasa de envio de paquetes de posicion remota; 60=ligero, 144/240=suave)
+    "fpsObjetivo": 60
+}

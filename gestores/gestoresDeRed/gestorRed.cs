@@ -1,3 +1,4 @@
+using System.Numerics;
 using Raylib_cs;
 using Riptide;
 
@@ -32,6 +33,15 @@ public static class gestorRed
     /// Cada cuantos segundos el servidor reenvia el snapshot completo
     /// </summary>
     private const float INTERVALO_SNAPSHOT = 5f;
+
+    /// <summary>Periodo (s) entre snapshots / envios de cliente al servidor, derivado de ConfiguracionMiscelanea.tickRateRed</summary>
+    private static float intervaloEnvioRed => 1f / Math.Max(1, ConfiguracionMiscelanea.tickRateRed);
+
+    /// <summary>Acumulador de tiempo real (s) para disparar el snapshot del servidor a tickRateRed</summary>
+    private static float acumuladorEnvioServidor = 0f;
+
+    /// <summary>Acumulador de tiempo real (s) para disparar el envio cliente→servidor a tickRateRed</summary>
+    private static float acumuladorEnvioCliente = 0f;
 
     /// <summary>
     /// Inicia la instancia en modo servidor en el puerto y con el numero de clientes indicados <br/>
@@ -95,6 +105,74 @@ public static class gestorRed
                 tiempoUltimoSnapshot = 0f;
                 gestorServidor.BroadcastSnapshot();
             }
+        }
+    }
+
+    /// <summary>
+    /// Solo servidor: agrupa pos+vida de todos los Jugador y Enemigo en un snapshot Unreliable y lo broadcastea. <br/>
+    /// Se llama una vez por frame de render; dispara internamente cada 1/tickRateRed segundos. <br/>
+    /// Reemplaza el broadcast per-frame que hacian Jugador.EnviarPosicion y Enemigo.BroadcastPosicion
+    /// </summary>
+    public static void TickEnvioSnapshots(float deltaReal)
+    {
+        if (!EsServidor || !EnLinea) return;
+        acumuladorEnvioServidor += deltaReal;
+        if (acumuladorEnvioServidor < intervaloEnvioRed) return;
+        acumuladorEnvioServidor = 0f;
+        EnviarSnapshotPosiciones();
+    }
+
+    private static void EnviarSnapshotPosiciones()
+    {
+        List<EntidadBase> aReplicar = new List<EntidadBase>();
+        foreach (EntidadBase e in GestorEntidades.ObtenerEntidades())
+        {
+            if (e is Jugador || e is Enemigo) aReplicar.Add(e);
+        }
+        Message m = Message.Create(MessageSendMode.Unreliable, IdMensajesDeRed.snapshotPosiciones);
+        m.AddInt(aReplicar.Count);
+        foreach (EntidadBase e in aReplicar)
+        {
+            if (e is Jugador j)
+            {
+                m.AddByte(0);
+                m.AddUShort(j.idRiptide);
+                m.AddFloat(j.posicion.X);
+                m.AddFloat(j.posicion.Y);
+                m.AddInt(j.vidaActual);
+            }
+            else if (e is Enemigo en)
+            {
+                m.AddByte(1);
+                m.AddInt(en.id);
+                m.AddFloat(en.posicion.X);
+                m.AddFloat(en.posicion.Y);
+                m.AddInt(en.vidaActual);
+            }
+        }
+        gestorServidor.EnviarMensajeATodosLosClientes(m);
+    }
+
+    /// <summary>
+    /// Solo cliente: envia pos+vida de cada Jugador local al servidor a tickRateRed. <br/>
+    /// Reemplaza el envio per-frame que hacia Jugador.EnviarPosicion. El servidor recibe via handler
+    /// PosicionJugadorEnServidor y lo aplica como JugadorRemoto local (luego el snapshot del servidor
+    /// lo retransmite a los demas clientes)
+    /// </summary>
+    public static void TickEnvioClienteAServidor(float deltaReal)
+    {
+        if (EsServidor || !EnLinea) return;
+        if (!gestorCliente.cliente.IsConnected) return;
+        acumuladorEnvioCliente += deltaReal;
+        if (acumuladorEnvioCliente < intervaloEnvioRed) return;
+        acumuladorEnvioCliente = 0f;
+        foreach (Jugador j in JugadoresLocales.lista)
+        {
+            Message m = Message.Create(MessageSendMode.Unreliable, IdMensajesDeRed.posicionJugador);
+            m.AddFloat(j.posicion.X);
+            m.AddFloat(j.posicion.Y);
+            m.AddInt(j.vidaActual);
+            gestorCliente.EnviarMensaje(m);
         }
     }
 

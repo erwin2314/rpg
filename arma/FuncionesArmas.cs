@@ -27,13 +27,8 @@ public static class FuncionesArmas
         List<Vector2> dirs = new List<Vector2>();
         for (int i = 0; i < arma.proyectilesPorDisparo; i++)
         {
-            float anguloDesv = (float)((rng.NextDouble() - 0.5) * arma.dispersionGrados * Math.PI / 180.0);
-            float cos = MathF.Cos(anguloDesv);
-            float sin = MathF.Sin(anguloDesv);
-            Vector2 d = new Vector2(
-                dirBase.X * cos - dirBase.Y * sin,
-                dirBase.X * sin + dirBase.Y * cos);
-            dirs.Add(d);
+            float anguloDesvGrados = (float)((rng.NextDouble() - 0.5) * arma.dispersionGrados);
+            dirs.Add(Matematicas.RotarVectorGrados(dirBase, anguloDesvGrados));
         }
         return dirs;
     }
@@ -117,28 +112,22 @@ public static class FuncionesArmas
     public static void IntentarRecogerArmaCercana(Jugador jugador)
     {
         float radioRecogida = 50f;
-        foreach (EntidadBase ent in GestorEntidades.ObtenerEntidades())
+        foreach (ArmaEnSuelo pickup in GestorFisica.EntidadesEnCirculo<ArmaEnSuelo>(jugador.posicion, radioRecogida))
         {
-            if (ent is ArmaEnSuelo pickup)
+            if (gestorRed.EsServidor)
             {
-                if (Vector2.Distance(pickup.posicion, jugador.posicion) <= radioRecogida)
-                {
-                    if (gestorRed.EsServidor)
-                    {
-                        EjecutarRecogerArma(pickup.idPickup, jugador.idRiptide);
-                        Message b = Message.Create(MessageSendMode.Reliable, IdMensajesDeRed.armaRecogida);
-                        b.AddInt(pickup.idPickup); b.AddUShort(jugador.idRiptide);
-                        gestorServidor.EnviarMensajeATodosLosClientes(b);
-                    }
-                    else
-                    {
-                        Message m = Message.Create(MessageSendMode.Reliable, IdMensajesDeRed.pedirRecogerArma);
-                        m.AddInt(pickup.idPickup);
-                        gestorCliente.EnviarMensaje(m);
-                    }
-                    return;
-                }
+                EjecutarRecogerArma(pickup.idPickup, jugador.idRiptide);
+                Message b = Message.Create(MessageSendMode.Reliable, IdMensajesDeRed.armaRecogida);
+                b.AddInt(pickup.idPickup); b.AddUShort(jugador.idRiptide);
+                gestorServidor.EnviarMensajeATodosLosClientes(b);
             }
+            else
+            {
+                Message m = Message.Create(MessageSendMode.Reliable, IdMensajesDeRed.pedirRecogerArma);
+                m.AddInt(pickup.idPickup);
+                gestorCliente.EnviarMensaje(m);
+            }
+            return;
         }
     }
 
@@ -159,10 +148,11 @@ public static class FuncionesArmas
         Arma armaRecogida = pickup.arma;
         GestorEntidades.EliminarEntidad(pickup);
 
-        Jugador? jugadorLocal = GestorEntidades.jugadorLocal;
-        if (jugadorLocal != null && jugadorLocal.idRiptide == idJugador)
+        // En modo local-multi, JugadoresLocales.local solo apunta a P1; iterar la lista
+        // entera para que P2/P3/P4 tambien reciban el arma cuando recogen
+        foreach (Jugador j in JugadoresLocales.lista)
         {
-            jugadorLocal.armaActual = armaRecogida;
+            if (j.idRiptide == idJugador) { j.armaActual = armaRecogida; break; }
         }
 
         if (gestorRed.EsServidor)
@@ -251,14 +241,13 @@ public static class FuncionesArmas
     }
 
     /// <summary>
-    /// Tick por frame (solo servidor en partida): decrementa los timers de respawn y dispara los que vencen
+    /// Tick de simulacion (solo servidor en partida): decrementa los timers de respawn y dispara los que vencen
     /// </summary>
-    public static void Actualizar()
+    public static void Actualizar(float dt)
     {
         if (!gestorRed.EsServidor || !Mapa.partidaIniciada) return;
         if (temporizadoresSpawn.Count == 0) return;
 
-        float dt = Raylib.GetFrameTime();
         Random rng = new Random();
         List<int> listos = new List<int>();
         List<int> claves = temporizadoresSpawn.Keys.ToList();
@@ -273,6 +262,7 @@ public static class FuncionesArmas
             temporizadoresSpawn.Remove(idx);
             if (Mapa.mapaActivo == null || idx >= Mapa.mapaActivo.spawnsArma.Count) continue;
             SpawnArmaDatos sa = Mapa.mapaActivo.spawnsArma[idx];
+            if (!sa.activo) continue;
             Arma a = ResolverArma(sa.arma, rng);
             SpawnPickup(sa.posicion, a, idx);
         }
@@ -288,15 +278,19 @@ public static class FuncionesArmas
 
         if (Mapa.mapaActivo != null && Mapa.mapaActivo.spawnsArma.Count > 0)
         {
+            List<SpawnArmaDatos> activos = new List<SpawnArmaDatos>();
+            foreach (SpawnArmaDatos s in Mapa.mapaActivo.spawnsArma)
+                if (s.activo) activos.Add(s);
+            if (activos.Count == 0) return null;
             // Listar spawns sin pickup activo cercano
             List<SpawnArmaDatos> libres = new List<SpawnArmaDatos>();
-            foreach (SpawnArmaDatos s in Mapa.mapaActivo.spawnsArma)
+            foreach (SpawnArmaDatos s in activos)
             {
                 if (PosicionSinPickup(s.posicion, radioPickup * 2f)) libres.Add(s);
             }
             if (libres.Count > 0) return libres[rng.Next(libres.Count)].posicion;
             // Todos ocupados: devolver uno cualquiera (no nuevo pickup pero al menos no hay duplicado)
-            return Mapa.mapaActivo.spawnsArma[rng.Next(Mapa.mapaActivo.spawnsArma.Count)].posicion;
+            return activos[rng.Next(activos.Count)].posicion;
         }
 
         // Sin spawns definidos: buscar posicion aleatoria sin chocar contra paredes
@@ -328,15 +322,7 @@ public static class FuncionesArmas
     /// <summary>Devuelve true si NO hay ya un ArmaEnSuelo dentro de `dist` pixeles de la posicion</summary>
     private static bool PosicionSinPickup(Vector2 pos, float dist)
     {
-        float d2 = dist * dist;
-        foreach (EntidadBase ent in GestorEntidades.ObtenerEntidades())
-        {
-            if (ent is ArmaEnSuelo p)
-            {
-                if (Vector2.DistanceSquared(p.posicion, pos) < d2) return false;
-            }
-        }
-        return true;
+        return GestorFisica.EntidadesEnCirculo<ArmaEnSuelo>(pos, dist).Count == 0;
     }
 
     /// <summary>
@@ -365,6 +351,7 @@ public static class FuncionesArmas
             for (int i = 0; i < Mapa.mapaActivo.spawnsArma.Count; i++)
             {
                 SpawnArmaDatos sa = Mapa.mapaActivo.spawnsArma[i];
+                if (!sa.activo) continue;
                 Arma a = ResolverArma(sa.arma, rng);
                 int id = proximoIdPickup++;
                 pickupASpawn[id] = i;

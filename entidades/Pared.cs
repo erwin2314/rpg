@@ -2,9 +2,10 @@ using System.Numerics;
 using Raylib_cs;
 
 /// <summary>
-/// Entidad inmovil solida rectangular que bloquea el movimiento de otras entidades solidas
+/// Entidad inmovil solida rectangular que bloquea el movimiento de otras entidades solidas. <br/>
+/// Implementa `IBloqueaLOS` para participar del test de linea de vision de GestorFisica
 /// </summary>
-public class Pared : EntidadBase
+public class Pared : EntidadBase, IBloqueaLOS
 {
     public Color color = Color.DarkGray;
 
@@ -31,7 +32,7 @@ public class Pared : EntidadBase
     }
 
     public override void Inicializar() { }
-    public override void Actualizar() { }
+    public override void Actualizar(float dt) { }
 
     public override void Dibujar()
     {

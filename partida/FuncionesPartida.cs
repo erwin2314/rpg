@@ -160,6 +160,23 @@ public static class FuncionesPartida
     }
 
     /// <summary>
+    /// Solo servidor: en modo Oleadas se llama al morir un Enemigo. Suma 1 al contador de
+    /// TODOS los jugadores conectados (puntuacion cooperativa). NO termina la partida —
+    /// la victoria en Oleadas depende de oleadas completadas, no de la cuenta individual. <br/>
+    /// El parametro idAsesino se ignora (queda como hook por si se quiere mostrar feedback
+    /// visual del ultimo que pegó)
+    /// </summary>
+    public static void AplicarPuntuacionPorEnemigo(ushort idAsesino)
+    {
+        if (!gestorRed.EsServidor) return;
+        foreach (DatosJugador d in gestorServidor.datosJugadores.Values)
+        {
+            d.puntuacion++;
+        }
+        gestorServidor.BroadcastSnapshot();
+    }
+
+    /// <summary>
     /// Solo servidor: suma 1 al asesino, broadcastea snapshot y comprueba fin de partida
     /// </summary>
     public static void AplicarPuntuacion(ushort idAsesino)
@@ -196,6 +213,11 @@ public static class FuncionesPartida
         GestorOleadas.Detener();
         foreach (HUDArma hud in hudsActivos) hud.Dispose();
         hudsActivos.Clear();
+        JugadoresLocales.lista.Clear();
+        Render2d.objetivosCamara.Clear();
+        GestorEfectos.LimpiarTodos();
+        SpawnerPowerUps.Limpiar();
+        GestorTriggers.Limpiar();
         GestorEntidades.LimpiarMundo();
         gestorCliente.jugadoresRemotos.Clear();
         gestorCliente.enemigosRemotos.Clear();
@@ -213,16 +235,48 @@ public static class FuncionesPartida
     }
 
     /// <summary>
-    /// Como ElegirSpawnJugador pero devuelve el SpawnJugadorDatos completo (con vidaMaxima, regen, etc.) o null si no hay spawns
+    /// Como ElegirSpawnJugador pero devuelve el SpawnJugadorDatos completo (con vidaMaxima, regen, etc.) o null si no hay spawns. <br/>
+    /// En Deathmatch evita spawns con un Jugador/JugadorRemoto cerca (no spawn-kill). Si todos estan ocupados
+    /// (mas jugadores que spawns), cae a uno random
     /// </summary>
     public static SpawnJugadorDatos? ElegirSpawnJugadorDatos()
     {
-        if (Mapa.mapaActivo != null && Mapa.mapaActivo.spawnsJugador.Count > 0)
+        if (Mapa.mapaActivo == null || Mapa.mapaActivo.spawnsJugador.Count == 0) return null;
+
+        Random r = new Random();
+        List<SpawnJugadorDatos> todos = new List<SpawnJugadorDatos>();
+        foreach (SpawnJugadorDatos s in Mapa.mapaActivo.spawnsJugador)
+            if (s.activo) todos.Add(s);
+        if (todos.Count == 0) return null;
+
+        if (modoActual == ModoDeJuego.Deathmatch)
         {
-            Random r = new Random();
-            return Mapa.mapaActivo.spawnsJugador[r.Next(Mapa.mapaActivo.spawnsJugador.Count)];
+            List<SpawnJugadorDatos> libres = new List<SpawnJugadorDatos>();
+            foreach (SpawnJugadorDatos s in todos)
+            {
+                if (SpawnLibreDeJugadores(s.posicion)) libres.Add(s);
+            }
+            if (libres.Count > 0) return libres[r.Next(libres.Count)];
+            // fallthrough: todos ocupados → random como fallback
         }
-        return null;
+
+        return todos[r.Next(todos.Count)];
+    }
+
+    /// <summary>Radio (px) alrededor de un spawn dentro del cual se considera "ocupado" por otro jugador</summary>
+    private const float RADIO_SPAWN_SEGURO = 200f;
+
+    /// <summary>True si no hay ningun Jugador/JugadorRemoto activo dentro de RADIO_SPAWN_SEGURO de la posicion</summary>
+    private static bool SpawnLibreDeJugadores(Vector2 pos)
+    {
+        float r2 = RADIO_SPAWN_SEGURO * RADIO_SPAWN_SEGURO;
+        foreach (EntidadBase ent in GestorEntidades.ObtenerEntidades())
+        {
+            if (!ent.activo) continue;
+            if (ent is not Jugador && ent is not JugadorRemoto) continue;
+            if (Vector2.DistanceSquared(ent.posicion, pos) < r2) return false;
+        }
+        return true;
     }
 
     /// <summary>
@@ -264,7 +318,8 @@ public static class FuncionesPartida
             ? ConfiguracionLocal.cantidadJugadores
             : 1;
 
-        GestorEntidades.jugadoresLocales.Clear();
+        JugadoresLocales.lista.Clear();
+        Render2d.objetivosCamara.Clear();
         for (int i = 0; i < cantidadLocales; i++)
         {
             ushort id = esServidor ? (ushort)i : gestorCliente.cliente.Id;
@@ -272,6 +327,9 @@ public static class FuncionesPartida
             Vector2 posInicial = spawnJug?.posicion ?? new Vector2(Mapa.ancho / 2f, Mapa.alto / 2f);
             Color color = ColorPorIndice(i);
             Jugador jugador = new Jugador(posInicial, id, color);
+            // Sprite distinto por slot: P1 = jugador1.png, P2 = jugador2.png, etc.
+            // Si la textura no existe, GestorTexturas devuelve el placeholder
+            jugador.sprite = $"jugador{i + 1}.png";
 
             if (spawnJug != null)
             {
@@ -291,27 +349,46 @@ public static class FuncionesPartida
                 jugador.vidaActual = jugador.vidaMaxima;
             }
 
-            // P1 = teclado+mouse, P2-PN = gamepad (indice 0..N-2)
-            jugador.input = i == 0 ? (IInputJugador)new InputTecladoRaton() : new InputGamepad(i - 1);
+            // Asignacion de input. Default: P1 = teclado+mouse, P2-PN = gamepad (indice 0..N-2).
+            // Con ConfiguracionControles.p1UsaGamepad: todos usan gamepad y los indices arrancan en 0
+            if (ConfiguracionControles.p1UsaGamepad)
+                jugador.input = new InputGamepad(i);
+            else
+                jugador.input = i == 0 ? (IInputJugador)new InputTecladoRaton() : new InputGamepad(i - 1);
 
             // En local-multi, registrar a los jugadores extra en datosJugadores con nombre P{i+1}
             // para que sus etiquetas/HUDs encuentren su entrada en jugadoresConectados
             if (cantidadLocales > 1 && i > 0)
             {
+                string nombre = i switch
+                {
+                    1 => ConfiguracionLocal.nombreP2,
+                    2 => ConfiguracionLocal.nombreP3,
+                    3 => ConfiguracionLocal.nombreP4,
+                    _ => $"P{i + 1}",
+                };
                 gestorServidor.datosJugadores[id] = new DatosJugador
                 {
                     id = id,
-                    nombre = $"P{i + 1}",
+                    nombre = nombre,
                     color = color,
                     vidaMaxima = jugador.vidaMaxima,
                 };
             }
 
-            GestorEntidades.jugadoresLocales.Add(jugador);
+            JugadoresLocales.lista.Add(jugador);
+            Render2d.objetivosCamara.Add(jugador);
             hudsActivos.Add(new HUDArma(jugador));
         }
 
         if (cantidadLocales > 1) gestorServidor.BroadcastSnapshot();
+
+        // Materializar PowerUps definidos en el mapa via el spawner (gestiona respawn tras ser recogidos)
+        if (Mapa.mapaActivo != null)
+        {
+            SpawnerPowerUps.IniciarConSpawns(Mapa.mapaActivo.spawnsPowerUp);
+            GestorTriggers.IniciarConTriggers(Mapa.mapaActivo.triggers);
+        }
 
         Mapa.partidaIniciada = true;
         Menus.menuActivo?.cambiarVisibilidadActivo(false);

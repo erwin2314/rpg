@@ -44,20 +44,20 @@ public static class GestorOleadas
     }
 
     /// <summary>
-    /// Llamada cada frame desde el game loop. Por cada spawn, drip-spawnea segun su timer y su cap de vivos
+    /// Llamada cada tick de simulacion desde el game loop. Por cada spawn, drip-spawnea segun su timer y su cap de vivos
     /// </summary>
-    public static void Actualizar()
+    public static void Actualizar(float dt)
     {
         if (!gestorRed.EsServidor || !activo) return;
         if (Mapa.mapaActivo == null) return;
 
         ConfigOleadas config = Mapa.mapaActivo.configOleadas;
-        float dt = Raylib.GetFrameTime();
         Random rng = new Random();
 
         for (int i = 0; i < Mapa.mapaActivo.spawnsEnemigo.Count; i++)
         {
             SpawnEnemigoDatos spawn = Mapa.mapaActivo.spawnsEnemigo[i];
+            if (!spawn.activo) continue;
             if (!tiemposPorSpawn.ContainsKey(i)) tiemposPorSpawn[i] = 0f;
             if (!vivosPorSpawn.ContainsKey(i)) vivosPorSpawn[i] = 0;
 

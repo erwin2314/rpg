@@ -31,9 +31,20 @@ public static class Program
             Mapa.carpetaArmas = Path.Combine(raizSource, "armas");
         }
 
+        GestorAudio.Inicializar();
+
         // Permite arrastrar bordes para redimensionar; la UI se reescala via UI/Layout.cs + AplicarLayout
         Raylib.SetConfigFlags(ConfigFlags.ResizableWindow);
         Raylib.InitWindow(1280,720,"prueba");
+
+        // Mapeos SDL_GameControllerDB: GLFW (via Raylib) trae una tabla integrada pero le faltan
+        // muchos controladores (en particular Xbox Wireless via Bluetooth/xpadneo). Cargar el archivo
+        // publico mantenido por la comunidad permite que GetGamepadAxisMovement lea los ejes correctos
+        if (File.Exists("gamecontrollerdb.txt"))
+        {
+            string mappings = File.ReadAllText("gamecontrollerdb.txt");
+            Raylib.SetGamepadMappings(mappings);
+        }
 
         Serializador.RegistrarClase<Panel>();
         Serializador.RegistrarClase<BarraDeProgreso>();
@@ -43,8 +54,11 @@ public static class Program
 
         ConfiguracionRed.ObtenerConfiguracionDeRed();
         ConfiguracionMiscelanea.ObtenerConfiguracionMiscelanea();
+        ConfiguracionControles.ObtenerConfiguracionControles();
+        ConfiguracionLocal.ObtenerConfiguracionLocal();
 
-        // FPS objetivo = tasa real de envio de paquetes de posicion (Jugador/Enemigo envian 1 vez por frame)
+        // fpsObjetivo limita la tasa de render (Raylib.SetTargetFPS). La simulacion va a
+        // tickRateSimulacion y el envio de paquetes a tickRateRed — independientes de este valor
         Raylib.SetTargetFPS(ConfiguracionMiscelanea.fpsObjetivo);
 
         // Crea comportamientos/Basico.jsonc, Agresivo.jsonc, Torreta.jsonc si no existen
@@ -53,6 +67,20 @@ public static class Program
         Arma.BootstrapDefaults();
 
         GestorTexturas.CargarTexturas();
+        GestorAudio.CargarAudio();
+
+        // Hooks del motor: Render2d no conoce Mapa ni EditorMapa, el juego se los inyecta
+        Render2d.esPartidaEnCurso = () => Mapa.partidaIniciada;
+        Render2d.esModoEditor = () => EditorMapa.activo || EditorComportamientoIA.activo;
+        Render2d.colorFondoActual = () =>
+        {
+            if (EditorMapa.activo) return EditorMapa.mapaEnEdicion.colorFondo;
+            if (EditorComportamientoIA.activo) return Color.Black;
+            return Mapa.colorFondo;
+        };
+        Render2d.dibujarOverlayMundo = () => { if (EditorMapa.activo) EditorMapa.Dibujar(); };
+        Render2d.dibujarOverlayPantalla = () => { if (EditorComportamientoIA.activo) EditorComportamientoIA.Dibujar(); };
+        ChatUI.fuenteNombreUsuario = () => ConfiguracionRed.NombreUsuario;
 
         Menu menuPrincipal = new MenuBuilder(visible: true)
             .Boton("Salir", 50, 50, onClick: () => API.Encolar(FuncionesSistema.Salir), ancho: 100, alto: 100)
@@ -94,17 +122,30 @@ public static class Program
         // Menu local: elige cantidad de jugadores (2-4) y arranca como servidor sin clientes.
         // P1 usa teclado+mouse; P2..PN gamepad (indice i-1). Muestra que gamepads estan disponibles
         Menu menuLocal = new MenuBuilder()
-            .Panel("Local — varios jugadores en la misma PC", 320, 50, ancho: 640, alto: 30,
+            .Panel("Modo local: varios jugadores en la misma PC", 320, 50, ancho: 640, alto: 30,
                    colorTexto: Color.Black, colorRectangulo: Color.Beige)
             .Panel("", 320, 90, ancho: 640, alto: 20, colorTexto: Color.White,
                    colorRectangulo: new Color((byte)0, (byte)0, (byte)0, (byte)0),
-                   fuenteTexto: () => $"Gamepads: 0={(Raylib.IsGamepadAvailable(0)?"SI":"NO")}  1={(Raylib.IsGamepadAvailable(1)?"SI":"NO")}  2={(Raylib.IsGamepadAvailable(2)?"SI":"NO")}")
-            .Panel("P1 = teclado WASD + mouse.  P2-PN = gamepad correspondiente",
-                   320, 120, ancho: 640, alto: 20, colorTexto: Color.Gray,
-                   colorRectangulo: new Color((byte)0, (byte)0, (byte)0, (byte)0))
-            .Boton("2 jugadores", 320, 170, ancho: 200, alto: 70, onClick: () => API.Encolar(IniciarLocal2))
-            .Boton("3 jugadores", 540, 170, ancho: 200, alto: 70, onClick: () => API.Encolar(IniciarLocal3))
-            .Boton("4 jugadores", 760, 170, ancho: 200, alto: 70, onClick: () => API.Encolar(IniciarLocal4))
+                   fuenteTexto: () =>
+                       $"Gamepad P2: {(Raylib.IsGamepadAvailable(0) ? "conectado" : "no detectado")}    " +
+                       $"Gamepad P3: {(Raylib.IsGamepadAvailable(1) ? "conectado" : "no detectado")}    " +
+                       $"Gamepad P4: {(Raylib.IsGamepadAvailable(2) ? "conectado" : "no detectado")}")
+            .Panel("", 320, 120, ancho: 640, alto: 20, colorTexto: Color.Gray,
+                   colorRectangulo: new Color((byte)0, (byte)0, (byte)0, (byte)0),
+                   fuenteTexto: () => ConfiguracionControles.p1UsaGamepad
+                       ? "Todos los jugadores usan gamepad (P1=gamepad 0, P2=gamepad 1, ...). Editar confControles.jsonc para cambiar."
+                       : "Jugador 1 usa teclado (WASD) y mouse. Jugadores 2-4 usan un gamepad cada uno (en orden de conexion).")
+            // Columna izquierda: nombres editables de P2/P3/P4 (persisten en confLocal.jsonc)
+            .Panel("Nombre P2", 60, 200, ancho: 120, alto: 30, colorTexto: Color.Black, colorRectangulo: Color.Beige)
+            .Campo(190, 200, ancho: 250, alto: 30, onEnter: t => API.Encolar(ConfiguracionLocal.CambiarNombreP2, t), fuenteTexto: () => ConfiguracionLocal.nombreP2)
+            .Panel("Nombre P3", 60, 250, ancho: 120, alto: 30, colorTexto: Color.Black, colorRectangulo: Color.Beige)
+            .Campo(190, 250, ancho: 250, alto: 30, onEnter: t => API.Encolar(ConfiguracionLocal.CambiarNombreP3, t), fuenteTexto: () => ConfiguracionLocal.nombreP3)
+            .Panel("Nombre P4", 60, 300, ancho: 120, alto: 30, colorTexto: Color.Black, colorRectangulo: Color.Beige)
+            .Campo(190, 300, ancho: 250, alto: 30, onEnter: t => API.Encolar(ConfiguracionLocal.CambiarNombreP4, t), fuenteTexto: () => ConfiguracionLocal.nombreP4)
+            // Columna derecha: botones de iniciar (apilados verticalmente)
+            .Boton("Iniciar con 2 jugadores", 600, 200, ancho: 300, alto: 60, onClick: () => API.Encolar(IniciarLocal2))
+            .Boton("Iniciar con 3 jugadores", 600, 270, ancho: 300, alto: 60, onClick: () => API.Encolar(IniciarLocal3))
+            .Boton("Iniciar con 4 jugadores", 600, 340, ancho: 300, alto: 60, onClick: () => API.Encolar(IniciarLocal4))
             .Boton("Regresar", 500, 500, out Boton botonVolverDeLocal, ancho: 280, alto: 100)
             .Build();
 
@@ -148,32 +189,88 @@ public static class Program
         // HUDArmas se crean en FuncionesPartida.CrearMundoLocal (uno por jugador local) y se
         // limpian en AplicarFinPartidaLocal. En menu principal no hay ninguno
 
+        float dtSimulacion = 1f / Math.Max(1, ConfiguracionMiscelanea.tickRateSimulacion);
+        float acumulador = 0f;
+        double tiempoPrevio = Raylib.GetTime();
+
         while(!Raylib.WindowShouldClose())
         {
+            double ahora = Raylib.GetTime();
+            float deltaReal = (float)(ahora - tiempoPrevio);
+            tiempoPrevio = ahora;
+            if (deltaReal > 0.25f) deltaReal = 0.25f; // anti spiral-of-death
+            acumulador += deltaReal;
+
+            // Tiempo real (cada frame de render): input, poll de red, UI, eventos
             CMD.ProcesarComandos();
-            if (!EditorMapa.activo && !EditorComportamientoIA.activo)
-            {
-                gestorRed.Actualizar();
-                GestorOleadas.Actualizar();
-                FuncionesArmas.Actualizar();
-                GestorEntidades.Actualizar();
-                GestorEntidades.ProcesarColisiones();
-            }
-            else if (EditorMapa.activo)
-            {
-                EditorMapa.Actualizar();
-            }
-            else if (EditorComportamientoIA.activo)
-            {
-                EditorComportamientoIA.Actualizar();
-            }
+            gestorRed.Actualizar();
             CentroUI.Actualizar();
             API.Procesar();
-            Observadores.Procesar();
+            // Latch de inputs edge-triggered (IsKeyPressed, IsGamepadButtonPressed) por frame de render
+            // para que no se pierdan en frames sin tick de simulacion
+            foreach (Jugador j in JugadoresLocales.lista) j.input?.Pollear();
+
+            // Editor: SOLO por frame de render (no en TickSimulacion). Los IsMouseButtonPressed/Released
+            // de Raylib son edge-triggered por frame de render; si esperamos a TickSim (fixed-rate)
+            // perdemos eventos en frames sin tick → drag-release fallaba creando paredes/spawns
+            if (EditorMapa.activo) EditorMapa.Actualizar();
+            else if (EditorComportamientoIA.activo) EditorComportamientoIA.Actualizar();
+
+            // Simulacion a tasa fija (logica, fisica, IA). Se omite mientras hay editor activo
+            int ticksEsteFrame = 0;
+            while (acumulador >= dtSimulacion && ticksEsteFrame < 5)
+            {
+                GuardarPosicionesPrevias();
+                TickSimulacion(dtSimulacion);
+                acumulador -= dtSimulacion;
+                ticksEsteFrame++;
+            }
+            if (ticksEsteFrame >= 5) acumulador = 0f; // descartar deuda si se acumulo demasiado
+
+            // Envio de red (independiente de la simulacion, a tickRateRed)
+            gestorRed.TickEnvioClienteAServidor(deltaReal);
+            gestorRed.TickEnvioSnapshots(deltaReal);
+
+            // Render con interpolacion entre el tick previo y el actual
+            Render2d.alphaInterpolacion = acumulador / dtSimulacion;
             InterfazUI.RecargarUI();
+            GestorAudio.Actualizar();
             Render2d.DibujarObjetosAbstractos();
         }
-        Raylib.CloseWindow();
+        // ESC o X de la ventana hacen WindowShouldClose true. Pasamos por Salir para
+        // garantizar shutdown ordenado (audio, texturas, red) igual que el boton "Salir" del menu
+        FuncionesSistema.Salir();
+    }
+
+    /// <summary>
+    /// Un paso de simulacion a tasa fija (= 1/tickRateSimulacion segundos). <br/>
+    /// Incluye IA, fisica y colisiones; NO incluye render, UI ni poll de red — esos son a tiempo real
+    /// </summary>
+    private static void TickSimulacion(float dt)
+    {
+        if (EditorMapa.activo || EditorComportamientoIA.activo) return;
+        GestorOleadas.Actualizar(dt);
+        FuncionesArmas.Actualizar(dt);
+        GestorEfectos.Actualizar(dt);
+        SpawnerPowerUps.Actualizar(dt);
+        GestorEntidades.Actualizar(dt);
+        GestorFisica.IntegrarMovimiento(dt);
+        GestorEntidades.ProcesarColisiones();
+        Observadores.Procesar();
+    }
+
+    /// <summary>
+    /// Guarda la posicion actual de cada entidad como su posicionPrevia, justo antes de avanzar un tick. <br/>
+    /// Permite al render interpolar entre posicionPrevia y posicion con Render2d.alphaInterpolacion. <br/>
+    /// Las entidades remotas se saltan porque su posicion la setea el buffer de interpolacion cada frame (no la simulacion)
+    /// </summary>
+    private static void GuardarPosicionesPrevias()
+    {
+        foreach (EntidadBase e in GestorEntidades.ObtenerEntidades())
+        {
+            if (e is JugadorRemoto || e is EnemigoRemoto) continue;
+            e.posicionPrevia = e.posicion;
+        }
     }
 
     /// <summary>

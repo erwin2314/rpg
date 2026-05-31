@@ -49,38 +49,39 @@ public class JugadorRemoto : EntidadBase
 
     public override void Inicializar() { }
 
-    public override void Actualizar()
+    public override void Actualizar(float dt)
     {
-        // Suavizado de posicion: interpola/extrapola desde las muestras recibidas por red
-        posicion = buffer.Calcular(posicion);
-
-        int anchoBarra = 50;
-        barraVida.posicionX = (int)(posicion.X - anchoBarra / 2);
-        barraVida.posicionY = (int)(posicion.Y - radio - 12);
-
+        // Solo valores no-posicionales aqui. posicion y HUD posicional se actualizan en Dibujar
+        // a render rate (no a tick rate) para evitar tirones cuando sim < render
         gestorRed.jugadoresConectados.TryGetValue(idRiptide, out DatosJugador? d);
         string nombre = d?.nombre ?? $"?({idRiptide})";
         int punt = d?.puntuacion ?? 0;
         int vidaMax = d?.vidaMaxima ?? 100;
         barraVida.total = vidaMax;
         barraVida.progreso = vidaActual;
-
         etiquetaNombre.textoAMostrar = $"{nombre} [{punt}]";
-        etiquetaNombre.posicionX = (int)(posicion.X - 50);
-        etiquetaNombre.posicionY = (int)(posicion.Y - radio - 28);
     }
 
     public override void Dibujar()
     {
-        gestorRed.jugadoresConectados.TryGetValue(idRiptide, out DatosJugador? d);
-        Color tinte = d?.color ?? Color.White;
+        // Suavizado de posicion a render rate: el buffer trabaja con Raylib.GetTime() (reloj real)
+        posicion = buffer.Calcular(posicion);
 
+        // HUD posicional sigue al sprite cada frame de render (capas 51, 52 dibujan despues que esta capa 50)
+        int anchoBarra = 50;
+        barraVida.posicionX = (int)(posicion.X - anchoBarra / 2);
+        barraVida.posicionY = (int)(posicion.Y - radio - 12);
+        etiquetaNombre.posicionX = (int)(posicion.X - 50);
+        etiquetaNombre.posicionY = (int)(posicion.Y - radio - 28);
+
+        // Sprite sin tinte (igual que el Jugador local). El color de DatosJugador se conserva
+        // en el dict por si despues se usa para barra de vida / indicadores
         Texture2D tex = GestorTexturas.ObtenerTextura("jugador1.png");
         Raylib.DrawTexturePro(
             tex,
             new Rectangle(0, 0, tex.Width, tex.Height),
             new Rectangle(posicion.X - radio, posicion.Y - radio, radio * 2, radio * 2),
-            Vector2.Zero, 0f, tinte);
+            Vector2.Zero, 0f, Color.White);
     }
 
     public override void Limpiar()

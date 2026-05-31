@@ -1,0 +1,22 @@
+{
+    // si es true, el Jugador 1 usa gamepad 0 en vez de teclado+mouse; los demas se desplazan (P2 = gamepad 1, etc.)
+    "p1UsaGamepad": false,
+    // valores de Raylib.KeyboardKey: W, A, S, D, Up, Down, Left, Right, Space, ...
+    "teclaMoverArriba": "W",
+    // idem
+    "teclaMoverAbajo": "S",
+    // idem
+    "teclaMoverIzquierda": "A",
+    // idem
+    "teclaMoverDerecha": "D",
+    // tecla para recoger arma del suelo (default E)
+    "teclaRecoger": "E",
+    // boton del mouse: Left, Right, Middle
+    "botonDisparoMouse": "Left",
+    // boton del gamepad para recoger (Raylib.GamepadButton). RightFaceRight = B en xbox
+    "gamepadBotonRecoger": "RightFaceRight",
+    // boton extra de disparo. RightFaceDown = A en xbox. El gatillo derecho siempre dispara
+    "gamepadBotonDisparoExtra": "RightFaceDown",
+    // magnitud minima del stick para considerar input (0.0 a 1.0)
+    "gamepadZonaMuerta": 0.2
+}

@@ -43,8 +43,8 @@ public class HUDArma : ObjetoAbstracto
     public override void Actualizar()
     {
         // Reposiciona los paneles en el rincon inferior-derecho del viewport del jugador
-        int n = GestorEntidades.jugadoresLocales.Count;
-        int idx = GestorEntidades.jugadoresLocales.IndexOf(jugador);
+        int n = JugadoresLocales.lista.Count;
+        int idx = JugadoresLocales.lista.IndexOf(jugador);
         if (idx < 0)
         {
             fondo.visible = sprite.visible = textoNombre.visible = textoMunicion.visible = false;

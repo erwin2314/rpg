@@ -24,7 +24,7 @@ public class ArmaEnSuelo : EntidadBase
     }
 
     public override void Inicializar() { }
-    public override void Actualizar() { }
+    public override void Actualizar(float dt) { }
 
     public override void Dibujar()
     {

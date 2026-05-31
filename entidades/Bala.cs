@@ -34,10 +34,10 @@ public class Bala : EntidadBase
 
     public override void Inicializar() { }
 
-    public override void Actualizar()
+    public override void Actualizar(float dt)
     {
-        posicion += velocidad * Raylib.GetFrameTime();
-        tiempoVida -= Raylib.GetFrameTime();
+        // La integracion (posicion += velocidad * dt) la hace GestorFisica en el game loop
+        tiempoVida -= dt;
         if (tiempoVida <= 0)
         {
             GestorEntidades.EliminarEntidad(this);
@@ -46,11 +46,12 @@ public class Bala : EntidadBase
 
     public override void Dibujar()
     {
+        Vector2 posVis = PosicionInterpolada();
         Texture2D tex = GestorTexturas.ObtenerTextura(sprite);
         Raylib.DrawTexturePro(
             tex,
             new Rectangle(0, 0, tex.Width, tex.Height),
-            new Rectangle(posicion.X - radio, posicion.Y - radio, radio * 2, radio * 2),
+            new Rectangle(posVis.X - radio, posVis.Y - radio, radio * 2, radio * 2),
             Vector2.Zero, 0f, Color.White);
     }
 
@@ -102,7 +103,7 @@ public class Bala : EntidadBase
         }
 
         // Aplica daño si la otra entidad es UN Jugador local de ESTE proceso (modo local soporta varios)
-        if (otra is Jugador j && GestorEntidades.jugadoresLocales.Contains(j))
+        if (otra is Jugador j && JugadoresLocales.lista.Contains(j))
         {
             if (j.vidaActual <= 0)
             {

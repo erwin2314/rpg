@@ -1,0 +1,12 @@
+{
+    // nombre de usuario
+    "nombreUsuario": "placeHolder",
+    // IP del servidor al que se conecta el cliente
+    "ipServidor": "127.0.0.1",
+    // Puerto que usa el cliente para conectarse
+    "puertoCliente": 7777,
+    // Puerto en el que escucha el servidor
+    "puertoServidor": 7777,
+    // Maximo clientes simultaneos
+    "maximoClientesServidor": 4
+}

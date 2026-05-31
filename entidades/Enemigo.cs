@@ -41,6 +41,9 @@ public class Enemigo : EntidadBase
     /// <summary>Color de tinte aplicado al sprite (copiado desde SpawnEnemigoDatos.tinteEnemigo)</summary>
     public Color tinte = Color.Maroon;
 
+    /// <summary>Id Riptide del jugador que asesto el ultimo golpe; -1 si no fue jugador. Se usa para acreditar el kill al morir</summary>
+    public int idUltimoAsesino = -1;
+
     public BarraDeProgreso barraVida;
 
     public Enemigo(Vector2 posicion, int vidaMax, ComportamientoIA comportamiento, SpawnEnemigoDatos? spawnDatos = null, int spawnIndex = -1)
@@ -77,20 +80,20 @@ public class Enemigo : EntidadBase
 
     public override void Inicializar() { }
 
-    public override void Actualizar()
+    public override void Actualizar(float dt)
     {
         if (!gestorRed.EsServidor) return;
 
         // Working memory: actualizar timers y reanudar objetivo cada tick
-        cooldownDisparo -= Raylib.GetFrameTime();
-        tiempoUltimoRecalcular += Raylib.GetFrameTime();
+        cooldownDisparo -= dt;
+        tiempoUltimoRecalcular += dt;
         objetivoActual = FuncionesIA.JugadorMasCercano(this);
 
         string accion = EvaluarArbol(comportamiento, this);
         EjecutorAcciones.Ejecutar(accion, this);
 
         ActualizarHUD();
-        BroadcastPosicion();
+        // Broadcast de pos+vida lo hace gestorRed.TickEnvioSnapshots a tickRateRed, no por frame
     }
 
     /// <summary>Recorre el arbol desde la raiz evaluando Condiciones hasta encontrar una Accion</summary>
@@ -113,20 +116,25 @@ public class Enemigo : EntidadBase
 
     private void ActualizarHUD()
     {
-        int anchoBarra = 50;
-        barraVida.posicionX = (int)(posicion.X - anchoBarra / 2);
-        barraVida.posicionY = (int)(posicion.Y - radio - 12);
+        // Solo valores no-posicionales. Las posicionX/Y de la barra las setea Dibujar a render rate
         barraVida.total = vidaMaxima;
         barraVida.progreso = vidaActual;
     }
 
     public override void Dibujar()
     {
+        Vector2 posVis = PosicionInterpolada();
+
+        // HUD posicional sincronizado al sprite a render rate (capa 51 dibuja despues que esta capa 50)
+        int anchoBarra = 50;
+        barraVida.posicionX = (int)(posVis.X - anchoBarra / 2);
+        barraVida.posicionY = (int)(posVis.Y - radio - 12);
+
         Texture2D tex = GestorTexturas.ObtenerTextura(sprite);
         Raylib.DrawTexturePro(
             tex,
             new Rectangle(0, 0, tex.Width, tex.Height),
-            new Rectangle(posicion.X - radio, posicion.Y - radio, radio * 2, radio * 2),
+            new Rectangle(posVis.X - radio, posVis.Y - radio, radio * 2, radio * 2),
             Vector2.Zero, 0f, tinte);
     }
 
@@ -134,6 +142,7 @@ public class Enemigo : EntidadBase
     {
         if (otra is Bala b && b.idEnemigoDueno == -1)
         {
+            idUltimoAsesino = b.idDueno;
             RecibirDaño(b.dano);
             GestorEntidades.EliminarEntidad(b);
         }
@@ -147,6 +156,12 @@ public class Enemigo : EntidadBase
             m.AddInt(id);
             gestorServidor.EnviarMensajeATodosLosClientes(m);
         }
+        // Acreditar el kill — solo servidor, solo si fue un jugador el que asesto el ultimo golpe.
+        // En modo Oleadas la puntuacion es compartida (todos los jugadores suman 1)
+        if (gestorRed.EsServidor && idUltimoAsesino >= 0)
+        {
+            FuncionesPartida.AplicarPuntuacionPorEnemigo((ushort)idUltimoAsesino);
+        }
         CentroUI.EliminarUnObjetoDeObjetosAbstractos(barraVida);
         GestorOleadas.NotificarMuerteEnemigo(this);
         GestorEntidades.EliminarEntidad(this);
@@ -157,14 +172,4 @@ public class Enemigo : EntidadBase
         CentroUI.EliminarUnObjetoDeObjetosAbstractos(barraVida);
     }
 
-    private void BroadcastPosicion()
-    {
-        if (!gestorRed.EnLinea || !gestorRed.EsServidor) return;
-        Message m = Message.Create(MessageSendMode.Unreliable, IdMensajesDeRed.broadcastPosicionEnemigo);
-        m.AddInt(id);
-        m.AddFloat(posicion.X);
-        m.AddFloat(posicion.Y);
-        m.AddInt(vidaActual);
-        gestorServidor.EnviarMensajeATodosLosClientes(m);
-    }
 }

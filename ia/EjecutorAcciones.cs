@@ -23,9 +23,14 @@ public static class EjecutorAcciones
     private const float UMBRAL_RECALCULAR_TIEMPO = 0.5f;
     private static readonly Random rng = new Random();
 
-    /// <summary>Despacha la accion por nombre. Idle es no-op</summary>
+    /// <summary>
+    /// Despacha la accion por nombre. Idle es no-op <br/>
+    /// Resetea la velocidad del enemigo al inicio para que acciones que retornan temprano (sin objetivo, sin camino, etc.)
+    /// no dejen velocidad residual del frame anterior — GestorFisica lo seguiria moviendo si no
+    /// </summary>
     public static void Ejecutar(string nombre, Enemigo e)
     {
+        e.velocidad = Vector2.Zero;
         switch (nombre)
         {
             case "Perseguir":           Perseguir(e); break;
@@ -61,8 +66,8 @@ public static class EjecutorAcciones
             return;
         }
 
-        Vector2 dir = Vector2.Normalize(hacia);
-        e.posicion += dir * e.comportamiento.velocidad * Raylib.GetFrameTime();
+        Vector2 dir = Matematicas.NormalizarSeguro(hacia);
+        e.velocidad = dir * e.comportamiento.velocidad;
     }
 
     /// <summary>Dispara contra el objetivo si el cooldown lo permite. No transiciona; el arbol decide</summary>
@@ -72,9 +77,8 @@ public static class EjecutorAcciones
         if (e.cooldownDisparo > 0f) return;
         if (e.armaActual == null) return;
 
-        Vector2 dirBase = e.objetivoActual.posicion - e.posicion;
-        if (dirBase.LengthSquared() < 0.0001f) return;
-        dirBase = Vector2.Normalize(dirBase);
+        Vector2 dirBase = Matematicas.NormalizarSeguro(e.objetivoActual.posicion - e.posicion);
+        if (dirBase == Vector2.Zero) return;
 
         Vector2 origen = e.posicion + dirBase * (e.radio + 10);
         List<Vector2> dirs = FuncionesArmas.CalcularDireccionesDisparo(dirBase, e.armaActual, rng);
@@ -89,10 +93,9 @@ public static class EjecutorAcciones
         if (e.objetivoActual == null) return;
         if (e.comportamiento.velocidad <= 0f) return;
 
-        Vector2 dirAlejarse = e.posicion - e.objetivoActual.posicion;
-        if (dirAlejarse.LengthSquared() < 0.0001f) return;
-        dirAlejarse = Vector2.Normalize(dirAlejarse);
-        e.posicion += dirAlejarse * e.comportamiento.velocidad * Raylib.GetFrameTime();
+        Vector2 dirAlejarse = Matematicas.NormalizarSeguro(e.posicion - e.objetivoActual.posicion);
+        if (dirAlejarse == Vector2.Zero) return;
+        e.velocidad = dirAlejarse * e.comportamiento.velocidad;
     }
 
     /// <summary>Sigue los waypoints definidos por el spawn en orden cicliclo. Movimiento directo (sin A*).</summary>
@@ -108,8 +111,8 @@ public static class EjecutorAcciones
             e.indiceCaminoPatrulla = (e.indiceCaminoPatrulla + 1) % e.caminoPatrulla.Count;
             return;
         }
-        Vector2 dir = Vector2.Normalize(hacia);
-        e.posicion += dir * e.comportamiento.velocidad * Raylib.GetFrameTime();
+        Vector2 dir = Matematicas.NormalizarSeguro(hacia);
+        e.velocidad = dir * e.comportamiento.velocidad;
     }
 
     /// <summary>Camina hacia destinos aleatorios dentro de radioPatrullaAleatoria alrededor del origenSpawn</summary>
@@ -118,13 +121,10 @@ public static class EjecutorAcciones
         if (e.comportamiento.velocidad <= 0f) return;
         if (e.destinoAleatorio == null || Vector2.Distance(e.posicion, e.destinoAleatorio.Value) < 20f)
         {
-            float ang = (float)(rng.NextDouble() * Math.PI * 2);
-            float dist = (float)(rng.NextDouble() * e.radioPatrullaAleatoria);
-            e.destinoAleatorio = e.origenSpawn + new Vector2(MathF.Cos(ang), MathF.Sin(ang)) * dist;
+            e.destinoAleatorio = MatematicasRandom.PuntoUniformeEnCirculo(e.radioPatrullaAleatoria, e.origenSpawn);
         }
-        Vector2 hacia = e.destinoAleatorio.Value - e.posicion;
-        if (hacia.LengthSquared() < 0.01f) return;
-        Vector2 dir = Vector2.Normalize(hacia);
-        e.posicion += dir * e.comportamiento.velocidad * Raylib.GetFrameTime();
+        Vector2 dir = Matematicas.NormalizarSeguro(e.destinoAleatorio.Value - e.posicion);
+        if (dir == Vector2.Zero) return;
+        e.velocidad = dir * e.comportamiento.velocidad;
     }
 }

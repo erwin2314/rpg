@@ -16,8 +16,45 @@ public class MapaDatos
     public List<SpawnJugadorDatos> spawnsJugador = new();
     public List<SpawnEnemigoDatos> spawnsEnemigo = new();
     public List<SpawnArmaDatos> spawnsArma = new();
+    public List<SpawnPowerUpDatos> spawnsPowerUp = new();
+    public List<TriggerDatos> triggers = new();
     public ConfigOleadas configOleadas = new ConfigOleadas();
     public ConfigDeathmatch configDeathmatch = new ConfigDeathmatch();
+}
+
+/// <summary>Tipo de condicion de un TriggerDatos</summary>
+public enum TipoTrigger
+{
+    /// <summary>Rectangulo centrado en posicion ± tamano/2. Se cumple si hay un Jugador/JugadorRemoto dentro</summary>
+    JugadorEnZona,
+    /// <summary>Se cumple cuando Clase.Campo equivale (string) a valorEsperado. Patron de Observadores.Crear</summary>
+    Observador,
+}
+
+/// <summary>
+/// Trigger del mapa: cuando se cumple la condicion, dispara una funcion [EventoAPI] con argumentos. <br/>
+/// La funcion puede ser CUALQUIERA registrada en la API; el dispatcher usa reflection para parsear cada
+/// argumento al tipo del parametro correspondiente. <br/>
+/// Tipos de condicion: JugadorEnZona (rectangulo) | Observador (Clase.Campo == valor)
+/// </summary>
+public class TriggerDatos
+{
+    public string id = "Trigger";
+    public TipoTrigger tipo = TipoTrigger.JugadorEnZona;
+
+    // Datos para JugadorEnZona
+    public Vector2 posicion;
+    public Vector2 tamano = new Vector2(120, 80);
+
+    // Datos para Observador (CampoObservado equivale a ValorEsperado)
+    public string campoObservado = "";
+    public string valorEsperado = "";
+
+    // Accion: nombre de funcion [EventoAPI] + argumentos posicionales (uno por parametro)
+    public string nombreFuncion = "";
+    public List<string> argumentos = new List<string>();
+
+    public bool unaVez = true;   // true = una vez por partida; false = cada frame mientras se cumpla
 }
 
 /// <summary>Configuracion especifica para modo Oleadas</summary>
@@ -54,6 +91,7 @@ public class SpawnJugadorDatos
     public int vidaMaxima = 100;                     // HP maximo al spawnear (antes de aplicar multiplicador del modo)
     public float regeneracionPorSegundo = 0f;        // HP regenerados por segundo mientras se este vivo
     public float escala = 1f;                        // multiplicador de tamano aplicado al radio del jugador
+    public bool activo = true;                       // si esta inactivo, no se usa al iniciar partida
 }
 
 /// <summary>Punto de aparicion para un enemigo. preset = "Basico" | "Agresivo" | "Torreta" o el nombre de un .jsonc de comportamiento</summary>
@@ -70,6 +108,7 @@ public class SpawnEnemigoDatos
     public float escala = 1f;                        // multiplicador de tamano aplicado al radio del enemigo
     public string spriteEnemigo = "jugador1.png";  // sprite con el que se dibuja
     public Color tinteEnemigo = Color.Maroon;        // tinte aplicado al sprite
+    public bool activo = true;                       // si esta inactivo, GestorOleadas lo ignora
 }
 
 /// <summary>Punto de aparicion para un arma. arma = "Pistola" | "Revolver" | "Subfusil1" | "Subfusil2" | "Escopeta" | "Francotirador" | "Aleatoria"</summary>
@@ -79,4 +118,20 @@ public class SpawnArmaDatos
     public string arma = "Aleatoria";
     public float tiempoRespawn = 5f;     // segundos hasta que reaparezca tras ser recogida
     public float escala = 1f;            // multiplicador de tamano aplicado al radio del pickup
+    public bool activo = true;           // si esta inactivo, no genera arma inicial
+}
+
+/// <summary>Punto de aparicion para un PowerUp. Al instanciarse en partida se materializa como PowerUpEnSuelo
+/// que al ser tocado aplica un EfectoEstado(id, tipo, magnitud, duracion) al jugador</summary>
+public class SpawnPowerUpDatos
+{
+    public Vector2 posicion;
+    public string id = "PowerUp";                    // id del efecto (refrescaDuracion compara por id)
+    public TipoEfecto tipo = TipoEfecto.BonoVidaMaxima;
+    public float magnitud = 50f;                     // semantica segun tipo (vida extra, dano/seg, multiplicador...)
+    public float duracion = 10f;                     // segundos que dura el efecto al aplicarse
+    public string sprite = "placeholder.png";        // sprite del pickup en el suelo
+    public float escala = 1f;
+    public float tiempoRespawn = 5f;                 // segundos hasta reaparecer tras ser recogido (0 o menor = no respawnea)
+    public bool activo = true;                       // si esta inactivo, SpawnerPowerUps no instancia el pickup
 }

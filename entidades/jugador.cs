@@ -1,6 +1,5 @@
 using System.Numerics;
 using Raylib_cs;
-using Riptide;
 
 public class Jugador : EntidadBase
 {
@@ -10,6 +9,13 @@ public class Jugador : EntidadBase
 
     /// <summary>Color con el que se dibuja el jugador</summary>
     public Color color;
+
+    /// <summary>
+    /// Sprite con el que se dibuja. Default "jugador1.png" (P1). <br/>
+    /// En local-multi FuncionesPartida.CrearMundoLocal asigna "jugador{i+1}.png" para diferenciar slots. <br/>
+    /// Si la textura no existe, GestorTexturas.ObtenerTextura devuelve el placeholder
+    /// </summary>
+    public string sprite = "jugador1.png";
 
     /// <summary>Arma equipada actualmente (puede ser null si no tiene). Se setea al spawnear via Mapa.CargarArma</summary>
     public Arma? armaActual = Mapa.CargarArma("Pistola");
@@ -72,20 +78,21 @@ public class Jugador : EntidadBase
 
     public override void Inicializar() { }
 
-    public override void Actualizar()
+    public override void Actualizar(float dt)
     {
-        // Movimiento — delegado al input (teclado WASD, stick izq, etc.)
+        // Movimiento — delegado al input (teclado WASD, stick izq, etc.).
+        // La integracion (posicion += velocidad * dt) la hace GestorFisica en el game loop
+        velocidad = Vector2.Zero;
         if (input != null)
         {
-            Vector2 dir = input.LeerMovimiento();
-            if (dir.LengthSquared() > 0) dir = Vector2.Normalize(dir);
-            posicion += dir * velocidadMaxima * Raylib.GetFrameTime();
+            Vector2 dir = Matematicas.NormalizarSeguro(input.LeerMovimiento());
+            velocidad = dir * velocidadMaxima;
         }
 
         // Regeneracion HP/s (acumulada fraccionalmente; suma 1 cuando llega a entero)
         if (regeneracionPorSegundo > 0f && vidaActual > 0 && vidaActual < vidaMaxima)
         {
-            regenAcumulado += regeneracionPorSegundo * Raylib.GetFrameTime();
+            regenAcumulado += regeneracionPorSegundo * dt;
             while (regenAcumulado >= 1f && vidaActual < vidaMaxima)
             {
                 vidaActual++;
@@ -96,7 +103,7 @@ public class Jugador : EntidadBase
         // Disparo y recoger arma — solo si hay input asignado (no para placeholders)
         if (input != null)
         {
-            cooldownDisparo -= Raylib.GetFrameTime();
+            cooldownDisparo -= dt;
 
             if (armaActual != null && armaActual.municionActual > 0 && cooldownDisparo <= 0
                 && input.LeerDisparoMantenido())
@@ -121,54 +128,45 @@ public class Jugador : EntidadBase
         }
 
         ActualizarHUD();
-        EnviarPosicion();
+        // Envio de pos+vida al servidor lo hace gestorRed.TickEnvioClienteAServidor a tickRateRed, no por frame
     }
 
     private void ActualizarHUD()
     {
-        int anchoBarra = 50;
-        barraVida.posicionX = (int)(posicion.X - anchoBarra / 2);
-        barraVida.posicionY = (int)(posicion.Y - radio - 12);
+        // Solo valores no-posicionales aqui. Las posicionX/Y del HUD las setea Dibujar
+        // con PosicionInterpolada() para que sigan al sprite a render rate (no a tick rate)
         barraVida.total = vidaMaxima;
         barraVida.progreso = vidaActual;
 
-        int punt = gestorRed.jugadoresConectados.TryGetValue(idRiptide, out DatosJugador? d) ? d.puntuacion : 0;
-        etiquetaNombre.textoAMostrar = $"{ConfiguracionRed.NombreUsuario} [{punt}]";
-        etiquetaNombre.posicionX = (int)(posicion.X - 50);
-        etiquetaNombre.posicionY = (int)(posicion.Y - radio - 28);
-    }
-
-    private void EnviarPosicion()
-    {
-        if (!gestorRed.EnLinea) return;
-
-        if (gestorRed.EsServidor)
-        {
-            Message m = Message.Create(MessageSendMode.Unreliable, IdMensajesDeRed.broadcastPosicion);
-            m.AddUShort(idRiptide);
-            m.AddFloat(posicion.X);
-            m.AddFloat(posicion.Y);
-            m.AddInt(vidaActual);
-            gestorServidor.EnviarMensajeATodosLosClientes(m);
-        }
-        else
-        {
-            Message m = Message.Create(MessageSendMode.Unreliable, IdMensajesDeRed.posicionJugador);
-            m.AddFloat(posicion.X);
-            m.AddFloat(posicion.Y);
-            m.AddInt(vidaActual);
-            gestorCliente.EnviarMensaje(m);
-        }
+        // El nombre y puntuacion salen del dict de jugadores conectados (poblado por BroadcastSnapshot).
+        // Asi P2/P3/P4 locales muestran sus nombres custom, no el del host. Fallback al nombre del config
+        // por si el dict todavia no propago (caso degenerado)
+        gestorRed.jugadoresConectados.TryGetValue(idRiptide, out DatosJugador? d);
+        string nombre = d?.nombre ?? ConfiguracionRed.NombreUsuario;
+        int punt = d?.puntuacion ?? 0;
+        etiquetaNombre.textoAMostrar = $"{nombre} [{punt}]";
     }
 
     public override void Dibujar()
     {
-        Texture2D tex = GestorTexturas.ObtenerTextura("jugador1.png");
+        Vector2 posVis = PosicionInterpolada();
+
+        // HUD posicional se sincroniza al sprite cada frame de render (no por tick) — capas 51, 52
+        // dibujan despues que esta (capa 50), asi que leeran los valores frescos
+        int anchoBarra = 50;
+        barraVida.posicionX = (int)(posVis.X - anchoBarra / 2);
+        barraVida.posicionY = (int)(posVis.Y - radio - 12);
+        etiquetaNombre.posicionX = (int)(posVis.X - 50);
+        etiquetaNombre.posicionY = (int)(posVis.Y - radio - 28);
+
+        Texture2D tex = GestorTexturas.ObtenerTextura(sprite);
+        // Sprite sin tinte: cada slot usa su propia textura jugadorN.png, no hace falta tenir.
+        // El campo color se conserva por si despues se usa para barra de vida / indicadores
         Raylib.DrawTexturePro(
             tex,
             new Rectangle(0, 0, tex.Width, tex.Height),
-            new Rectangle(posicion.X - radio, posicion.Y - radio, radio * 2, radio * 2),
-            Vector2.Zero, 0f, color);
+            new Rectangle(posVis.X - radio, posVis.Y - radio, radio * 2, radio * 2),
+            Vector2.Zero, 0f, Color.White);
     }
 
     public override void RecibirDaño(int cantidad) => base.RecibirDaño(cantidad);
